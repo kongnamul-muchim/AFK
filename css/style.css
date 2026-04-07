@@ -380,24 +380,29 @@ body {
     padding: 1rem;
 }
 
-/* 인벤토리 그리드 - 모바일 */
+/* 인벤토리 그리드 - 5 개 정렬 (패널에 맞춤) */
 .items-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
 }
 
 .item-slot {
     aspect-ratio: 1;
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-secondary);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     position: relative;
     border: 2px solid transparent;
+    cursor: pointer;
+    min-width: 0;
 }
 
 .item-slot.common { border-color: var(--rarity-common); }
@@ -1003,19 +1008,4 @@ body {
     font-weight: bold;
     color: white;
     text-shadow: 1px 1px 2px black;
-}
-
-/* 장비 행 (5 희귀도) */
-.equipment-row {
-    display: flex;
-    gap: 0.25rem;
-    margin-bottom: 0.5rem;
-    padding: 0.25rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-}
-
-.equipment-row .item-slot {
-    flex: 1;
-    min-width: 0;
 }
