@@ -109,13 +109,15 @@ class CombatSystem {
             isBoss: monsterData.isBoss
         };
         
+        // 새 몬스터 등장 로그 (처음만)
         gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, { 
-            message: `${this.currentMonster.name}이(가) 등장했습니다!` 
+            message: `${this.currentMonster.name}이 (가) 등장했습니다!` 
         });
         
         if (this.currentMonster.isBoss) {
             gameEventBus.emit(GAME_EVENTS.STAGE_BOSS_ENTER);
         }
+    }
     }
 
     /**
@@ -166,11 +168,12 @@ class CombatSystem {
             maxHp: monster.maxHp
         });
         
-        // 로그
-        const critText = isCrit ? '[크리티컬!] ' : '';
-        gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
-            message: `${critText}플레이어가 ${monster.name}에게 ${damage} 데미지를 입혔습니다.`
-        });
+        // 로그 - 크리티컬Hit 만 표시 (로그 과부하 방지)
+        if (isCrit) {
+            gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
+                message: `[크리티컬!] ${damage} 데미지!`
+            });
+        }
         
         // 몬스터 처치 확인
         if (monster.currentHp <= 0) {

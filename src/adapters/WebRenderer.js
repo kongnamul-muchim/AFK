@@ -135,7 +135,7 @@ class GameRenderer {
     renderPlayer() {
         const x = this.width * 0.3;
         const y = this.height - 100;
-        const spriteSize = 64; // 스프라이트 크기
+        const spriteSize = 48; // 약간 작게 조정
         
         // 스프라이트 시도
         const sprite = gameImageLoader.get('player');
@@ -154,6 +154,7 @@ class GameRenderer {
             // 폴백: 사각형
             this.ctx.fillStyle = '#4a9eff';
             this.ctx.fillRect(x - spriteSize/2, y - spriteSize, spriteSize, spriteSize);
+            gameLogger.debug('Player sprite not loaded, using fallback');
         }
         
         // HP 바
@@ -170,7 +171,7 @@ class GameRenderer {
     renderMonster() {
         const x = this.width * 0.7;
         const y = this.height - 100;
-        const spriteSize = 64;
+        const spriteSize = 48;
         
         // 스프라이트 시도
         const sprite = gameImageLoader.get('monster');
@@ -178,7 +179,7 @@ class GameRenderer {
             const frameWidth = 32;
             const frameHeight = 32;
             const frameX = this.monsterFrameIndex % 4;
-            const frameY = 0; // 대기/공격 프레임 (0 행)
+            const frameY = 0;
             
             this.ctx.drawImage(
                 sprite,
@@ -189,10 +190,11 @@ class GameRenderer {
             // 폴백: 사각형
             this.ctx.fillStyle = '#ef4444';
             this.ctx.fillRect(x - spriteSize/2, y - spriteSize, spriteSize, spriteSize);
+            gameLogger.debug('Monster sprite not loaded, using fallback');
         }
         
         // 몬스터 HP 바
-        const monster = this.gameState.currentMonster;
+        const monster = this.combatSystem?.currentMonster;
         if (monster && monster.maxHp > 0) {
             const hpPercent = monster.currentHp / monster.maxHp;
             this.ctx.fillStyle = '#333';
