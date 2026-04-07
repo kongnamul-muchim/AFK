@@ -58,7 +58,7 @@ class Game {
 
             // 스토리지 매니저 초기화
             this.storageManager = new StorageManager();
-            this.storageManager.init();
+            // gameState 는 나중에 생성되므로 일단 null
             this.updateLoadingProgress(20, '데이터 로드 중...');
 
             // CSV 데이터 로드
@@ -96,6 +96,9 @@ class Game {
                 this.gameState = new GameState();
                 gameLogger.info('New game created');
             }
+            
+            // StorageManager 에 gameState 연동
+            this.storageManager.init(this.gameState);
             
             this.updateLoadingProgress(70, 'UI 초기화...');
 

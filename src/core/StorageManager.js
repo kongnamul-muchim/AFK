@@ -10,6 +10,7 @@ const CURRENT_VERSION = 1;
 
 class StorageManager {
     constructor() {
+        this.gameState = null;
         this.autoSaveInterval = null;
         this.debouncedSaveTimer = null;
         this.DEBOUNCE_DELAY = 1000; // 1 초
@@ -17,8 +18,10 @@ class StorageManager {
 
     /**
      * 저장소 초기화
+     * @param {GameState} gameState 
      */
-    init() {
+    init(gameState) {
+        this.gameState = gameState;
         this.startAutoSave();
         gameLogger.info('StorageManager initialized');
     }
@@ -50,7 +53,7 @@ class StorageManager {
     debouncedSave() {
         if (this.debouncedSaveTimer) clearTimeout(this.debouncedSaveTimer);
         this.debouncedSaveTimer = setTimeout(() => {
-            this.save();
+            this.save(this.gameState ? this.gameState.toJSON() : null);
         }, this.DEBOUNCE_DELAY);
     }
 
@@ -60,6 +63,10 @@ class StorageManager {
      * @returns {boolean} 성공 여부
      */
     save(gameState) {
+        if (!gameState) {
+            gameLogger.warn('Save called without gameState');
+            return false;
+        }
         try {
             gameState.lastSaveTime = Date.now();
             const data = {
