@@ -86,7 +86,7 @@ class InventorySystem {
 
     /**
      * 합성 가능 여부 확인
-     * @param {number} itemId 
+     * @param {number|string} itemId 
      * @returns {boolean}
      */
     canSynthesize(itemId) {
@@ -98,6 +98,7 @@ class InventorySystem {
 
     /**
      * 장비 합성 (5 개 → 다음 등급 1 개)
+     * grade 1-10: 단순 강화 시스템
      * @param {number} itemId 
      * @returns {Object|null} 합성된 아이템 정보 또는 null
      */
@@ -110,13 +111,13 @@ class InventorySystem {
         const item = this.gameState.inventory.items.get(itemId.toString());
         const nextGrade = item.grade + 1;
         
-        // 최대 등급 확인 (5: 신화)
-        if (nextGrade > 5) {
-            gameLogger.warn(`Item ${itemId} is already max grade`);
+        // 최대 등급 확인 (10: silver_ring mythic 등)
+        if (nextGrade > 10) {
+            gameLogger.warn(`Item ${item.name} is already max grade`);
             return null;
         }
         
-        // 다음 등급 아이템 찾기 (이름 + 등급으로 검색)
+        // 다음 등급 아이템 찾기 (같은 이름 + 다음 grade)
         const items = gameDataLoader.get('items');
         const nextGradeItem = items.find(i => 
             i.name === item.name &&  // 같은 이름
@@ -129,7 +130,7 @@ class InventorySystem {
         }
         
         // 재료 아이템 5 개 제거
-        this.removeItem(itemId, this.synthesizeCount);
+        this.removeItem(item.itemId || itemId, this.synthesizeCount);
         
         // 다음 등급 아이템 1 개 추가
         this.addItem({
@@ -150,7 +151,7 @@ class InventorySystem {
             resultGrade: nextGradeItem.grade
         });
         
-        gameLogger.info(`Synthesized: ${item.name} x5 → ${nextGradeItem.name} x1`);
+        gameLogger.info(`Synthesized: ${item.name} grade.${item.grade} x5 → ${nextGradeItem.name} grade.${nextGradeItem.grade} x1`);
         
         return {
             id: nextGradeItem.id,
