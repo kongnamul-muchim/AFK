@@ -1,18 +1,48 @@
 # items.csv - 아이템 데이터
-# id: 고유 ID, name: 이름, grade: 등급 (1-5), type: 타입, rarity: 희귀도, stats_min: 최소 스탯, stats_max: 최대 스탯, dropRate: 드롭 확률
+# id,name,grade,type,rarity,stats_min,stats_max,dropRate
 id,name,grade,type,rarity,stats_min,stats_max,dropRate
-1, rusty_sword,1,weapon,common,"{""str"":1}","{""str"":2}",0.3
-2, rusty_armor,1,armor,common,"{""vit"":2}","{""vit"":3}",0.3
-3, rusty_ring,1,accessory,common,"{""agi"":1}","{""agi"":2}",0.3
-4, iron_sword,2,weapon,common,"{""str"":3}","{""str"":5}",0.25
-5, iron_armor,2,armor,common,"{""vit"":4}","{""vit"":6}",0.25
-6, iron_ring,2,accessory,common,"{""agi"":3}","{""agi"":5}",0.25
-7, steel_sword,3,weapon,rare,"{""str"":6,""agi"":2}","{""str"":9,""agi"":4}",0.1
-8, steel_armor,3,armor,rare,"{""vit"":8,""str"":2}","{""vit"":12,""str"":4}",0.1
-9, steel_ring,3,accessory,rare,"{""agi"":6,""int"":2}","{""agi"":9,""int"":4}",0.1
-10, magic_sword,4,weapon,epic,"{""str"":10,""int"":5}","{""str"":15,""int"":8}",0.05
-11, magic_armor,4,armor,epic,"{""vit"":15,""int"":5}","{""vit"":22,""int"":8}",0.05
-12, magic_ring,4,accessory,epic,"{""agi"":10,""int"":5}","{""agi"":15,""int"":8}",0.05
-13, legendary_sword,5,weapon,legendary,"{""str"":20,""agi"":10,""vit"":10}","{""str"":30,""agi"":15,""vit"":15}",0.01
-14, legendary_armor,5,armor,legendary,"{""vit"":30,""str"":10,""agi"":5}","{""vit"":45,""str"":15,""agi"":8}",0.01
-15, legendary_ring,5,accessory,legendary,"{""agi"":20,""int"":10,""str"":5}","{""agi"":30,""int"":15,""str"":8}",0.01
+1,rusty_sword,1,weapon,common,"{""str"":1}","{""str"":2}",0.3
+2,rusty_sword,1,weapon,rare,"{""str"":2}","{""str"":3}",0.25
+3,rusty_sword,1,weapon,epic,"{""str"":3}","{""str"":4}",0.15
+4,rusty_sword,1,weapon,legendary,"{""str"":4}","{""str"":5}",0.05
+5,rusty_sword,1,weapon,mythic,"{""str"":5}","{""str"":6}",0.01
+6,iron_sword,2,weapon,common,"{""str"":3}","{""str"":5}",0.3
+7,iron_sword,2,weapon,rare,"{""str"":4}","{""str"":6}",0.25
+8,iron_sword,2,weapon,epic,"{""str"":5}","{""str"":7}",0.15
+9,iron_sword,2,weapon,legendary,"{""str"":6}","{""str"":8}",0.05
+10,iron_sword,2,weapon,mythic,"{""str"":7}","{""str"":9}",0.01
+11,steel_sword,3,weapon,common,"{""str"":6}","{""str"":9}",0.3
+12,steel_sword,3,weapon,rare,"{""str"":7}","{""str"":10}",0.25
+13,steel_sword,3,weapon,epic,"{""str"":8}","{""str"":11}",0.15
+14,steel_sword,3,weapon,legendary,"{""str"":9}","{""str"":12}",0.05
+15,steel_sword,3,weapon,mythic,"{""str"":10}","{""str"":13}",0.01
+16,rusty_armor,1,armor,common,"{""vit"":2}","{""vit"":3}",0.3
+17,rusty_armor,1,armor,rare,"{""vit"":3}","{""vit"":4}",0.25
+18,rusty_armor,1,armor,epic,"{""vit"":4}","{""vit"":5}",0.15
+19,rusty_armor,1,armor,legendary,"{""vit"":5}","{""vit"":6}",0.05
+20,rusty_armor,1,armor,mythic,"{""vit"":6}","{""vit"":7}",0.01
+21,iron_armor,2,armor,common,"{""vit"":4}","{""vit"":6}",0.3
+22,iron_armor,2,armor,rare,"{""vit"":5}","{""vit"":7}",0.25
+23,iron_armor,2,armor,epic,"{""vit"":6}","{""vit"":8}",0.15
+24,iron_armor,2,armor,legendary,"{""vit"":7}","{""vit"":9}",0.05
+25,iron_armor,2,armor,mythic,"{""vit"":8}","{""vit"":10}",0.01
+26,leather_boots,1,boots,common,"{""agi"":1}","{""agi"":2}",0.3
+27,leather_boots,1,boots,rare,"{""agi"":2}","{""agi"":3}",0.25
+28,leather_boots,1,boots,epic,"{""agi"":3}","{""agi"":4}",0.15
+29,leather_boots,1,boots,legendary,"{""agi"":4}","{""agi"":5}",0.05
+30,leather_boots,1,boots,mythic,"{""agi"":5}","{""agi"":6}",0.01
+31,iron_boots,2,boots,common,"{""agi"":3}","{""agi"":5}",0.3
+32,iron_boots,2,boots,rare,"{""agi"":4}","{""agi"":6}",0.25
+33,iron_boots,2,boots,epic,"{""agi"":5}","{""agi"":7}",0.15
+34,iron_boots,2,boots,legendary,"{""agi"":6}","{""agi"":8}",0.05
+35,iron_boots,2,boots,mythic,"{""agi"":7}","{""agi"":9}",0.01
+36,copper_ring,1,accessory,common,"{""int"":1}","{""int"":2}",0.3
+37,copper_ring,1,accessory,rare,"{""int"":2}","{""int"":3}",0.25
+38,copper_ring,1,accessory,epic,"{""int"":3}","{""int"":4}",0.15
+39,copper_ring,1,accessory,legendary,"{""int"":4}","{""int"":5}",0.05
+40,copper_ring,1,accessory,mythic,"{""int"":5}","{""int"":6}",0.01
+41,silver_ring,2,accessory,common,"{""int"":3}","{""int"":5}",0.3
+42,silver_ring,2,accessory,rare,"{""int"":4}","{""int"":6}",0.25
+43,silver_ring,2,accessory,epic,"{""int"":5}","{""int"":7}",0.15
+44,silver_ring,2,accessory,legendary,"{""int"":6}","{""int"":8}",0.05
+45,silver_ring,2,accessory,mythic,"{""int"":7}","{""int"":9}",0.01
