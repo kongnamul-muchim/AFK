@@ -202,45 +202,6 @@ class GameRenderer {
     }
 
     /**
-     * 몬스터 렌더링
-     */
-    renderMonster() {
-        const x = this.width * 0.7;
-        const y = this.height - 100;
-        const spriteSize = 48;
-        
-        // 스프라이트 시도
-        const sprite = gameImageLoader.get('monster');
-        if (sprite) {
-            const frameWidth = 32;
-            const frameHeight = 32;
-            const frameX = this.monsterFrameIndex % 4;
-            const frameY = 0;
-            
-            this.ctx.drawImage(
-                sprite,
-                frameX * frameWidth, frameY * frameHeight, frameWidth, frameHeight,
-                x - spriteSize/2, y - spriteSize, spriteSize, spriteSize
-            );
-        } else {
-            // 폴백: 사각형
-            this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - spriteSize/2, y - spriteSize, spriteSize, spriteSize);
-            gameLogger.debug('Monster sprite not loaded, using fallback');
-        }
-        
-        // 몬스터 HP 바
-        const monster = this.combatSystem?.currentMonster;
-        if (monster && monster.maxHp > 0) {
-            const hpPercent = monster.currentHp / monster.maxHp;
-            this.ctx.fillStyle = '#333';
-            this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize, 6);
-            this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize * hpPercent, 6);
-        }
-    }
-
-    /**
      * 데미지 표시
      * @param {number} damage 
      * @param {Object} position 
