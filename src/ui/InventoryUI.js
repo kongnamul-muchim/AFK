@@ -217,9 +217,8 @@ class InventoryUI {
                 this.handleSynthesize(item.id);
             });
         } else if (discovered) {
-            // 한 번 획득했지만 현재 개수 0 (도감 해제됨)
+            // 한 번 획득했지만 현재 개수 0 (도감 해제됨 - 항상 활성화)
             slot.classList.add('discovered', item.rarity);
-            slot.style.opacity = '0.5';
             slot.innerHTML = `
                 <span class="item-name">${item.name}</span>
                 <span class="item-count">x0</span>
