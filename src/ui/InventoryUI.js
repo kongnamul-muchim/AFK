@@ -109,10 +109,14 @@ class InventoryUI {
         // 현재 탭의 아이템만 필터링
         const tabItems = allItems.filter(item => item.type === this.currentTab);
         
-        // 아이템 렌더링 (개별 카드)
-        tabItems.forEach(item => {
-            const slot = this.createItemSlot(item);
-            container.appendChild(slot);
+        // 아이템을 베이스 이름별로 그룹화 (rusty_sword_1 → rusty_sword)
+        const groupedItems = this.groupItemsByBase(tabItems);
+        
+        // 그룹별로 행 생성 (1 행 = 5 희귀도)
+        Object.keys(groupedItems).forEach(baseName => {
+            const group = groupedItems[baseName];
+            const row = this.createRarityRow(baseName, group);
+            container.appendChild(row);
         });
         
         // 골드 업데이트
@@ -122,6 +126,55 @@ class InventoryUI {
         
         // 장착 아이템 업데이트
         this.updateEquipmentPanel();
+    }
+
+    /**
+     * 아이템을 베이스 이름별로 그룹화
+     * @param {Array} items 
+     * @returns {Object}
+     */
+    groupItemsByBase(items) {
+        const groups = {};
+        
+        items.forEach(item => {
+            // 이름에서 베이스 추출 (rusty_sword_1 → rusty_sword)
+            const parts = item.name.split('_');
+            const baseName = parts.slice(0, -1).join('_'); // 마지막 (등급번호) 제외
+            
+            if (!groups[baseName]) {
+                groups[baseName] = [];
+            }
+            groups[baseName].push(item);
+        });
+        
+        // 각 그룹을 희귀도 순서대로 정렬
+        const rarityOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+        Object.keys(groups).forEach(key => {
+            groups[key].sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity));
+        });
+        
+        return groups;
+    }
+
+    /**
+     * 희귀도 행 생성 (1 행 = 5 개)
+     * @param {string} baseName 
+     * @param {Array} items 
+     * @returns {HTMLElement}
+     */
+    createRarityRow(baseName, items) {
+        const row = document.createElement('div');
+        row.className = 'rarity-row';
+        row.style.cssText = 'display: flex; gap: 0.25rem; margin-bottom: 0.5rem;';
+        
+        // 5 희귀도 슬롯 생성
+        items.forEach(item => {
+            const slot = this.createItemSlot(item);
+            slot.style.flex = '1';
+            row.appendChild(slot);
+        });
+        
+        return row;
     }
 
     /**
@@ -141,14 +194,24 @@ class InventoryUI {
             // 획득한 아이템
             slot.classList.add('has-item', item.rarity);
             slot.dataset.count = owned.count;
-            slot.innerHTML = `<span class="item-name">${item.name}</span>`;
+            slot.dataset.itemName = item.name;
+            slot.innerHTML = `
+                <span class="item-name">${item.name}</span>
+                <span class="item-count">x${owned.count}</span>
+            `;
             
             // 이벤트
             slot.addEventListener('mouseenter', (e) => this.showTooltip(item, e));
             slot.addEventListener('mouseleave', () => this.hideTooltip());
             slot.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 this.handleEquip(item);
+            });
+            slot.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleSynthesize(item.id);
             });
         } else {
             // 미획득 아이템 (도감)
