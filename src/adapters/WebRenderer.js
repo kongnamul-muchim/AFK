@@ -196,14 +196,6 @@ class GameRenderer {
             this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize * hpPercent, 6);
         }
     }
-        
-        // HP 바
-        const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
-        this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize, 6);
-        this.ctx.fillStyle = '#ef4444';
-        this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize * hpPercent, 6);
-    }
 
     /**
      * 몬스터 렌더링
