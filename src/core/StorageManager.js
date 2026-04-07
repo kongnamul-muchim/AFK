@@ -64,7 +64,7 @@ class StorageManager {
      */
     save(gameState) {
         if (!gameState) {
-            gameLogger.warn('Save called without gameState');
+            // gameLogger.warn('Save called without gameState');
             return false;
         }
         try {
@@ -76,7 +76,7 @@ class StorageManager {
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             gameEventBus.emit(GAME_EVENTS.GAME_SAVED);
-            gameLogger.debug('Game saved');
+            // gameLogger.debug('Game saved');  // 로그 끄기
             return true;
         } catch (error) {
             gameLogger.error('Failed to save game:', error);

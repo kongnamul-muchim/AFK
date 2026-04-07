@@ -234,25 +234,28 @@ body {
     position: absolute;
     top: 0.5rem;
     left: 0.5rem;
-    right: 0.5rem;
-    max-height: 120px;
+    right: 4rem;
+    max-height: 100px;
     overflow-y: auto;
     pointer-events: none;
     display: flex;
     flex-direction: column-reverse;
+    z-index: 100;
 }
 
 .combat-log-entry {
-    background: rgba(0, 0, 0, 0.7);
-    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 0.35rem 0.5rem;
     border-radius: 4px;
     margin-bottom: 0.25rem;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     animation: fadeOut 3s forwards;
     animation-delay: 2s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: white;
+    border-left: 3px solid #4a9eff;
 }
 
 @keyframes fadeOut {
