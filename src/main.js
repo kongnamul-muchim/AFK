@@ -11,6 +11,13 @@ import { LoadingScreen } from './ui/LoadingScreen.js';
 import { UIManager } from './ui/UIManager.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { GameRenderer } from './adapters/WebRenderer.js';
+import { CombatSystem } from './systems/CombatSystem.js';
+import { StageSystem } from './systems/StageSystem.js';
+import { InventorySystem } from './systems/InventorySystem.js';
+import { OfflineRewards } from './systems/OfflineRewards.js';
+import { TutorialSystem } from './systems/TutorialSystem.js';
+import { AchievementSystem } from './systems/AchievementSystem.js';
+import { StatsTracker } from './systems/StatsTracker.js';
 
 class Game {
     constructor() {
@@ -20,6 +27,16 @@ class Game {
         this.uiManager = null;
         this.audioManager = null;
         this.renderer = null;
+        
+        // Systems
+        this.combatSystem = null;
+        this.stageSystem = null;
+        this.inventorySystem = null;
+        this.offlineRewards = null;
+        this.tutorialSystem = null;
+        this.achievementSystem = null;
+        this.statsTracker = null;
+        
         this.isRunning = false;
         this.lastFrameTime = 0;
         this.updateAccumulator = 0;
@@ -74,6 +91,28 @@ class Game {
             // 오디오 매니저 초기화
             this.audioManager = new AudioManager(this.gameState);
             this.audioManager.init();
+
+            // 시스템 초기화
+            this.stageSystem = new StageSystem(this.gameState);
+            this.stageSystem.init();
+            
+            this.inventorySystem = new InventorySystem(this.gameState);
+            this.inventorySystem.init();
+            
+            this.offlineRewards = new OfflineRewards(this.gameState);
+            this.offlineRewards.init();
+            
+            this.tutorialSystem = new TutorialSystem(this.gameState);
+            this.tutorialSystem.init();
+            
+            this.achievementSystem = new AchievementSystem(this.gameState);
+            this.achievementSystem.init();
+            
+            this.statsTracker = new StatsTracker(this.gameState);
+            this.statsTracker.init();
+            
+            this.combatSystem = new CombatSystem(this.gameState);
+            this.combatSystem.init();
 
             // 렌더러 초기화
             this.renderer = new GameRenderer(this.gameState);
@@ -215,10 +254,12 @@ class Game {
      */
     update(dt) {
         // 플레이 시간 기록
-        this.gameState.stats.playTime += dt;
+        this.statsTracker.updatePlayTime(dt);
         
-        // 여기서 게임 로직 업데이트 (전투, 스폰 등)
-        // 시스템 클래스들이 실제로 작업함
+        // 전투 시스템 업데이트 (자동 공격)
+        if (!this.combatSystem.isAttacking) {
+            this.combatSystem.startCombat();
+        }
     }
 
     /**
