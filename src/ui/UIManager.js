@@ -61,7 +61,12 @@ class UIManager {
     setupMenuButtons() {
         document.getElementById('btn-inventory')?.addEventListener('click', () => {
             this.showModal(this.inventoryModal);
-            this.renderInventory();
+            // InventoryUI 에게 위임
+            if (this.game.inventoryUI) {
+                this.game.inventoryUI.renderInventory();
+            } else {
+                this.renderInventory();
+            }
         });
         
         document.getElementById('btn-stats')?.addEventListener('click', () => {

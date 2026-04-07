@@ -11,6 +11,7 @@ import { gameImageLoader } from './core/ImageLoader.js';
 import { gameConfig } from './config/GameConfig.js';
 import { LoadingScreen } from './ui/LoadingScreen.js';
 import { UIManager } from './ui/UIManager.js';
+import { InventoryUI } from './ui/InventoryUI.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { GameRenderer } from './adapters/WebRenderer.js';
 import { CombatSystem } from './systems/CombatSystem.js';
@@ -127,6 +128,7 @@ class Game {
 
             // UI 매니저 초기화
             this.uiManager = new UIManager(this.gameState);
+            this.uiManager.game = this; // game 참조 추가
             this.uiManager.init();
 
             // 오디오 매니저 초기화
@@ -139,6 +141,10 @@ class Game {
             
             this.inventorySystem = new InventorySystem(this.gameState);
             this.inventorySystem.init();
+            
+            // 인벤토리 UI 초기화
+            this.inventoryUI = new InventoryUI(this.gameState, this.inventorySystem);
+            this.inventoryUI.init();
             
             this.offlineRewards = new OfflineRewards(this.gameState);
             this.offlineRewards.init();
