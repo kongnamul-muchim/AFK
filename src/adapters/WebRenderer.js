@@ -21,6 +21,9 @@ class GameRenderer {
         this.monsterFrameIndex = 0;
         this.frameTimer = 0;
         this.frameInterval = 150; // ms per frame
+        
+        // 이미지 로더 참조 (콘솔에서 접근 가능하도록)
+        this.gameImageLoader = gameImageLoader;
     }
 
     /**
