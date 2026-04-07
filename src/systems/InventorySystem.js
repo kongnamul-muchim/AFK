@@ -20,6 +20,32 @@ class InventorySystem {
      */
     init() {
         gameLogger.debug('InventorySystem initialized');
+        this.fixAllItemNames();  // 기존 아이템 이름 수정
+    }
+
+    /**
+     * 모든 아이템 이름 수정 (rusty_sword_2 → rusty_sword)
+     */
+    fixAllItemNames() {
+        const items = gameDataLoader.get('items');
+        if (!items) return;
+        
+        // itemId → name 매핑 생성
+        const nameMap = new Map();
+        items.forEach(item => {
+            nameMap.set(item.id.toString(), item.name);
+        });
+        
+        // 인벤토리 아이템 이름 수정
+        this.gameState.inventory.items.forEach((item, itemId) => {
+            const correctName = nameMap.get(itemId);
+            if (correctName && item.name !== correctName) {
+                gameLogger.info(`Fixed item name: "${item.name}" → "${correctName}"`);
+                item.name = correctName;
+            }
+        });
+        
+        gameLogger.debug('All item names fixed');
     }
 
     /**
@@ -38,6 +64,13 @@ class InventorySystem {
         if (this.gameState.inventory.items.has(itemIdStr)) {
             // 기존 아이템 - 카운트 증가
             const existing = this.gameState.inventory.items.get(itemIdStr);
+            
+            // 이름이 틀렸으면 수정 (rusty_sword_2 → rusty_sword)
+            if (existing.name !== name) {
+                gameLogger.debug(`Fixing item name: "${existing.name}" → "${name}"`);
+                existing.name = name;
+            }
+            
             existing.count += count;
             
             gameLogger.debug(`Item stack increased: ${name} x${existing.count}, stored.name="${existing.name}"`);
