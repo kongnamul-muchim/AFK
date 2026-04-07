@@ -147,6 +147,19 @@ class InventorySystem {
     }
 
     /**
+     * 타입별 최대 등급
+     */
+    getMaxGradeByType(type) {
+        const maxGrades = {
+            'weapon': 15,      // steel_sword (1-15)
+            'armor': 10,       // iron_armor (1-10)
+            'boots': 10,       // iron_boots (1-10)
+            'accessory': 10    // silver_ring (1-10)
+        };
+        return maxGrades[type] || 10;
+    }
+
+    /**
      * 장비 합성 (5 개 → 다음 등급 1 개)
      * grade 1-15: 단순 강화 시스템
      * 베이스 아이템 전환 지원 (rusty_sword → iron_sword → steel_sword)
@@ -165,6 +178,14 @@ class InventorySystem {
         const item = this.gameState.inventory.items.get(itemIdStr);
         const nextGrade = item.grade + 1;
         
+        // 타입별 최대 등급 확인
+        const maxGrade = this.getMaxGradeByType(item.type);
+        
+        if (nextGrade > maxGrade) {
+            gameLogger.warn(`${item.type} ${item.name} is already max grade (${maxGrade})`);
+            return null;
+        }
+        
         // 다음 등급 아이템 찾기 (베이스 아이템 전환 지원)
         const nextGradeItem = this.findNextGradeItem(item.name, item.type, nextGrade);
         
@@ -173,13 +194,7 @@ class InventorySystem {
             return null;
         }
         
-        // 최대 등급 확인
-        if (nextGradeItem.grade > 15) {
-            gameLogger.warn(`Item ${item.name} is already max grade`);
-            return null;
-        }
-        
-        gameLogger.debug(`Found next grade: ${nextGradeItem.name} grade ${nextGradeItem.grade}`);
+        gameLogger.debug(`Found next grade: ${nextGradeItem.name} grade ${nextGradeItem.grade} (max: ${maxGrade})`);
         
         // 재료 아이템 5 개 제거 (문자열 키 사용!)
         const removed = this.removeItem(itemIdStr, this.synthesizeCount);
