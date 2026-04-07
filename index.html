@@ -76,17 +76,65 @@
 
     <!-- 인벤토리 모달 -->
     <div id="inventory-modal" class="modal" style="display: none;">
-        <div class="modal-content">
+        <div class="modal-content inventory-modal-content">
             <div class="modal-header">
                 <h2>인벤토리</h2>
                 <button class="modal-close" id="btn-close-inventory">&times;</button>
             </div>
-            <div class="inventory-content">
-                <div class="items-grid" id="inventory-items"></div>
-                <div class="gold-display">
-                    <span>💰 골드:</span>
-                    <span id="inventory-gold">0</span>
+            
+            <!-- 장착 아이템 패널 -->
+            <div class="equipment-panel">
+                <div class="equipment-slot" data-slot="weapon">
+                    <div class="slot-label">무기</div>
+                    <div class="slot-item" id="equip-weapon"></div>
                 </div>
+                <div class="equipment-slot" data-slot="armor">
+                    <div class="slot-label">갑옷</div>
+                    <div class="slot-item" id="equip-armor"></div>
+                </div>
+                <div class="equipment-slot" data-slot="boots">
+                    <div class="slot-label">신발</div>
+                    <div class="slot-item" id="equip-boots"></div>
+                </div>
+                <div class="equipment-slot" data-slot="accessory">
+                    <div class="slot-label">장신구</div>
+                    <div class="slot-item" id="equip-accessory"></div>
+                </div>
+                <!-- 스탯 가중치 패널 -->
+                <div class="stats-bonus-panel" id="stats-bonus">
+                    <div class="bonus-stat"><span>공격력:</span><span id="bonus-atk">+0</span></div>
+                    <div class="bonus-stat"><span>방어력:</span><span id="bonus-def">+0</span></div>
+                    <div class="bonus-stat"><span>체력:</span><span id="bonus-hp">+0</span></div>
+                    <div class="bonus-stat"><span>크리티컬:</span><span id="bonus-crit">+0%</span></div>
+                </div>
+            </div>
+            
+            <!-- 인벤토리 탭 -->
+            <div class="inventory-tabs">
+                <button class="tab-btn active" data-tab="all">전체</button>
+                <button class="tab-btn" data-tab="weapon">무기</button>
+                <button class="tab-btn" data-tab="armor">갑옷</button>
+                <button class="tab-btn" data-tab="boots">신발</button>
+                <button class="tab-btn" data-tab="accessory">장신구</button>
+            </div>
+            
+            <!-- 아이템 그리드 (도감) -->
+            <div class="items-grid" id="inventory-items"></div>
+            
+            <div class="gold-display">
+                <span>💰 골드:</span>
+                <span id="inventory-gold">0</span>
+            </div>
+        </div>
+        
+        <!-- 아이템 툴팁 -->
+        <div class="item-tooltip" id="item-tooltip" style="display: none;">
+            <div class="tooltip-name" id="tooltip-name"></div>
+            <div class="tooltip-grade" id="tooltip-grade"></div>
+            <div class="tooltip-stats" id="tooltip-stats"></div>
+            <div class="tooltip-actions">
+                <div class="action equip">좌클릭: 장착</div>
+                <div class="action synthesize">우클릭: 합성 (x5)</div>
             </div>
         </div>
     </div>

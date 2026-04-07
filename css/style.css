@@ -829,3 +829,178 @@ body {
         opacity: 0;
     }
 }
+
+/* 인벤토리 모달 확장 */
+.inventory-modal-content {
+    max-width: 600px;
+}
+
+/* 장착 아이템 패널 */
+.equipment-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.equipment-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.slot-label {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+.slot-item {
+    width: 48px;
+    height: 48px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-bg-tertiary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.slot-item.has-item {
+    border-color: var(--color-accent);
+    cursor: pointer;
+}
+
+/* 스탯 가중치 패널 */
+.stats-bonus-panel {
+    grid-column: span 4;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    margin-top: 0.5rem;
+}
+
+.bonus-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.bonus-stat span:first-child {
+    color: var(--color-text-secondary);
+}
+
+.bonus-stat span:last-child {
+    color: var(--color-success);
+    font-weight: bold;
+}
+
+/* 인벤토리 탭 */
+.inventory-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.inventory-tabs .tab-btn {
+    flex: 1;
+    padding: 0.5rem;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.inventory-tabs .tab-btn.active {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* 아이템 툴팁 */
+.item-tooltip {
+    position: fixed;
+    background: rgba(15, 15, 26, 0.95);
+    border: 2px solid var(--color-accent);
+    border-radius: 8px;
+    padding: 1rem;
+    min-width: 200px;
+    z-index: 10000;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip-name {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.tooltip-grade {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.tooltip-stats {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.tooltip-stats div {
+    padding: 0.2rem 0;
+}
+
+.tooltip-actions {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    border-top: 1px solid var(--color-bg-tertiary);
+    padding-top: 0.5rem;
+}
+
+.tooltip-actions .action {
+    padding: 0.15rem 0;
+}
+
+/* 도감 아이템 (미획득) */
+.item-slot.locked {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    background: var(--color-bg-secondary);
+}
+
+.item-slot.locked::after {
+    content: '🔒';
+    position: absolute;
+    font-size: 1.2rem;
+}
+
+.item-slot.has-item {
+    cursor: pointer;
+}
+
+.item-slot.has-item::after {
+    content: 'x' attr(data-count);
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+}
