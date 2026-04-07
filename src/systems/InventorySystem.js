@@ -3,6 +3,7 @@
  */
 import { gameEventBus, GAME_EVENTS } from '../core/EventBus.js';
 import { gameConfig } from '../config/GameConfig.js';
+import { gameDataLoader } from '../data-parser/DataLoader.js';
 import { gameLogger } from '../core/Logger.js';
 
 class InventorySystem {

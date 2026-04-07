@@ -1034,3 +1034,25 @@ body {
     font-size: 0.6rem;
     max-width: 100%;
 }
+
+/* 인벤토리 아이템 그리드 래퍼 */
+.inventory-items-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.rarity-row {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.rarity-row .item-slot {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+}

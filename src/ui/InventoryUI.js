@@ -102,14 +102,15 @@ class InventoryUI {
         if (!container) return;
         
         container.innerHTML = '';
+        container.className = 'inventory-items-wrapper';
         
-        // 모든 아이템 데이터 (도감)
+        // 모든 아이템 데이터 (도감) - CSV 에서 로드
         const allItems = gameDataLoader.get('items') || [];
         
         // 현재 탭의 아이템만 필터링
         const tabItems = allItems.filter(item => item.type === this.currentTab);
         
-        // 아이템을 베이스 이름별로 그룹화 (rusty_sword_1 → rusty_sword)
+        // 아이템을 베이스 이름별로 그룹화
         const groupedItems = this.groupItemsByBase(tabItems);
         
         // 그룹별로 행 생성 (1 행 = 5 희귀도)
