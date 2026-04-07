@@ -30,6 +30,8 @@ class InventorySystem {
         const { itemId, name, count = 1, grade, rarity, stats } = itemData;
         const itemIdStr = itemId.toString();
         
+        gameLogger.debug(`addItem: itemId=${itemIdStr}, name="${name}", grade=${grade}`);
+        
         // 발견 아이템으로 등록 (영구 해제)
         this.gameState.inventory.discoveredItems.add(itemIdStr);
         
@@ -38,17 +40,19 @@ class InventorySystem {
             const existing = this.gameState.inventory.items.get(itemIdStr);
             existing.count += count;
             
-            gameLogger.debug(`Item stack increased: ${name} x${existing.count}`);
+            gameLogger.debug(`Item stack increased: ${name} x${existing.count}, stored.name="${existing.name}"`);
         } else {
             // 새 아이템
-            this.gameState.inventory.items.set(itemIdStr, {
+            const itemToStore = {
                 itemId,
                 name,
                 count,
                 grade,
                 rarity,
                 stats
-            });
+            };
+            gameLogger.debug(`Storing new item:`, itemToStore);
+            this.gameState.inventory.items.set(itemIdStr, itemToStore);
             
             gameLogger.debug(`New item added: ${name}`);
         }
@@ -157,13 +161,14 @@ class InventorySystem {
         // 다음 등급 아이템 1 개 추가
         const newItemData = {
             itemId: nextGradeItem.id,
-            name: nextGradeItem.name,
+            name: nextGradeItem.name,  // CSV 에서 읽은 이름 (rusty_sword)
             count: 1,
             grade: nextGradeItem.grade,
             rarity: nextGradeItem.rarity,
             stats: nextGradeItem.stats_min,
             type: nextGradeItem.type
         };
+        gameLogger.debug(`Adding item: id=${newItemData.itemId}, name="${newItemData.name}", grade=${newItemData.grade}`);
         this.addItem(newItemData);
         gameLogger.debug(`Added new item: ${nextGradeItem.name} grade.${nextGradeItem.grade}`);
         
