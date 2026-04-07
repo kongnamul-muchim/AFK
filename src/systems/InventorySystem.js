@@ -74,12 +74,16 @@ class InventorySystem {
         
         const item = this.gameState.inventory.items.get(itemIdStr);
         
-        if (item.count > count) {
+        // 정확히 같은 수량일 때만 삭제 (count 가 0 이 되지 않도록)
+        if (item.count === count) {
+            this.gameState.inventory.items.delete(itemIdStr);
+            gameLogger.debug(`Removed all x ${item.name}`);
+        } else if (item.count > count) {
             item.count -= count;
             gameLogger.debug(`Removed ${count} x ${item.name}, remaining: ${item.count}`);
         } else {
-            this.gameState.inventory.items.delete(itemIdStr);
-            gameLogger.debug(`Removed all x ${item.name}`);
+            gameLogger.warn(`Not enough items: have ${item.count}, need ${count}`);
+            return false;
         }
         
         gameEventBus.emit(GAME_EVENTS.INVENTORY_ITEM_REMOVED, {
