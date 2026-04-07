@@ -118,7 +118,6 @@ class CombatSystem {
             gameEventBus.emit(GAME_EVENTS.STAGE_BOSS_ENTER);
         }
     }
-    }
 
     /**
      * 공격 루프 시작
