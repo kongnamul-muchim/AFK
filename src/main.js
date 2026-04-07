@@ -151,8 +151,8 @@ class Game {
             this.combatSystem = new CombatSystem(this.gameState);
             this.combatSystem.init();
 
-            // 렌더러 초기화
-            this.renderer = new GameRenderer(this.gameState);
+            // 렌더러 초기화 (combatSystem 전달)
+            this.renderer = new GameRenderer(this.gameState, this.combatSystem);
             this.renderer.init();
             
             this.updateLoadingProgress(90, '마지막 준비...');

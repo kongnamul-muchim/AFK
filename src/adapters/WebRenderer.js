@@ -7,8 +7,9 @@ import { gameLogger } from '../core/Logger.js';
 import { gameImageLoader } from '../core/ImageLoader.js';
 
 class GameRenderer {
-    constructor(gameState) {
+    constructor(gameState, combatSystem) {
         this.gameState = gameState;
+        this.combatSystem = combatSystem;
         this.canvas = null;
         this.ctx = null;
         this.width = 0;
@@ -137,33 +138,34 @@ class GameRenderer {
      */
     renderPlayer() {
         const x = this.width * 0.3;
-        const y = this.height - 100;
+        const y = this.height - 80;
         
         // 분할된 스프라이트 프레임 사용
         const frameKey = `player_${this.playerFrameIndex % 8}`;
         const sprite = gameImageLoader.get(frameKey);
         
         if (sprite) {
-            // 원본 이미지 크기 * 0.8 스케일
-            const scale = 0.8;
+            // 원본 이미지 크기 * 0.7 스케일
+            const scale = 0.7;
             const displayWidth = sprite.width * scale;
             const displayHeight = sprite.height * scale;
             this.ctx.drawImage(
                 sprite,
                 x - displayWidth/2, y - displayHeight, displayWidth, displayHeight
             );
+            
+            // HP 바 (캐릭터 위에)
+            const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
+            this.ctx.fillStyle = '#333';
+            this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth, 8);
+            this.ctx.fillStyle = '#ef4444';
+            this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth * hpPercent, 8);
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#4a9eff';
-            this.ctx.fillRect(x - 26, y - 51, 51, 51);
+            const size = 45;
+            this.ctx.fillRect(x - size/2, y - size, size, size);
         }
-        
-        // HP 바
-        const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
-        this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(x - 26, y - 10, 51, 6);
-        this.ctx.fillStyle = '#ef4444';
-        this.ctx.fillRect(x - 26, y - 10, 51 * hpPercent, 6);
     }
 
     /**
@@ -171,15 +173,15 @@ class GameRenderer {
      */
     renderMonster() {
         const x = this.width * 0.7;
-        const y = this.height - 100;
+        const y = this.height - 80;
         
         // 분할된 스프라이트 프레임 사용
         const frameKey = `monster_${this.monsterFrameIndex % 8}`;
         const sprite = gameImageLoader.get(frameKey);
         
         if (sprite) {
-            // 원본 이미지 크기 * 0.8 스케일
-            const scale = 0.8;
+            // 원본 이미지 크기 * 0.7 스케일
+            const scale = 0.7;
             const displayWidth = sprite.width * scale;
             const displayHeight = sprite.height * scale;
             
@@ -189,20 +191,21 @@ class GameRenderer {
             this.ctx.scale(-1, 1);
             this.ctx.drawImage(sprite, 0, 0, displayWidth, displayHeight);
             this.ctx.restore();
+            
+            // HP 바 (캐릭터 위에)
+            const monster = this.combatSystem?.currentMonster;
+            if (monster && monster.maxHp > 0) {
+                const hpPercent = monster.currentHp / monster.maxHp;
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth, 8);
+                this.ctx.fillStyle = '#ef4444';
+                this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth * hpPercent, 8);
+            }
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - 26, y - 51, 51, 51);
-        }
-        
-        // 몬스터 HP 바
-        const monster = this.combatSystem?.currentMonster;
-        if (monster && monster.maxHp > 0) {
-            const hpPercent = monster.currentHp / monster.maxHp;
-            this.ctx.fillStyle = '#333';
-            this.ctx.fillRect(x - 26, y - 10, 51, 6);
-            this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - 26, y - 10, 51 * hpPercent, 6);
+            const size = 45;
+            this.ctx.fillRect(x - size/2, y - size, size, size);
         }
     }
 
