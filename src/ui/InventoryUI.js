@@ -23,6 +23,17 @@ class InventoryUI {
         this.setupTabs();
         this.setupContextMenu();
         this.setupTooltip();
+        this.centerInventory();
+    }
+
+    /**
+     * 인벤토리 중앙 정렬
+     */
+    centerInventory() {
+        const modal = document.querySelector('.inventory-modal-content');
+        if (modal) {
+            modal.style.margin = '0 auto';
+        }
     }
 
     /**
