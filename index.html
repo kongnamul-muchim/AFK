@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="방치형 RPG - 탑 오르기">
+    <title>Idle RPG - Tower Climber</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 로딩 화면 -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <h1 class="loading-logo">Idle RPG</h1>
+            <div class="loading-progress">
+                <div class="loading-bar">
+                    <div class="loading-bar-fill" id="loading-bar-fill"></div>
+                </div>
+                <span class="loading-percent" id="loading-percent">0%</span>
+            </div>
+            <p class="loading-tip" id="loading-tip">로딩 중...</p>
+            <p class="loading-version">v1.0.0-prototype</p>
+            <button class="loading-retry" id="loading-retry" style="display: none;">재시도</button>
+        </div>
+    </div>
+
+    <!-- 게임 컨테이너 -->
+    <div id="game-container" class="game-container" style="display: none;">
+        <!-- HUD 상단 -->
+        <header class="hud-top">
+            <div class="player-info">
+                <span class="player-level" id="hud-level">Lv.1</span>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill" id="hud-hp-fill"></div>
+                </div>
+                <span class="hp-text" id="hud-hp-text">100/100</span>
+            </div>
+            <div class="stage-info">
+                <span class="stage-text" id="hud-stage">Stage 1</span>
+            </div>
+            <div class="gold-info">
+                <span class="gold-icon">💰</span>
+                <span class="gold-text" id="hud-gold">0</span>
+            </div>
+        </header>
+
+        <!-- 2D 게임 뷰 (Canvas) -->
+        <div class="game-view">
+            <canvas id="game-canvas"></canvas>
+            
+            <!-- 전투 로그 오버레이 -->
+            <div class="combat-log" id="combat-log"></div>
+        </div>
+
+        <!-- HUD 하단 -->
+        <footer class="hud-bottom">
+            <div class="exp-bar-container">
+                <div class="exp-bar-fill" id="hud-exp-fill"></div>
+            </div>
+            <div class="bottom-stats">
+                <span class="stat-text" id="hud-exp-text">Exp: 0/100</span>
+                <span class="stat-points" id="hud-stat-points">SP: 0</span>
+            </div>
+        </footer>
+
+        <!-- 메뉴 버튼들 -->
+        <div class="menu-buttons">
+            <button class="menu-btn" id="btn-inventory">인벤토리</button>
+            <button class="menu-btn" id="btn-stats">상태</button>
+            <button class="menu-btn" id="btn-settings">설정</button>
+        </div>
+    </div>
+
+    <!-- 인벤토리 모달 -->
+    <div id="inventory-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>인벤토리</h2>
+                <button class="modal-close" id="btn-close-inventory">&times;</button>
+            </div>
+            <div class="inventory-content">
+                <div class="items-grid" id="inventory-items"></div>
+                <div class="gold-display">
+                    <span>💰 골드:</span>
+                    <span id="inventory-gold">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>설정</h2>
+                <button class="modal-close" id="btn-close-settings">&times;</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <label for="sfx-volume">효과음</label>
+                    <input type="range" id="sfx-volume" min="0" max="100" value="80">
+                    <span id="sfx-value">80%</span>
+                </div>
+                <div class="setting-row">
+                    <label for="bgm-volume">BGM</label>
+                    <input type="range" id="bgm-volume" min="0" max="100" value="60">
+                    <span id="bgm-value">60%</span>
+                </div>
+                <div class="setting-row">
+                    <label for="vibration">진동</label>
+                    <input type="checkbox" id="vibration" checked>
+                </div>
+                <div class="setting-row">
+                    <label for="notifications">알림</label>
+                    <input type="checkbox" id="notifications" checked>
+                </div>
+                <div class="setting-row">
+                    <button class="data-btn" id="btn-export-data">데이터 내보내기</button>
+                    <button class="data-btn" id="btn-import-data">데이터 가져오기</button>
+                </div>
+                <div class="setting-row">
+                    <button class="data-btn danger" id="btn-reset-data">데이터 초기화</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상태창 모달 -->
+    <div id="stats-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>상태</h2>
+                <button class="modal-close" id="btn-close-stats">&times;</button>
+            </div>
+            <div class="stats-content">
+                <div class="stats-info">
+                    <p>레벨: <span id="stats-level">1</span></p>
+                    <p>경험치: <span id="stats-exp">0/100</span></p>
+                    <p>남은 스탯포인트: <span id="stats-points">0</span></p>
+                </div>
+                <div class="stat-allocation">
+                    <div class="stat-row">
+                        <span>힘 (공격력)</span>
+                        <span id="stat-str">5</span>
+                        <button class="stat-plus" data-stat="str">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>민첩 (크리티컬)</span>
+                        <span id="stat-agi">5</span>
+                        <button class="stat-plus" data-stat="agi">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>지력 (마나)</span>
+                        <span id="stat-int">5</span>
+                        <button class="stat-plus" data-stat="int">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>체력 (HP)</span>
+                        <span id="stat-vit">10</span>
+                        <button class="stat-plus" data-stat="vit">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 오프라인 보상 모달 -->
+    <div id="offline-reward-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>오프라인 보상</h2>
+            </div>
+            <div class="offline-content">
+                <p class="offline-time">접속하지 않은 시간: <span id="offline-duration">0 시간</span></p>
+                <div class="offline-rewards">
+                    <p>획득한 경험치: <span id="offline-exp">0</span></p>
+                    <p>획득한 골드: <span id="offline-gold">0</span></p>
+                </div>
+                <button class="confirm-btn" id="btn-claim-reward">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 튜토리얼 가이드 오버레이 -->
+    <div id="tutorial-overlay" class="tutorial-overlay" style="display: none;">
+        <div class="tutorial-guide" id="tutorial-guide">
+            <p class="tutorial-message" id="tutorial-message"></p>
+            <button class="tutorial-next" id="tutorial-next">다음</button>
+        </div>
+    </div>
+
+    <!--.hidden 파일 입력 (데이터 가져오기용) -->
+    <input type="file" id="file-import" accept=".json" style="display: none;">
+
+    <!-- 게임 스크립트 (모듈) -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

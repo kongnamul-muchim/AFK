@@ -1,0 +1,18 @@
+# items.csv - 아이템 데이터
+# id: 고유 ID, name: 이름, grade: 등급 (1-5), type: 타입, rarity: 희귀도, stats_min: 최소 스탯, stats_max: 최대 스탯, dropRate: 드롭 확률
+id,name,grade,type,rarity,stats_min,stats_max,dropRate
+1, rusty_sword,1,weapon,common,"{""str"":1}","{""str"":2}",0.3
+2, rusty_armor,1,armor,common,"{""vit"":2}","{""vit"":3}",0.3
+3, rusty_ring,1,accessory,common,"{""agi"":1}","{""agi"":2}",0.3
+4, iron_sword,2,weapon,common,"{""str"":3}","{""str"":5}",0.25
+5, iron_armor,2,armor,common,"{""vit"":4}","{""vit"":6}",0.25
+6, iron_ring,2,accessory,common,"{""agi"":3}","{""agi"":5}",0.25
+7, steel_sword,3,weapon,rare,"{""str"":6,""agi"":2}","{""str"":9,""agi"":4}",0.1
+8, steel_armor,3,armor,rare,"{""vit"":8,""str"":2}","{""vit"":12,""str"":4}",0.1
+9, steel_ring,3,accessory,rare,"{""agi"":6,""int"":2}","{""agi"":9,""int"":4}",0.1
+10, magic_sword,4,weapon,epic,"{""str"":10,""int"":5}","{""str"":15,""int"":8}",0.05
+11, magic_armor,4,armor,epic,"{""vit"":15,""int"":5}","{""vit"":22,""int"":8}",0.05
+12, magic_ring,4,accessory,epic,"{""agi"":10,""int"":5}","{""agi"":15,""int"":8}",0.05
+13, legendary_sword,5,weapon,legendary,"{""str"":20,""agi"":10,""vit"":10}","{""str"":30,""agi"":15,""vit"":15}",0.01
+14, legendary_armor,5,armor,legendary,"{""vit"":30,""str"":10,""agi"":5}","{""vit"":45,""str"":15,""agi"":8}",0.01
+15, legendary_ring,5,accessory,legendary,"{""agi"":20,""int"":10,""str"":5}","{""agi"":30,""int"":15,""str"":8}",0.01

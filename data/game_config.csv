@@ -1,0 +1,21 @@
+# game_config.csv - 게임 밸런스 설정
+# category: 카테고리, key: 키, value: 값, description: 설명
+category,key,value,description
+player,baseExp,100,레벨 1->2 필요 경험치
+player,expMultiplier,1.2,레벨당 경험치 증가율
+player,statPointsPerLevel,1,레벨업 시 획득 스탯포인트
+player,baseHp,100,기본 체력
+player,hpPerVit,10,체력당 HP
+combat,attackInterval,100,공격 속도 (ms)
+combat,monsterScalingMultiplier,1.1,몬스터 스탯 증가율
+combat,critChance,0.05,기본 크리티컬 확률
+combat,critDamage,1.5,크리티컬 데미지 배수
+combat,minDamage,1,최소 데미지
+inventory,synthesizeCount,5,합성 필요 개수
+inventory,commonDropRate,0.6,일반 아이템 드롭률
+inventory,rareDropRate,0.3,희귀 아이템 드롭률
+inventory,epicDropRate,0.09,영웅 아이템 드롭률
+inventory,legendaryDropRate,0.01,전설 아이템 드롭률
+offline,maxHours,24,오프라인 보상 최대 시간
+offline,expPerHour,100,시간당 경험치
+offline,goldPerHour,50,시간당 골드

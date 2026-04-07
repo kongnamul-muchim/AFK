@@ -1,0 +1,23 @@
+# monsters.csv - 몬스터 데이터
+# id: 고유 ID, name: 이름, stage: 스테이지, hp_base: 기본 체력, hp_scale: 체력 계수, atk_base: 기본 공격력, atk_scale: 공격력 계수, exp_reward: 경험치 보상, gold_reward: 골드 보상, isBoss: 보스 여부
+id,name,stage,hp_base,hp_scale,atk_base,atk_scale,exp_reward,gold_reward,isBoss
+1,slime,1,50,10,5,1,10,5,false
+2,goblin,1,70,12,8,1.5,15,8,false
+3,bat,2,80,15,10,2,20,10,false
+4,wolf,2,100,18,12,2.5,25,12,false
+5,skeleton,3,120,20,15,3,30,15,false
+6,orc,3,150,25,18,3.5,35,18,false
+7,ghost,4,180,30,22,4,40,22,false
+8,troll,4,220,35,26,4.5,45,26,false
+9,dark_knight,5,260,40,30,5,50,30,false
+10,goblin_king,10,800,100,80,20,300,150,true
+11,vampire,6,300,45,35,5.5,55,35,false
+12,lich,7,350,50,40,6,60,40,false
+13,demon,8,400,55,45,6.5,65,45,false
+14,dragon_whelp,9,450,60,50,7,70,50,false
+15,ancient_dragon,20,2000,200,200,50,1000,500,true
+16,dragon_knight,11,500,65,55,7.5,75,55,false
+17,phoenix,12,550,70,60,8,80,60,false
+18,hydra,13,600,75,65,8.5,85,65,false
+19,titan,14,650,80,70,9,90,70,false
+20,world_eater,30,5000,500,500,100,2500,1250,true

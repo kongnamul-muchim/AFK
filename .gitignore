@@ -1,0 +1,11 @@
+# Unity
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# OpenSpec (명세 파일은 포함, 변경사항은 제외)
+openspec/changes/

@@ -1,0 +1,23 @@
+# stages.csv - 스테이지 데이터
+# stageNumber: 스테이지 번호, monsterCount: 몬스터 수, bossStage: 보스 스테이지 여부, difficulty: 난이도 계수, rewards: 보상 배수
+stageNumber,monsterCount,bossStage,difficulty,rewards
+1,10,false,1.0,1.0
+2,10,false,1.1,1.1
+3,10,false,1.2,1.2
+4,10,false,1.3,1.3
+5,10,false,1.4,1.4
+6,10,false,1.5,1.5
+7,10,false,1.6,1.6
+8,10,false,1.7,1.7
+9,10,false,1.8,1.8
+10,1,true,2.0,2.5
+11,10,false,2.1,2.1
+12,10,false,2.2,2.2
+13,10,false,2.3,2.3
+14,10,false,2.4,2.4
+15,10,false,2.5,2.5
+16,10,false,2.6,2.6
+17,10,false,2.7,2.7
+18,10,false,2.8,2.8
+19,10,false,2.9,2.9
+20,1,true,3.5,4.0

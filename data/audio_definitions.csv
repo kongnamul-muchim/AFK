@@ -1,0 +1,14 @@
+# audio_definitions.csv - 사운드 정의
+# sound_id: 사운드 ID, file_name: 파일명, type: 타입 (sfx/bgm), volume_default: 기본 음량
+sound_id,file_name,type,volume_default
+attack,sfx_attack_001.wav,sfx,0.8
+levelup,sfx_levelup_001.wav,sfx,0.9
+getItem,sfx_getitem_001.wav,sfx,0.7
+synthesize,sfx_synthesize_001.wav,sfx,0.8
+bossWarning,sfx_boss_warning.wav,sfx,1.0
+bossDefeated,sfx_boss_defeated.wav,sfx,0.9
+playerHit,sfx_player_hit.wav,sfx,0.7
+monsterHit,sfx_monster_hit.wav,sfx,0.6
+main,bgm_main_001.mp3,bgm,0.6
+boss,bgm_boss_001.mp3,bgm,0.7
+victory,bgm_victory_001.mp3,bgm,0.7
