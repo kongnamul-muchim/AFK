@@ -143,9 +143,71 @@ class UIManager {
         this.statPlusButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const statType = btn.dataset.stat;
-                this.gameState.increaseStat(statType);
+                const success = this.gameState.increaseStat(statType);
+                
+                if (success) {
+                    // 성공 시 피드백
+                    this.showToast(`${statType.toUpperCase()} +1!`);
+                    this.updateStatsPanel();
+                    this.updateHUD();
+                } else {
+                    // 스탯포인트 부족
+                    this.showToast('스타츠 포인트가 부족합니다!');
+                }
             });
         });
+    }
+
+    /**
+     * 상태창 업데이트 (게임 루프에서 호출)
+     */
+    updateGameView() {
+        // 플레이어 상태 업데이트
+        this.updateHUD();
+        
+        // 스탯 패널 업데이트 (모달이 열려있을 때)
+        const statsModal = document.getElementById('stats-modal');
+        if (statsModal && statsModal.style.display !== 'none') {
+            this.updateStatsPanel();
+        }
+    }
+
+    /**
+     * 토스트 메시지 표시
+     * @param {string} message 
+     */
+    showToast(message) {
+        // 기존 토스트 제거
+        const existing = document.querySelector('.toast-message');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // 새 토스트 생성
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 9999;
+            animation: toastFade 1.5s ease-out forwards;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // 애니메이션 완료 후 제거
+        setTimeout(() => {
+            toast.remove();
+        }, 1500);
     }
 
     /**

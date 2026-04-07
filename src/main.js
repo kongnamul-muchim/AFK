@@ -297,6 +297,11 @@ class Game {
         // 플레이 시간 기록
         this.statsTracker.updatePlayTime(dt);
         
+        // UI 업데이트
+        if (this.uiManager) {
+            this.uiManager.updateGameView();
+        }
+        
         // 전투 시스템 업데이트 (자동 공격)
         if (!this.combatSystem.isAttacking) {
             this.combatSystem.startCombat();

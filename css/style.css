@@ -231,16 +231,7 @@ body {
 }
 
 .combat-log {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-    right: 4rem;
-    max-height: 100px;
-    overflow-y: auto;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column-reverse;
-    z-index: 100;
+    display: none !important;
 }
 
 .combat-log-entry {
@@ -258,8 +249,24 @@ body {
     border-left: 3px solid #4a9eff;
 }
 
-@keyframes fadeOut {
-    to { opacity: 0; }
+/* 토스트 메시지 */
+@keyframes toastFade {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
 }
 
 /* HUD 하단 */
