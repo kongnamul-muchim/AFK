@@ -41,6 +41,7 @@ class GameState {
         };
         this.inventory = {
             items: new Map(),  // itemId -> { count, grade, itemId }
+            discoveredItems: new Set(),  // 한 번이라도 획득한 itemId 집합 (영구 해제)
             gold: 0
         };
         this.settings = {

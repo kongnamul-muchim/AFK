@@ -187,11 +187,14 @@ class InventoryUI {
         slot.className = 'item-slot';
         slot.dataset.itemId = item.id;
         
-        // 보유 확인
+        // 보유 확인 (현재 개수)
         const owned = this.gameState.inventory.items.get(item.id.toString());
         
+        // 발견 확인 (영구 해제)
+        const discovered = this.gameState.inventory.discoveredItems.has(item.id.toString());
+        
         if (owned && owned.count > 0) {
-            // 획득한 아이템
+            // 현재 보유한 아이템
             slot.classList.add('has-item', item.rarity);
             slot.dataset.count = owned.count;
             slot.dataset.itemName = item.name;
@@ -213,6 +216,17 @@ class InventoryUI {
                 e.stopPropagation();
                 this.handleSynthesize(item.id);
             });
+        } else if (discovered) {
+            // 한 번 획득했지만 현재 개수 0 (도감 해제됨)
+            slot.classList.add('discovered', item.rarity);
+            slot.style.opacity = '0.5';
+            slot.innerHTML = `
+                <span class="item-name">${item.name}</span>
+                <span class="item-count">x0</span>
+            `;
+            
+            slot.addEventListener('mouseenter', (e) => this.showTooltip(item, e));
+            slot.addEventListener('mouseleave', () => this.hideTooltip());
         } else {
             // 미획득 아이템 (도감)
             slot.classList.add('locked');

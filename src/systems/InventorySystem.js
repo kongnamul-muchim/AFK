@@ -30,6 +30,9 @@ class InventorySystem {
         const { itemId, name, count = 1, grade, rarity, stats } = itemData;
         const itemIdStr = itemId.toString();
         
+        // 발견 아이템으로 등록 (영구 해제)
+        this.gameState.inventory.discoveredItems.add(itemIdStr);
+        
         if (this.gameState.inventory.items.has(itemIdStr)) {
             // 기존 아이템 - 카운트 증가
             const existing = this.gameState.inventory.items.get(itemIdStr);

@@ -1062,3 +1062,20 @@ body {
     min-width: 0;
     max-width: 100%;
 }
+
+/* 발견된 아이템 (count 0) */
+.item-slot.discovered {
+    opacity: 0.6;
+    filter: grayscale(50%);
+    border-style: dashed;
+}
+
+.item-slot.discovered::after {
+    content: 'x0';
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--color-text-secondary);
+}
