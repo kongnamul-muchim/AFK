@@ -298,7 +298,8 @@ class GameState {
             stage: { ...this.stage },
             inventory: {
                 items: Array.from(this.inventory.items.entries()),
-                gold: this.inventory.gold
+                gold: this.inventory.gold,
+                discoveredItems: Array.from(this.inventory.discoveredItems)  // 추가
             },
             settings: { ...this.settings },
             tutorial: { ...this.tutorial },
@@ -320,6 +321,10 @@ class GameState {
         if (data.inventory) {
             this.inventory.gold = data.inventory.gold;
             this.inventory.items = new Map(data.inventory.items || []);
+            // discoveredItems 복원
+            if (data.inventory.discoveredItems) {
+                this.inventory.discoveredItems = new Set(data.inventory.discoveredItems);
+            }
         }
         if (data.settings) Object.assign(this.settings, data.settings);
         if (data.tutorial) Object.assign(this.tutorial, data.tutorial);
