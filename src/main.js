@@ -7,6 +7,7 @@ import { GameState } from './core/GameState.js';
 import { StorageManager } from './core/StorageManager.js';
 import { gameLogger } from './core/Logger.js';
 import { gameDataLoader } from './data-parser/DataLoader.js';
+import { gameImageLoader } from './core/ImageLoader.js';
 import { LoadingScreen } from './ui/LoadingScreen.js';
 import { UIManager } from './ui/UIManager.js';
 import { AudioManager } from './audio/AudioManager.js';
@@ -62,7 +63,21 @@ class Game {
 
             // CSV 데이터 로드
             await gameDataLoader.loadAll();
-            this.updateLoadingProgress(50, '리소스 로드 중...');
+            this.updateLoadingProgress(50, '이미지 로드 중...');
+
+            // 이미지 로드 (폴더에 파일이 있으면 로드, 없으면 스킵)
+            try {
+                await gameImageLoader.loadAll({
+                    player: 'assets/images/characters/player_spritesheet.png',
+                    monster: 'assets/images/monsters/slime_spritesheet.png',
+                    background_normal: 'assets/images/backgrounds/background_normal.png',
+                    background_boss: 'assets/images/backgrounds/background_boss.png'
+                });
+            } catch (error) {
+                gameLogger.warn('Some images failed to load (using fallback graphics)');
+            }
+            
+            this.updateLoadingProgress(70, 'UI 초기화...');
 
             // 게임 상태 로드 또는 신규 생성
             const savedData = this.storageManager.load();
