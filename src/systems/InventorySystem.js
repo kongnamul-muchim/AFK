@@ -148,7 +148,8 @@ class InventorySystem {
 
     /**
      * 장비 합성 (5 개 → 다음 등급 1 개)
-     * grade 1-10: 단순 강화 시스템
+     * grade 1-15: 단순 강화 시스템
+     * 베이스 아이템 전환 지원 (rusty_sword → iron_sword → steel_sword)
      * @param {number|string} itemId 
      * @returns {Object|null} 합성된 아이템 정보 또는 null
      */
@@ -164,28 +165,21 @@ class InventorySystem {
         const item = this.gameState.inventory.items.get(itemIdStr);
         const nextGrade = item.grade + 1;
         
-        // 최대 등급 확인 (10: silver_ring mythic 등)
-        if (nextGrade > 10) {
+        // 다음 등급 아이템 찾기 (베이스 아이템 전환 지원)
+        const nextGradeItem = this.findNextGradeItem(item.name, item.type, nextGrade);
+        
+        if (!nextGradeItem) {
+            gameLogger.warn(`No next grade item found for "${item.name}" grade ${item.grade} → ${nextGrade}`);
+            return null;
+        }
+        
+        // 최대 등급 확인
+        if (nextGradeItem.grade > 15) {
             gameLogger.warn(`Item ${item.name} is already max grade`);
             return null;
         }
         
-        // 다음 등급 아이템 찾기 (같은 이름 + 다음 grade)
-        const items = gameDataLoader.get('items');
-        gameLogger.debug(`Looking for: name="${item.name}" grade=${nextGrade}`);
-        gameLogger.debug(`All items:`, items.slice(0, 5).map(i => `${i.name}(${i.grade})`));
-        
-        const nextGradeItem = items.find(i => {
-            const match = i.name === item.name && i.grade === nextGrade;
-            if (match) gameLogger.debug(`Found: ${i.name} grade ${i.grade}`);
-            return match;
-        });
-        
-        if (!nextGradeItem) {
-            gameLogger.warn(`No next grade item found for "${item.name}" grade ${nextGrade}`);
-            gameLogger.debug(`Searched ${items.length} items`);
-            return null;
-        }
+        gameLogger.debug(`Found next grade: ${nextGradeItem.name} grade ${nextGradeItem.grade}`);
         
         // 재료 아이템 5 개 제거 (문자열 키 사용!)
         const removed = this.removeItem(itemIdStr, this.synthesizeCount);
@@ -194,7 +188,7 @@ class InventorySystem {
         // 다음 등급 아이템 1 개 추가
         const newItemData = {
             itemId: nextGradeItem.id,
-            name: nextGradeItem.name,  // CSV 에서 읽은 이름 (rusty_sword)
+            name: nextGradeItem.name,
             count: 1,
             grade: nextGradeItem.grade,
             rarity: nextGradeItem.rarity,
@@ -220,6 +214,33 @@ class InventorySystem {
             name: nextGradeItem.name,
             grade: nextGradeItem.grade
         };
+    }
+
+    /**
+     * 다음 등급 아이템 찾기 (베이스 아이템 전환 지원)
+     * @param {string} currentName 
+     * @param {string} type 
+     * @param {number} nextGrade 
+     * @returns {Object|null}
+     */
+    findNextGradeItem(currentName, type, nextGrade) {
+        const items = gameDataLoader.get('items');
+        
+        // 1. 같은 이름 + 다음 등급 찾기
+        let nextItem = items.find(i => i.name === currentName && i.grade === nextGrade);
+        if (nextItem) {
+            gameLogger.debug(`Found same name: ${nextItem.name} grade ${nextItem.grade}`);
+            return nextItem;
+        }
+        
+        // 2. 같은 타입 + 다음 등급 찾기 (베이스 아이템 전환)
+        nextItem = items.find(i => i.type === type && i.grade === nextGrade);
+        if (nextItem) {
+            gameLogger.debug(`Found base transition: ${currentName} → ${nextItem.name} grade ${nextItem.grade}`);
+            return nextItem;
+        }
+        
+        return null;
     }
 
     /**
