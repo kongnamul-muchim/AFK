@@ -19,7 +19,7 @@
 
 #### Data
 - CSV 데이터 7 종 (items, monsters, stages, config, achievements, tutorial, audio)
-- 아이템 15 종 (5 등급 × 3 타입)
+- 아이템 45 종 (무기 15, 갑옷 10, 신발 10, 장신구 10)
 - 몬스터 20 종 (일반 18, 보스 2)
 - 스테이지 20 개 (보스 2 개)
 
@@ -32,10 +32,14 @@
 
 - GameState 통합 (플레이어, 인벤토리, 설정 일원화)
 - main.js 시스템 통합 (7 개 시스템 초기화)
+- 인벤토리 UI 대폭 개선 (탭, 스크롤, 도감)
 
 ### 📝 Fixed
 
--.tasks.md 체크박스 업데이트
+- tasks.md 체크박스 업데이트
+- discoveredItems 저장/로드 구현 (GameState toJSON/fromJSON)
+- 합성 시스템 타입별 최대 등급 (weapon:15, armor/boots/accessory:10)
+- 발견 아이템 항상 활성화 (count=0 이어도)
 
 ---
 
