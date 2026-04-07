@@ -137,9 +137,8 @@ class InventoryUI {
         const groups = {};
         
         items.forEach(item => {
-            // 이름에서 베이스 추출 (rusty_sword_1 → rusty_sword)
-            const parts = item.name.split('_');
-            const baseName = parts.slice(0, -1).join('_'); // 마지막 (등급번호) 제외
+            // name 으로 그룹화 (rusty_sword 는 그대로 사용)
+            const baseName = item.name;
             
             if (!groups[baseName]) {
                 groups[baseName] = [];

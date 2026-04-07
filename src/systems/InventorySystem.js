@@ -89,7 +89,7 @@ class InventorySystem {
      * @returns {boolean}
      */
     canSynthesize(itemId) {
-        const item = this.gameState.inventory.items.get(itemId);
+        const item = this.gameState.inventory.items.get(itemId.toString());
         if (!item) return false;
         
         return item.count >= this.synthesizeCount;
@@ -106,7 +106,7 @@ class InventorySystem {
             return null;
         }
         
-        const item = this.gameState.inventory.items.get(itemId);
+        const item = this.gameState.inventory.items.get(itemId.toString());
         const nextGrade = item.grade + 1;
         
         // 최대 등급 확인 (5: 신화)
