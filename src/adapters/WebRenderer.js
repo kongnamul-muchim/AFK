@@ -153,20 +153,18 @@ class GameRenderer {
                 sprite,
                 x - displayWidth/2, y - displayHeight, displayWidth, displayHeight
             );
-            
-            // HP 바 (고정 너비, 캐릭터 위에)
-            const hpBarWidth = 50;
-            const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
-            this.ctx.fillStyle = '#333';
-            this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth, 8);
-            this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth * hpPercent, 8);
-        } else {
-            // 폴백: 사각형
-            this.ctx.fillStyle = '#4a9eff';
-            const size = 45;
-            this.ctx.fillRect(x - size/2, y - size, size, size);
         }
+        
+        // HP 바 (고정 위치, 캐릭터 중심)
+        const hpBarWidth = 60;
+        const hpBarX = x - hpBarWidth / 2;
+        const hpBarY = y - 70; // 고정 Y 위치
+        const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
+        
+        this.ctx.fillStyle = '#333';
+        this.ctx.fillRect(hpBarX, hpBarY, hpBarWidth, 8);
+        this.ctx.fillStyle = '#ef4444';
+        this.ctx.fillRect(hpBarX, hpBarY, hpBarWidth * hpPercent, 8);
     }
 
     /**
@@ -192,22 +190,20 @@ class GameRenderer {
             this.ctx.scale(-1, 1);
             this.ctx.drawImage(sprite, 0, 0, displayWidth, displayHeight);
             this.ctx.restore();
-            
-            // HP 바 (고정 너비, 몬스터 위에 중심 맞춤)
-            const hpBarWidth = 50;
-            const monster = this.combatSystem?.currentMonster;
-            if (monster && monster.maxHp > 0) {
-                const hpPercent = monster.currentHp / monster.maxHp;
-                this.ctx.fillStyle = '#333';
-                this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth, 8);
-                this.ctx.fillStyle = '#ef4444';
-                this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth * hpPercent, 8);
-            }
-        } else {
-            // 폴백: 사각형
+        }
+        
+        // HP 바 (고정 위치, 몬스터 중심)
+        const hpBarWidth = 60;
+        const hpBarX = x - hpBarWidth / 2; // X 중심 맞춤
+        const hpBarY = y - 70; // 고정 Y 위치
+        const monster = this.combatSystem?.currentMonster;
+        
+        if (monster && monster.maxHp > 0) {
+            const hpPercent = monster.currentHp / monster.maxHp;
+            this.ctx.fillStyle = '#333';
+            this.ctx.fillRect(hpBarX, hpBarY, hpBarWidth, 8);
             this.ctx.fillStyle = '#ef4444';
-            const size = 35;
-            this.ctx.fillRect(x - size/2, y - size, size, size);
+            this.ctx.fillRect(hpBarX, hpBarY, hpBarWidth * hpPercent, 8);
         }
     }
 
