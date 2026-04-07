@@ -111,11 +111,11 @@ b74d9bc fix: 합성 아이템 이름 디버깅 강화
 ### 1. ~~discoveredItems 저장 구현~~ 🟢 완료!
 - [x] GameState.toJSON() 에 discoveredItems 추가
 - [x] GameState.fromJSON() 에 복원 로직 추가
-- [ ] StorageManager 테스트
-- [ ] 게임 재시작 후 유지 확인
+- [x] StorageManager 테스트
+- [x] 게임 재시작 후 유지 확인
 
-### 2. findNextGradeItem() 디버깅 🔴
-- [ ] 콘솔 로그 추가
+### 2. findNextGradeItem() 디버깅 🟡 진행중
+- [x] 콘솔 로그 추가 (상세)
 - [ ] iron_sword grade.9→10 테스트
 - [ ] armor/boots/accessory 합성 테스트
 - [ ] CSV 데이터 type 확인
