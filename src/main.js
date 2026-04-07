@@ -77,14 +77,14 @@ class Game {
                     player_5: 'assets/images/characters/player_spritesheet_5.png',
                     player_6: 'assets/images/characters/player_spritesheet_6.png',
                     player_7: 'assets/images/characters/player_spritesheet_7.png',
-                    // 몬스터 프레임 (8 개 - 순서 매핑)
+                    // 몬스터 프레임 (8 개 - 순차적)
                     monster_0: 'assets/images/monsters/slime_spritesheet_0.png',
                     monster_1: 'assets/images/monsters/slime_spritesheet_1.png',
-                    monster_2: 'assets/images/monsters/slime_spritesheet_11.png',
-                    monster_3: 'assets/images/monsters/slime_spritesheet_15.png',
+                    monster_2: 'assets/images/monsters/slime_spritesheet_2.png',
+                    monster_3: 'assets/images/monsters/slime_spritesheet_3.png',
                     monster_4: 'assets/images/monsters/slime_spritesheet_4.png',
                     monster_5: 'assets/images/monsters/slime_spritesheet_5.png',
-                    monster_6: 'assets/images/monsters/slime_spritesheet_2.png',
+                    monster_6: 'assets/images/monsters/slime_spritesheet_6.png',
                     monster_7: 'assets/images/monsters/slime_spritesheet_7.png',
                     // 배경
                     background_normal: 'assets/images/backgrounds/background_normal.png',
