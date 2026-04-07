@@ -154,12 +154,13 @@ class GameRenderer {
                 x - displayWidth/2, y - displayHeight, displayWidth, displayHeight
             );
             
-            // HP 바 (캐릭터 위에)
+            // HP 바 (고정 너비, 캐릭터 위에)
+            const hpBarWidth = 50;
             const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
             this.ctx.fillStyle = '#333';
-            this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth, 8);
+            this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth, 8);
             this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth * hpPercent, 8);
+            this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth * hpPercent, 8);
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#4a9eff';
@@ -180,8 +181,8 @@ class GameRenderer {
         const sprite = gameImageLoader.get(frameKey);
         
         if (sprite) {
-            // 원본 이미지 크기 * 0.7 스케일
-            const scale = 0.7;
+            // 원본 이미지 크기 * 0.5 스케일
+            const scale = 0.5;
             const displayWidth = sprite.width * scale;
             const displayHeight = sprite.height * scale;
             
@@ -192,19 +193,20 @@ class GameRenderer {
             this.ctx.drawImage(sprite, 0, 0, displayWidth, displayHeight);
             this.ctx.restore();
             
-            // HP 바 (캐릭터 위에)
+            // HP 바 (고정 너비, 몬스터 위에 중심 맞춤)
+            const hpBarWidth = 50;
             const monster = this.combatSystem?.currentMonster;
             if (monster && monster.maxHp > 0) {
                 const hpPercent = monster.currentHp / monster.maxHp;
                 this.ctx.fillStyle = '#333';
-                this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth, 8);
+                this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth, 8);
                 this.ctx.fillStyle = '#ef4444';
-                this.ctx.fillRect(x - displayWidth/2, y - displayHeight - 12, displayWidth * hpPercent, 8);
+                this.ctx.fillRect(x - hpBarWidth/2, y - displayHeight - 12, hpBarWidth * hpPercent, 8);
             }
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#ef4444';
-            const size = 45;
+            const size = 35;
             this.ctx.fillRect(x - size/2, y - size, size, size);
         }
     }
