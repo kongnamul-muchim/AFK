@@ -196,6 +196,7 @@ class GameRenderer {
             const displayWidth = sprite.width * scale;
             const displayHeight = sprite.height * scale;
             
+            // 좌우 반전 렌더링
             this.ctx.save();
             this.ctx.translate(x, y - displayHeight);
             this.ctx.scale(-1, 1);
@@ -203,9 +204,10 @@ class GameRenderer {
             this.ctx.restore();
         }
         
-        // HP 바 (몬스터 중심에 HP 바 중심 정렬)
+        // HP 바 (몬스터 시각적 중심에 HP 바 중심 정렬)
         const hpBarWidth = 60;
-        const hpBarX = x - hpBarWidth / 2; // HP 바 중심 = 몬스터 중심
+        // 좌우 반전되었으므로, 시각적 중심은 x - baseWidth/2
+        const hpBarX = (x - baseWidth / 2) - hpBarWidth / 2;
         const hpBarY = y - baseHeight - 12;
         const monster = this.combatSystem?.currentMonster;
         
