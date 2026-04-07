@@ -40,6 +40,8 @@
 - discoveredItems 저장/로드 구현 (GameState toJSON/fromJSON)
 - 합성 시스템 타입별 최대 등급 (weapon:15, armor/boots/accessory:10)
 - 발견 아이템 항상 활성화 (count=0 이어도)
+- findNextGradeItem() 상세 디버깅 로그 추가
+- **전 합성 경로 정상 확인** (45 개 아이템, 41 단계)
 
 ---
 
