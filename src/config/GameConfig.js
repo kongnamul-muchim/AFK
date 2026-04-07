@@ -3,7 +3,7 @@
  * DataLoader 를 통해 CSV 에서 값을 읽어옴
  */
 import { gameDataLoader } from '../data-parser/DataLoader.js';
-import { gameLogger } from './Logger.js';
+import { gameLogger } from '../core/Logger.js';
 
 class GameConfig {
     constructor() {
