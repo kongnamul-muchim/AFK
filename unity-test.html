@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity Bridge Test</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #4a9eff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #b0b0c0;
+            margin-bottom: 2rem;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            background: #252542;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #3d3d5c;
+        }
+        
+        .panel h2 {
+            color: #4a9eff;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .status-box {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #3d3d5c;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            color: #b0b0c0;
+        }
+        
+        .status-value {
+            font-weight: bold;
+        }
+        
+        .status-value.success { color: #4ade80; }
+        .status-value.error { color: #f87171; }
+        .status-value.warning { color: #fbbf24; }
+        
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            margin: 0.25rem;
+        }
+        
+        button:hover {
+            background: #2d7dd2;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        button.danger {
+            background: #f87171;
+        }
+        
+        button.danger:hover {
+            background: #dc2626;
+        }
+        
+        button.success {
+            background: #4ade80;
+            color: #000;
+        }
+        
+        button.success:hover {
+            background: #22c55e;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .log-container {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 1rem;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #3d3d5c;
+        }
+        
+        .log-entry.js { color: #4ade80; }
+        .log-entry.unity { color: #4a9eff; }
+        .log-entry.error { color: #f87171; }
+        .log-entry.system { color: #fbbf24; }
+        
+        .log-time {
+            color: #666;
+            margin-right: 0.5rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #b0b0c0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: #0f0f1a;
+            border: 1px solid #3d3d5c;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .game-state-display {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .connection-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .connection-indicator.connected {
+            background: #4ade80;
+            box-shadow: 0 0 10px #4ade80;
+        }
+        
+        .connection-indicator.disconnected {
+            background: #f87171;
+        }
+        
+        .test-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #3d3d5c;
+        }
+        
+        code {
+            background: #0f0f1a;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 Unity Bridge Test</h1>
+    <p class="subtitle">Unity 와 JavaScript 간 통신 인터페이스 테스트</p>
+    
+    <div class="container">
+        <!-- Left Panel: Controls -->
+        <div class="panel">
+            <h2>📊 Connection Status</h2>
+            <div class="status-box">
+                <div class="status-item">
+                    <span class="status-label">
+                        <span class="connection-indicator disconnected" id="connection-indicator"></span>
+                        Unity Connection
+                    </span>
+                    <span class="status-value" id="connection-status">Disconnected</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Bridge Version</span>
+                    <span class="status-value">1.0.0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Message Queue</span>
+                    <span class="status-value" id="queue-count">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Messages Sent</span>
+                    <span class="status-value" id="messages-sent">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Messages Received</span>
+                    <span class="status-value" id="messages-received">0</span>
+                </div>
+            </div>
+            
+            <h2>🎮 Game Control</h2>
+            <div class="button-group">
+                <button onclick="testConnection()">Test Connection</button>
+                <button onclick="sendGameState()" class="success">Send Game State</button>
+                <button onclick="pauseGame()">Pause</button>
+                <button onclick="resumeGame()" class="success">Resume</button>
+                <button onclick="saveGame()">Save</button>
+                <button onclick="loadGame()">Load</button>
+            </div>
+            
+            <h2>⚔️ Combat Test</h2>
+            <div class="button-group">
+                <button onclick="simulateMonsterKill()">Monster Kill</button>
+                <button onclick="simulatePlayerLevelUp()">Level Up</button>
+                <button onclick="simulateItemDrop()">Item Drop</button>
+                <button onclick="simulateBossEncounter()">Boss Encounter</button>
+            </div>
+            
+            <h2>🎒 Inventory Test</h2>
+            <div class="input-group">
+                <label>Stat Type</label>
+                <select id="stat-type">
+                    <option value="str">Strength (STR)</option>
+                    <option value="agi">Agility (AGI)</option>
+                    <option value="int">Intelligence (INT)</option>
+                    <option value="vit">Vitality (VIT)</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button onclick="useStatPoint()">Use Stat Point</button>
+                <button onclick="synthesizeItem()">Synthesize Item</button>
+            </div>
+            
+            <h2>⚙️ Settings Test</h2>
+            <div class="input-group">
+                <label>SFX Volume (0-1)</label>
+                <input type="range" id="sfx-volume" min="0" max="1" step="0.1" value="0.8" oninput="updateVolumeDisplay()">
+                <span id="sfx-value">0.8</span>
+            </div>
+            <div class="input-group">
+                <label>BGM Volume (0-1)</label>
+                <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.6" oninput="updateVolumeDisplay()">
+                <span id="bgm-value">0.6</span>
+            </div>
+            <div class="button-group">
+                <button onclick="sendSettings()">Send Settings</button>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Logs & State -->
+        <div class="panel">
+            <h2>📋 Message Log</h2>
+            <div class="log-container" id="log-container">
+                <div class="log-entry system">
+                    <span class="log-time">[System]</span>
+                    Bridge initialized. Waiting for Unity connection...
+                </div>
+            </div>
+            <div class="button-group" style="margin-top: 1rem;">
+                <button onclick="clearLog()">Clear Log</button>
+                <button onclick="exportLog()">Export Log</button>
+            </div>
+            
+            <h2 class="test-section">🎮 Game State Preview</h2>
+            <div class="game-state-display" id="game-state-display">
+                No game state available. Load a game or start testing.
+            </div>
+            
+            <h2>📖 Usage Guide</h2>
+            <div style="font-size: 0.9rem; color: #b0b0c0;">
+                <p><strong>1. Connection Test:</strong> Click "Test Connection" to verify bridge is working</p>
+                <p><strong>2. Simulate Events:</strong> Use combat/inventory buttons to simulate game events</p>
+                <p><strong>3. Monitor Logs:</strong> Watch message log for JS ↔ Unity communication</p>
+                <p><strong>4. Unity Integration:</strong> When connected to Unity, messages will be sent via SendMessage()</p>
+                <p style="margin-top: 1rem; color: #4a9eff;">
+                    <strong>Note:</strong> This test page simulates Unity communication. 
+                    Actual Unity integration requires WebGL build with UnityBridge.cs
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { UnityBridge } from './src/adapters/UnityBridge.js';
+        
+        // Global bridge instance
+        let bridge = null;
+        let messagesSent = 0;
+        let messagesReceived = 0;
+        
+        // Mock game object for testing
+        const mockGame = {
+            gameState: {
+                player: {
+                    level: 1,
+                    exp: 0,
+                    maxExp: 100,
+                    currentHp: 100,
+                    maxHp: 100,
+                    stats: { str: 5, agi: 5, int: 5, vit: 10 },
+                    statPoints: 0
+                },
+                stage: { current: 1, max: 1, kills: 0 },
+                inventory: { gold: 0, items: new Map() },
+                settings: { soundVolume: 0.8, musicVolume: 0.6 }
+            },
+            inventorySystem: {
+                synthesize: (itemId) => ({ id: itemId + 1, name: 'Upgraded Item', grade: 2 })
+            },
+            storageManager: {
+                save: (data) => {
+                    localStorage.setItem('test_save', JSON.stringify(data));
+                    return true;
+                },
+                load: () => JSON.parse(localStorage.getItem('test_save') || 'null')
+            },
+            audioManager: {
+                playSFX: (id) => log(`Audio: Playing SFX ${id}`, 'js'),
+                playBGM: (id) => log(`Audio: Playing BGM ${id}`, 'js')
+            },
+            pause: () => log('Game paused', 'system'),
+            resume: () => log('Game resumed', 'system')
+        };
+        
+        // Initialize bridge
+        function initBridge() {
+            bridge = new UnityBridge(mockGame);
+            bridge.setupEventListeners();
+            log('UnityBridge initialized', 'system');
+            updateConnectionStatus();
+        }
+        
+        // Update connection status display
+        function updateConnectionStatus() {
+            const indicator = document.getElementById('connection-indicator');
+            const status = document.getElementById('connection-status');
+            const queueCount = document.getElementById('queue-count');
+            
+            if (bridge?.isUnityConnected) {
+                indicator.className = 'connection-indicator connected';
+                status.textContent = 'Connected';
+                status.className = 'status-value success';
+            } else {
+                indicator.className = 'connection-indicator disconnected';
+                status.textContent = 'Disconnected';
+                status.className = 'status-value error';
+            }
+            
+            queueCount.textContent = bridge?.messageQueue?.length || 0;
+        }
+        
+        // Log function
+        function log(message, type = 'js') {
+            const container = document.getElementById('log-container');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+            
+            if (type === 'unity') messagesReceived++;
+            if (type === 'js') messagesSent++;
+            
+            document.getElementById('messages-sent').textContent = messagesSent;
+            document.getElementById('messages-received').textContent = messagesReceived;
+        }
+        
+        // Expose functions to window for button onclick handlers
+        window.testConnection = () => {
+            if (bridge) {
+                bridge.testConnection();
+                log('Connection test sent', 'js');
+                setTimeout(() => {
+                    log('Connection test acknowledged (simulated)', 'unity');
+                    updateConnectionStatus();
+                }, 100);
+            }
+        };
+        
+        window.sendGameState = () => {
+            if (bridge) {
+                bridge.sendGameStateToUnity();
+                log('Game state sent to Unity', 'js');
+                updateGameStateDisplay();
+            }
+        };
+        
+        window.pauseGame = () => {
+            if (bridge) {
+                bridge.handlePause();
+                log('Pause command sent', 'js');
+            }
+        };
+        
+        window.resumeGame = () => {
+            if (bridge) {
+                bridge.handleResume();
+                log('Resume command sent', 'js');
+            }
+        };
+        
+        window.saveGame = () => {
+            if (bridge) {
+                bridge.handleSave();
+                log('Save command sent', 'js');
+            }
+        };
+        
+        window.loadGame = () => {
+            if (bridge) {
+                bridge.handleLoad();
+                log('Load command sent', 'js');
+            }
+        };
+        
+        window.simulateMonsterKill = () => {
+            mockGame.gameState.stage.kills++;
+            mockGame.gameState.inventory.gold += 5;
+            log(`Monster killed! +5 Gold (Total: ${mockGame.gameState.inventory.gold})`, 'system');
+            updateGameStateDisplay();
+        };
+        
+        window.simulatePlayerLevelUp = () => {
+            mockGame.gameState.player.level++;
+            mockGame.gameState.player.statPoints++;
+            mockGame.gameState.player.maxExp = Math.floor(mockGame.gameState.player.maxExp * 1.2);
+            log(`Level up! Now Lv.${mockGame.gameState.player.level}, SP: ${mockGame.gameState.player.statPoints}`, 'system');
+            updateGameStateDisplay();
+        };
+        
+        window.simulateItemDrop = () => {
+            const rarities = ['common', 'rare', 'epic', 'legendary'];
+            const rarity = rarities[Math.floor(Math.random() * rarities.length)];
+            mockGame.gameState.inventory.items.set(Date.now(), {
+                name: `${rarity} Sword`,
+                rarity,
+                count: 1
+            });
+            log(`Item dropped: ${rarity} Sword`, 'js');
+            updateGameStateDisplay();
+        };
+        
+        window.simulateBossEncounter = () => {
+            log('Boss encounter started!', 'system');
+            if (bridge) {
+                bridge.sendToUnity('OnBossEncounter', JSON.stringify({
+                    stage: mockGame.gameState.stage.current,
+                    bossName: 'Goblin King'
+                }));
+            }
+        };
+        
+        window.useStatPoint = () => {
+            const statType = document.getElementById('stat-type').value;
+            if (bridge) {
+                bridge.handleStatPointUsed(statType);
+                log(`Stat point used: ${statType}`, 'js');
+            }
+        };
+        
+        window.synthesizeItem = () => {
+            if (bridge) {
+                bridge.handleItemSynthesized(1);
+                log('Item synthesis requested', 'js');
+            }
+        };
+        
+        window.updateVolumeDisplay = () => {
+            document.getElementById('sfx-value').textContent = document.getElementById('sfx-volume').value;
+            document.getElementById('bgm-value').textContent = document.getElementById('bgm-volume').value;
+        };
+        
+        window.sendSettings = () => {
+            const settings = {
+                soundVolume: parseFloat(document.getElementById('sfx-volume').value),
+                musicVolume: parseFloat(document.getElementById('bgm-volume').value)
+            };
+            if (bridge) {
+                bridge.handleSettingsChanged(settings);
+                log(`Settings sent: SFX=${settings.soundVolume}, BGM=${settings.musicVolume}`, 'js');
+            }
+        };
+        
+        window.clearLog = () => {
+            document.getElementById('log-container').innerHTML = '';
+            messagesSent = 0;
+            messagesReceived = 0;
+            log('Log cleared', 'system');
+        };
+        
+        window.exportLog = () => {
+            const logs = document.getElementById('log-container').innerText;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `unity_bridge_log_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            log('Log exported', 'system');
+        };
+        
+        function updateGameStateDisplay() {
+            const display = document.getElementById('game-state-display');
+            const state = {
+                player: mockGame.gameState.player,
+                stage: mockGame.gameState.stage,
+                inventory: {
+                    gold: mockGame.gameState.inventory.gold,
+                    itemCount: mockGame.gameState.inventory.items.size
+                }
+            };
+            display.textContent = JSON.stringify(state, null, 2);
+        }
+        
+        // Initialize on load
+        initBridge();
+        updateGameStateDisplay();
+    </script>
+</body>
+</html>
