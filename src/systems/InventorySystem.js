@@ -241,21 +241,48 @@ class InventorySystem {
     findNextGradeItem(currentName, type, nextGrade) {
         const items = gameDataLoader.get('items');
         
+        // 디버깅 로그
+        gameLogger.debug(`[findNextGradeItem] currentName="${currentName}", type="${type}", nextGrade=${nextGrade}`);
+        gameLogger.debug(`[findNextGradeItem] Total items in CSV: ${items.length}`);
+        
         // 1. 같은 이름 + 다음 등급 찾기
-        let nextItem = items.find(i => i.name === currentName && i.grade === nextGrade);
-        if (nextItem) {
-            gameLogger.debug(`Found same name: ${nextItem.name} grade ${nextItem.grade}`);
-            return nextItem;
+        const sameName = items.find(i => {
+            const nameMatch = i.name === currentName;
+            const gradeMatch = i.grade === nextGrade;
+            if (nameMatch && gradeMatch) {
+                gameLogger.debug(`[findNextGradeItem] Found same name: ${i.name} grade ${i.grade} (id:${i.id})`);
+            }
+            return nameMatch && gradeMatch;
+        });
+        
+        if (sameName) {
+            gameLogger.debug(`[findNextGradeItem] Returning same name item: ${sameName.name}`);
+            return sameName;
         }
+        
+        gameLogger.debug(`[findNextGradeItem] No same name found, searching by type...`);
         
         // 2. 같은 타입 + 다음 등급 찾기 (베이스 아이템 전환)
-        nextItem = items.find(i => i.type === type && i.grade === nextGrade);
-        if (nextItem) {
-            gameLogger.debug(`Found base transition: ${currentName} → ${nextItem.name} grade ${nextItem.grade}`);
-            return nextItem;
+        const byType = items.find(i => {
+            const typeMatch = i.type === type;
+            const gradeMatch = i.grade === nextGrade;
+            if (typeMatch && gradeMatch) {
+                gameLogger.debug(`[findNextGradeItem] Found type match: ${i.name} grade ${i.grade} (id:${i.id})`);
+            }
+            return typeMatch && gradeMatch;
+        });
+        
+        if (!byType) {
+            // 찾기 실패 - 자세한 정보 로그
+            const availableGrades = items
+                .filter(i => i.type === type)
+                .map(i => `${i.name}(g.${i.grade})`)
+                .join(', ');
+            gameLogger.warn(`[findNextGradeItem] No item found! type="${type}", grade=${nextGrade}`);
+            gameLogger.warn(`[findNextGradeItem] Available ${type} items: ${availableGrades}`);
         }
         
-        return null;
+        return byType;
     }
 
     /**
