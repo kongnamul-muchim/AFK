@@ -144,8 +144,14 @@ class GameRenderer {
         const frameKey = `player_${this.playerFrameIndex % 8}`;
         const sprite = gameImageLoader.get(frameKey);
         
+        // HP 바 기준 (idle 0 번 프레임 크기)
+        const baseSprite = gameImageLoader.get('player_0');
+        const baseScale = 0.7;
+        const baseWidth = baseSprite ? baseSprite.width * baseScale : 50;
+        const baseHeight = baseSprite ? baseSprite.height * baseScale : 70;
+        
         if (sprite) {
-            // 원본 이미지 크기 * 0.7 스케일
+            // 현재 프레임 렌더링
             const scale = 0.7;
             const displayWidth = sprite.width * scale;
             const displayHeight = sprite.height * scale;
@@ -155,10 +161,10 @@ class GameRenderer {
             );
         }
         
-        // HP 바 (고정 위치, 캐릭터 중심)
+        // HP 바 (idle 0 기준 위치)
         const hpBarWidth = 60;
         const hpBarX = x - hpBarWidth / 2;
-        const hpBarY = y - 70; // 고정 Y 위치
+        const hpBarY = y - baseHeight - 12;
         const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
         
         this.ctx.fillStyle = '#333';
@@ -178,13 +184,18 @@ class GameRenderer {
         const frameKey = `monster_${this.monsterFrameIndex % 8}`;
         const sprite = gameImageLoader.get(frameKey);
         
+        // HP 바 기준 (idle 0 번 프레임 크기)
+        const baseSprite = gameImageLoader.get('monster_0');
+        const baseScale = 0.5;
+        const baseWidth = baseSprite ? baseSprite.width * baseScale : 50;
+        const baseHeight = baseSprite ? baseSprite.height * baseScale : 70;
+        
         if (sprite) {
-            // 원본 이미지 크기 * 0.5 스케일
+            // 현재 프레임 렌더링 (왼쪽 바라봄)
             const scale = 0.5;
             const displayWidth = sprite.width * scale;
             const displayHeight = sprite.height * scale;
             
-            // 몬스터는 왼쪽을 바라보게 (좌우 반전)
             this.ctx.save();
             this.ctx.translate(x, y - displayHeight);
             this.ctx.scale(-1, 1);
@@ -192,10 +203,10 @@ class GameRenderer {
             this.ctx.restore();
         }
         
-        // HP 바 (고정 위치, 몬스터 중심)
+        // HP 바 (몬스터 왼쪽 끝 기준 - 플레이어를 향함)
         const hpBarWidth = 60;
-        const hpBarX = x - hpBarWidth / 2; // X 중심 맞춤
-        const hpBarY = y - 70; // 고정 Y 위치
+        const hpBarX = x - baseWidth / 2; // 왼쪽 끝 중심
+        const hpBarY = y - baseHeight - 12;
         const monster = this.combatSystem?.currentMonster;
         
         if (monster && monster.maxHp > 0) {
