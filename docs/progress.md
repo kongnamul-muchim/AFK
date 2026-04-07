@@ -60,7 +60,7 @@
 ### 문제 3: discoveredItems 저장 안 됨
 **증상:** 게임 재시작 시 초기화  
 **원인:** GameState.toJSON() 에 직렬화 누락  
-**상태:** 🔴 미해결
+**상태:** 🟢 **해결 완료** (커밋 44b8d92)
 
 ---
 
@@ -108,9 +108,9 @@ b74d9bc fix: 합성 아이템 이름 디버깅 강화
 
 ## 🎯 다음 작업 (우선순위)
 
-### 1. discoveredItems 저장 구현 🔴
-- [ ] GameState.toJSON() 에 discoveredItems 추가
-- [ ] GameState.fromJSON() 에 복원 로직 추가
+### 1. ~~discoveredItems 저장 구현~~ 🟢 완료!
+- [x] GameState.toJSON() 에 discoveredItems 추가
+- [x] GameState.fromJSON() 에 복원 로직 추가
 - [ ] StorageManager 테스트
 - [ ] 게임 재시작 후 유지 확인
 
