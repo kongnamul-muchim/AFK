@@ -135,13 +135,18 @@ class InventorySystem {
         
         // 다음 등급 아이템 찾기 (같은 이름 + 다음 grade)
         const items = gameDataLoader.get('items');
-        const nextGradeItem = items.find(i => 
-            i.name === item.name &&  // 같은 이름
-            i.grade === nextGrade    // 다음 등급
-        );
+        gameLogger.debug(`Looking for: name="${item.name}" grade=${nextGrade}`);
+        gameLogger.debug(`All items:`, items.slice(0, 5).map(i => `${i.name}(${i.grade})`));
+        
+        const nextGradeItem = items.find(i => {
+            const match = i.name === item.name && i.grade === nextGrade;
+            if (match) gameLogger.debug(`Found: ${i.name} grade ${i.grade}`);
+            return match;
+        });
         
         if (!nextGradeItem) {
-            gameLogger.warn(`No next grade item found for ${item.name} grade ${nextGrade}`);
+            gameLogger.warn(`No next grade item found for "${item.name}" grade ${nextGrade}`);
+            gameLogger.debug(`Searched ${items.length} items`);
             return null;
         }
         
