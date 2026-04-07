@@ -2,7 +2,7 @@
  * InventorySystem - 인벤토리 및 장비 합성 시스템
  */
 import { gameEventBus, GAME_EVENTS } from '../core/EventBus.js';
-import { gameDataLoader } from '../data-parser/DataLoader.js';
+import { gameConfig } from '../config/GameConfig.js';
 import { gameLogger } from '../core/Logger.js';
 
 class InventorySystem {
@@ -11,14 +11,13 @@ class InventorySystem {
      */
     constructor(gameState) {
         this.gameState = gameState;
-        this.synthesizeCount = 5;
+        this.synthesizeCount = gameConfig.inventory.synthesizeCount;
     }
 
     /**
      * 초기화
      */
     init() {
-        this.synthesizeCount = gameDataLoader.getConfigNumber('inventory', 'synthesizeCount', 5);
         gameLogger.debug('InventorySystem initialized');
     }
 

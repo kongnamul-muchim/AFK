@@ -2,7 +2,7 @@
  * OfflineRewards - 오프라인 보상 시스템
  */
 import { gameEventBus, GAME_EVENTS } from '../core/EventBus.js';
-import { gameDataLoader } from '../data-parser/DataLoader.js';
+import { gameConfig } from '../config/GameConfig.js';
 import { gameLogger } from '../core/Logger.js';
 
 class OfflineRewards {
@@ -37,9 +37,9 @@ class OfflineRewards {
      * @returns {{exp: number, gold: number, hours: number}}
      */
     calculateReward(seconds) {
-        const maxHours = gameDataLoader.getConfigNumber('offline', 'maxHours', 24);
-        const expPerHour = gameDataLoader.getConfigNumber('offline', 'expPerHour', 100);
-        const goldPerHour = gameDataLoader.getConfigNumber('offline', 'goldPerHour', 50);
+        const maxHours = gameConfig.offline.maxHours;
+        const expPerHour = gameConfig.offline.expPerHour;
+        const goldPerHour = gameConfig.offline.goldPerHour;
         
         // 시간으로 변환 (최대 24 시간)
         const hours = Math.min(seconds / 3600, maxHours);

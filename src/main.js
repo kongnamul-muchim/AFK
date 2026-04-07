@@ -8,6 +8,7 @@ import { StorageManager } from './core/StorageManager.js';
 import { gameLogger } from './core/Logger.js';
 import { gameDataLoader } from './data-parser/DataLoader.js';
 import { gameImageLoader } from './core/ImageLoader.js';
+import { gameConfig } from './config/GameConfig.js';
 import { LoadingScreen } from './ui/LoadingScreen.js';
 import { UIManager } from './ui/UIManager.js';
 import { AudioManager } from './audio/AudioManager.js';
@@ -64,6 +65,9 @@ class Game {
             // CSV 데이터 로드
             await gameDataLoader.loadAll();
             this.updateLoadingProgress(50, '이미지 로드 중...');
+
+            // GameConfig 초기화 (CSV 기반 설정)
+            gameConfig.init();
 
             // 이미지 로드 (분할된 스프라이트 + 배경)
             try {

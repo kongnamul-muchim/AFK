@@ -3,7 +3,7 @@
  * Unity 독립적인 순수 게임 로직
  */
 import { gameEventBus, GAME_EVENTS } from '../core/EventBus.js';
-import { gameDataLoader } from '../data-parser/DataLoader.js';
+import { gameConfig } from '../config/GameConfig.js';
 import { gameLogger } from '../core/Logger.js';
 
 class CombatSystem {
@@ -23,7 +23,7 @@ class CombatSystem {
      */
     init() {
         // 공격 인터벌 설정 (Config 에서 읽음)
-        this.attackInterval = gameDataLoader.getConfigNumber('combat', 'attackInterval', 100);
+        this.attackInterval = gameConfig.combat.attackInterval;
         
         gameLogger.debug('CombatSystem initialized');
     }
@@ -95,7 +95,7 @@ class CombatSystem {
         }
         
         // 몬스터 스탯 계산 (스테이지 기반 스케일링)
-        const scalingMultiplier = gameDataLoader.getConfigNumber('combat', 'monsterScalingMultiplier', 1.1);
+        const scalingMultiplier = gameConfig.combat.monsterScalingMultiplier;
         const stageMultiplier = Math.pow(scalingMultiplier, stage - 1);
         
         this.currentMonster = {
@@ -146,7 +146,7 @@ class CombatSystem {
         const critMultiplier = isCrit ? player.derivedStats.critDamage : 1;
         
         // 데미지 계산 (공격력 - 방어력, 최소 1)
-        const minDamage = gameDataLoader.getConfigNumber('combat', 'minDamage', 1);
+        const minDamage = gameConfig.combat.minDamage;
         let damage = Math.max(minDamage, player.derivedStats.attack - 5); // 몬스터 방어력 5 고정
         damage = Math.floor(damage * critMultiplier);
         
