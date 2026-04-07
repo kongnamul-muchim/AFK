@@ -190,11 +190,13 @@ class InventoryUI {
         // 보유 확인 (현재 개수)
         const owned = this.gameState.inventory.items.get(item.id.toString());
         
-        // 발견 확인 (영구 해제)
+        // 발견 확인 (영구 해제) - discoveredItems 에 있으면 항상 활성화
         const discovered = this.gameState.inventory.discoveredItems.has(item.id.toString());
         
+        gameLogger.debug(`[createItemSlot] ${item.name}: owned=${owned ? owned.count : 0}, discovered=${discovered}`);
+        
         if (owned && owned.count > 0) {
-            // 현재 보유한 아이템
+            // 현재 보유한 아이템 - 활성화
             slot.classList.add('has-item', item.rarity);
             slot.dataset.count = owned.count;
             slot.dataset.itemName = item.name;
@@ -227,7 +229,7 @@ class InventoryUI {
             slot.addEventListener('mouseenter', (e) => this.showTooltip(item, e));
             slot.addEventListener('mouseleave', () => this.hideTooltip());
         } else {
-            // 미획득 아이템 (도감)
+            // 미획득 아이템 (도감) - 잠금
             slot.classList.add('locked');
             slot.innerHTML = `<span class="item-name">${item.name}</span>`;
         }

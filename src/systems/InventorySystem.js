@@ -150,13 +150,20 @@ class InventorySystem {
      * 타입별 최대 등급
      */
     getMaxGradeByType(type) {
-        const maxGrades = {
-            'weapon': 15,      // steel_sword (1-15)
-            'armor': 10,       // iron_armor (1-10)
-            'boots': 10,       // iron_boots (1-10)
-            'accessory': 10    // silver_ring (1-10)
-        };
-        return maxGrades[type] || 10;
+        // CSV 데이터에서 실제 최대 grade 찾기
+        const items = gameDataLoader.get('items');
+        if (!items) return 10;
+        
+        // 해당 타입의 아이템들 중 최대 grade 반환
+        const typeItems = items.filter(i => i.type === type);
+        if (typeItems.length === 0) {
+            gameLogger.warn(`[getMaxGradeByType] No items found for type: ${type}`);
+            return 10; // 기본값
+        }
+        
+        const maxGrade = Math.max(...typeItems.map(i => i.grade));
+        gameLogger.debug(`[getMaxGradeByType] type=${type}, maxGrade=${maxGrade}`);
+        return maxGrade;
     }
 
     /**
@@ -208,11 +215,11 @@ class InventorySystem {
             grade: nextGradeItem.grade,
             rarity: nextGradeItem.rarity,
             stats: nextGradeItem.stats_min,
-            type: nextGradeItem.type
+            type: nextGradeItem.type  // CSV 에서 읽은 정확한 타입
         };
-        gameLogger.debug(`Adding item: id=${newItemData.itemId}, name="${newItemData.name}", grade=${newItemData.grade}`);
+        gameLogger.debug(`[addItem] id=${newItemData.itemId}, name="${newItemData.name}", type="${newItemData.type}", grade=${newItemData.grade}`);
         this.addItem(newItemData);
-        gameLogger.debug(`Added new item: ${nextGradeItem.name} grade.${nextGradeItem.grade}`);
+        gameLogger.debug(`Added new item: ${nextGradeItem.name} grade.${nextGradeItem.grade} type.${nextGradeItem.type}`);
         
         // 이벤트
         gameEventBus.emit(GAME_EVENTS.INVENTORY_SYNTHESIZE, {
