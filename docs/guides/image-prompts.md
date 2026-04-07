@@ -83,33 +83,37 @@ Game asset for mobile idle RPG
 
 ---
 
-## 3️⃣ 일반 층 배경
+## 3️⃣ 일반 층 배경 (복도)
 
 **파일명:** `background_normal.png`  
-**크기:** 400x300 픽셀  
+**크기:** 400x300 픽셀 (또는 200x150 으로 작게 만들어 반복 사용)  
 **저장 경로:** `assets/images/backgrounds/`
 
 ### 프롬프트 (영어)
 ```
-Pixel art background for tower dungeon interior, floor level 1-9, 
-size 400x300 pixels, side view.
+Pixel art dungeon corridor background, seamless tileable pattern,
+size 400x300 pixels, side view scrolling background.
 
-Elements: Stone brick walls, wooden floor, torches on walls providing 
-warm orange light, dark shadows between torches, dungeon atmosphere.
+Elements: Stone brick walls on left and right, wooden floor at bottom,
+torches mounted on walls with warm orange glow, dark corridor extending
+into the distance, one-point perspective.
 
-Style: Pixel art, moody lighting, warm torch light contrasting with 
-cool dark stone, game background for idle RPG.
-Color palette: Dark blues/grays for walls, orange/yellow for torch light.
+Style: Pixel art, simple repeating pattern for side-scrolling game,
+moody lighting with torch shadows.
+Color palette: Dark gray/blue stones, orange torch light, brown wooden floor.
+
+No characters, no foreground objects, just empty corridor for game background.
 ```
 
 ### 분위기
-- 어두운 던전이지만 횃불이 밝히는 공간
-- 벽돌 벽, 나무 바닥
-- 횃불 사이의 그림자
+- 어두운 던전 복도
+- 좌우 벽돌 벽, 중앙 바닥
+- 횃불이 밝히는 어두운 공간
+- **반복 패턴으로 무한 스크롤**
 
 ---
 
-## 4️⃣ 보스 층 배경
+## 4️⃣ 보스 층 배경 (복도, 고급지게)
 
 **파일명:** `background_boss.png`  
 **크기:** 400x300 픽셀  
@@ -117,22 +121,25 @@ Color palette: Dark blues/grays for walls, orange/yellow for torch light.
 
 ### 프롬프트 (영어)
 ```
-Pixel art background for tower boss room interior, floor level 10, 20, 30..., 
-size 400x300 pixels, side view.
+Pixel art boss room corridor background, seamless tileable pattern,
+size 400x300 pixels, side view scrolling background.
 
-Elements: Ornate stone architecture, golden decorations, large throne or 
-altar in background, multiple torches/candelabras, more spacious and 
-impressive than normal floors.
+Elements: Ornate stone walls with golden decorations, marble floor,
+multiple torches/candelabras on walls, grand corridor extending
+into the distance, one-point perspective.
 
-Style: Pixel art, grand and imposing atmosphere, brighter than normal 
-floors but still dungeon-like, game background for idle RPG boss battle.
-Color palette: Dark purples/golds for walls, bright orange/yellow for lighting.
+Style: Pixel art, simple repeating pattern for side-scrolling game,
+impressive and spacious atmosphere.
+Color palette: Dark purple/gold stones, bright torch light, polished floor.
+
+No characters, no foreground objects, just empty boss corridor.
 ```
 
 ### 분위기
 - 일반 층보다 고급지고 웅장함
-- 금색 장식, 왕좌 또는 제단
-- 더 많은 조명
+- 금색 장식, 대리석 바닥
+- 더 밝고 넓은 느낌
+- **반복 패턴으로 무한 스크롤**
 
 ---
 
