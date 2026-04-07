@@ -138,27 +138,64 @@ class GameRenderer {
     renderPlayer() {
         const x = this.width * 0.3;
         const y = this.height - 100;
-        const spriteSize = 48; // 약간 작게 조정
+        const spriteSize = 64; // 분할된 이미지 크기
         
-        // 스프라이트 시도
-        const sprite = gameImageLoader.get('player');
+        // 분할된 스프라이트 프레임 사용
+        const frameKey = `player_${this.playerFrameIndex % 8}`;
+        const sprite = gameImageLoader.get(frameKey);
+        
         if (sprite) {
-            const frameWidth = 32;
-            const frameHeight = 32;
-            const frameX = this.playerFrameIndex % 4;
-            const frameY = 0; // 대기/공격 프레임 (0 행)
-            
             this.ctx.drawImage(
                 sprite,
-                frameX * frameWidth, frameY * frameHeight, frameWidth, frameHeight,
                 x - spriteSize/2, y - spriteSize, spriteSize, spriteSize
             );
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#4a9eff';
             this.ctx.fillRect(x - spriteSize/2, y - spriteSize, spriteSize, spriteSize);
-            gameLogger.debug('Player sprite not loaded, using fallback');
         }
+        
+        // HP 바
+        const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
+        this.ctx.fillStyle = '#333';
+        this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize, 6);
+        this.ctx.fillStyle = '#ef4444';
+        this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize * hpPercent, 6);
+    }
+
+    /**
+     * 몬스터 렌더링
+     */
+    renderMonster() {
+        const x = this.width * 0.7;
+        const y = this.height - 100;
+        const spriteSize = 64;
+        
+        // 분할된 스프라이트 프레임 사용
+        const frameKey = `monster_${this.monsterFrameIndex % 8}`;
+        const sprite = gameImageLoader.get(frameKey);
+        
+        if (sprite) {
+            this.ctx.drawImage(
+                sprite,
+                x - spriteSize/2, y - spriteSize, spriteSize, spriteSize
+            );
+        } else {
+            // 폴백: 사각형
+            this.ctx.fillStyle = '#ef4444';
+            this.ctx.fillRect(x - spriteSize/2, y - spriteSize, spriteSize, spriteSize);
+        }
+        
+        // 몬스터 HP 바
+        const monster = this.combatSystem?.currentMonster;
+        if (monster && monster.maxHp > 0) {
+            const hpPercent = monster.currentHp / monster.maxHp;
+            this.ctx.fillStyle = '#333';
+            this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize, 6);
+            this.ctx.fillStyle = '#ef4444';
+            this.ctx.fillRect(x - spriteSize/2, y - spriteSize - 10, spriteSize * hpPercent, 6);
+        }
+    }
         
         // HP 바
         const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;

@@ -65,11 +65,28 @@ class Game {
             await gameDataLoader.loadAll();
             this.updateLoadingProgress(50, '이미지 로드 중...');
 
-            // 이미지 로드 (폴더에 파일이 있으면 로드, 없으면 스킵)
+            // 이미지 로드 (분할된 스프라이트 + 배경)
             try {
                 await gameImageLoader.loadAll({
-                    player: 'assets/images/characters/player_spritesheet.png',
-                    monster: 'assets/images/monsters/slime_spritesheet.png',
+                    // 플레이어 프레임 (8 개)
+                    player_0: 'assets/images/characters/player_spritesheet_0.png',
+                    player_1: 'assets/images/characters/player_spritesheet_1.png',
+                    player_2: 'assets/images/characters/player_spritesheet_2.png',
+                    player_3: 'assets/images/characters/player_spritesheet_3.png',
+                    player_4: 'assets/images/characters/player_spritesheet_4.png',
+                    player_5: 'assets/images/characters/player_spritesheet_5.png',
+                    player_6: 'assets/images/characters/player_spritesheet_6.png',
+                    player_7: 'assets/images/characters/player_spritesheet_7.png',
+                    // 몬스터 프레임 (8 개 - 순서 매핑)
+                    monster_0: 'assets/images/monsters/slime_spritesheet_0.png',
+                    monster_1: 'assets/images/monsters/slime_spritesheet_1.png',
+                    monster_2: 'assets/images/monsters/slime_spritesheet_11.png',
+                    monster_3: 'assets/images/monsters/slime_spritesheet_15.png',
+                    monster_4: 'assets/images/monsters/slime_spritesheet_4.png',
+                    monster_5: 'assets/images/monsters/slime_spritesheet_5.png',
+                    monster_6: 'assets/images/monsters/slime_spritesheet_2.png',
+                    monster_7: 'assets/images/monsters/slime_spritesheet_7.png',
+                    // 배경
                     background_normal: 'assets/images/backgrounds/background_normal.png',
                     background_boss: 'assets/images/backgrounds/background_boss.png'
                 });
