@@ -26,6 +26,8 @@ class UIManager {
         this.settingsModal = document.getElementById('settings-modal');
         this.statsModal = document.getElementById('stats-modal');
         this.offlineRewardModal = document.getElementById('offline-reward-modal');
+        this.achievementsModal = document.getElementById('achievements-modal');
+        this.statisticsModal = document.getElementById('statistics-modal');
         this.tutorialOverlay = document.getElementById('tutorial-overlay');
         
         // Settings elements
@@ -66,6 +68,11 @@ class UIManager {
             this.showModal(this.statsModal);
         });
         
+        document.getElementById('btn-achievements')?.addEventListener('click', () => {
+            this.showModal(this.achievementsModal);
+            this.renderAchievements();
+        });
+        
         document.getElementById('btn-settings')?.addEventListener('click', () => {
             this.showModal(this.settingsModal);
         });
@@ -85,6 +92,18 @@ class UIManager {
         
         document.getElementById('btn-close-stats')?.addEventListener('click', () => {
             this.hideModal(this.statsModal);
+        });
+        
+        document.getElementById('btn-close-offline')?.addEventListener('click', () => {
+            this.hideModal(this.offlineRewardModal);
+        });
+        
+        document.getElementById('btn-close-achievements')?.addEventListener('click', () => {
+            this.hideModal(this.achievementsModal);
+        });
+        
+        document.getElementById('btn-close-statistics')?.addEventListener('click', () => {
+            this.hideModal(this.statisticsModal);
         });
     }
 
@@ -293,6 +312,132 @@ class UIManager {
     }
 
     /**
+     * 튜토리얼 가이드 표시
+     * @param {Object} data - { step, message, reward }
+     */
+    showTutorialGuide(data) {
+        const overlay = document.getElementById('tutorial-overlay');
+        const message = document.getElementById('tutorial-message');
+        const nextBtn = document.getElementById('tutorial-next');
+        
+        if (!overlay || !message) return;
+        
+        message.textContent = data.message;
+        overlay.style.display = 'flex';
+        
+        // 다음 버튼
+        const handleClick = () => {
+            this.hideTutorialGuide();
+            nextBtn?.removeEventListener('click', handleClick);
+        };
+        nextBtn?.addEventListener('click', handleClick);
+        
+        gameLogger.debug(`Tutorial step ${data.step}: ${data.message}`);
+    }
+
+    /**
+     * 튜토리얼 가이드 숨김
+     */
+    hideTutorialGuide() {
+        const overlay = document.getElementById('tutorial-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    /**
+     * 통계 화면 렌더링
+     */
+    renderStats() {
+        const stats = this.gameState.stats;
+        
+        const playTimeSeconds = Math.floor(stats.playTime / 1000);
+        const hours = Math.floor(playTimeSeconds / 3600);
+        const minutes = Math.floor((playTimeSeconds % 3600) / 60);
+        const seconds = playTimeSeconds % 60;
+        
+        document.getElementById('stats-playtime').textContent = 
+            `${hours}시간 ${minutes}분 ${seconds}초`;
+        document.getElementById('stats-kills').textContent = stats.totalKills;
+        document.getElementById('stats-max-stage').textContent = stats.maxStage;
+        document.getElementById('stats-levelups').textContent = stats.totalLevelups;
+        document.getElementById('stats-gold').textContent = this.formatNumber(stats.totalGold);
+        document.getElementById('stats-achievements').textContent = 
+            `${this.gameState.achievements.length}개`;
+    }
+
+    /**
+     * 업적 화면 렌더링
+     */
+    renderAchievements() {
+        const container = document.getElementById('achievements-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        // 해제된 업적
+        const unlocked = this.gameState.achievements;
+        const total = 10; // TODO: 데이터에서 읽기
+        const progress = (unlocked.length / total) * 100;
+        
+        // 진행도 업데이트
+        const progressBar = document.getElementById('achievements-progress');
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        document.getElementById('achievements-count').textContent = 
+            `${unlocked.length} / ${total}`;
+        
+        // TODO: 실제 업적 데이터에서 렌더링
+        if (unlocked.length === 0) {
+            container.innerHTML = '<p class="no-achievements">아직 달성한 업적이 없습니다.</p>';
+        }
+    }
+
+    /**
+     * 데미지 텍스트 표시
+     * @param {number} damage 
+     * @param {Object} position - { x, y }
+     */
+    showDamageText(damage, position) {
+        const gameView = document.querySelector('.game-view');
+        if (!gameView) return;
+        
+        const text = document.createElement('div');
+        text.className = 'damage-text';
+        text.textContent = damage;
+        text.style.left = `${position.x}px`;
+        text.style.top = `${position.y}px`;
+        
+        // 크리티컬이면 크게
+        if (damage > 50) {
+            text.style.fontSize = '2rem';
+            text.style.color = '#fbbf24';
+        }
+        
+        gameView.appendChild(text);
+        
+        // 애니메이션 완료 후 제거
+        setTimeout(() => {
+            text.remove();
+        }, 1000);
+    }
+
+    /**
+     * 레벨업 이펙트 표시
+     */
+    showLevelUpEffect() {
+        const glow = document.createElement('div');
+        glow.className = 'levelup-glow';
+        document.body.appendChild(glow);
+        
+        setTimeout(() => {
+            glow.remove();
+        }, 2000);
+    }
+
+    /**
      * 전투 로그 추가
      * @param {string} message 
      */
@@ -318,6 +463,88 @@ class UIManager {
     showToast(message) {
         // 간단한 구현 - 추후 개선
         gameLogger.info('Toast:', message);
+    }
+
+    /**
+     * 튜토리얼 가이드 표시
+     * @param {Object} data - { step, message, reward }
+     */
+    showTutorialGuide(data) {
+        const overlay = document.getElementById('tutorial-overlay');
+        const message = document.getElementById('tutorial-message');
+        const nextBtn = document.getElementById('tutorial-next');
+        
+        if (!overlay || !message) return;
+        
+        message.textContent = data.message;
+        overlay.style.display = 'flex';
+        
+        // 다음 버튼
+        nextBtn?.addEventListener('click', () => {
+            this.hideTutorialGuide();
+        });
+        
+        gameLogger.debug(`Tutorial step ${data.step}: ${data.message}`);
+    }
+
+    /**
+     * 튜토리얼 가이드 숨김
+     */
+    hideTutorialGuide() {
+        const overlay = document.getElementById('tutorial-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    /**
+     * 통계 화면 렌더링
+     */
+    renderStats() {
+        const stats = this.gameState.stats;
+        
+        const playTimeSeconds = Math.floor(stats.playTime / 1000);
+        const hours = Math.floor(playTimeSeconds / 3600);
+        const minutes = Math.floor((playTimeSeconds % 3600) / 60);
+        const seconds = playTimeSeconds % 60;
+        
+        document.getElementById('stats-playtime').textContent = 
+            `${hours}시간 ${minutes}분 ${seconds}초`;
+        document.getElementById('stats-kills').textContent = stats.totalKills;
+        document.getElementById('stats-max-stage').textContent = stats.maxStage;
+        document.getElementById('stats-levelups').textContent = stats.totalLevelups;
+        document.getElementById('stats-gold').textContent = this.formatNumber(stats.totalGold);
+        document.getElementById('stats-achievements').textContent = 
+            `${this.gameState.achievements.length}개`;
+    }
+
+    /**
+     * 업적 화면 렌더링
+     */
+    renderAchievements() {
+        const container = document.getElementById('achievements-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        // 해제된 업적
+        const unlocked = this.gameState.achievements;
+        const total = 10; // TODO: 데이터에서 읽기
+        const progress = (unlocked.length / total) * 100;
+        
+        // 진행도 업데이트
+        const progressBar = document.getElementById('achievements-progress');
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        document.getElementById('achievements-count').textContent = 
+            `${unlocked.length} / ${total}`;
+        
+        // TODO: 실제 업적 데이터에서 렌더링
+        if (unlocked.length === 0) {
+            container.innerHTML = '<p class="no-achievements">아직 달성한 업적이 없습니다.</p>';
+        }
     }
 
     /**

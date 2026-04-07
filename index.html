@@ -69,6 +69,7 @@
         <div class="menu-buttons">
             <button class="menu-btn" id="btn-inventory">인벤토리</button>
             <button class="menu-btn" id="btn-stats">상태</button>
+            <button class="menu-btn" id="btn-achievements">업적</button>
             <button class="menu-btn" id="btn-settings">설정</button>
         </div>
     </div>
@@ -171,6 +172,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>오프라인 보상</h2>
+                <button class="modal-close" id="btn-close-offline">&times;</button>
             </div>
             <div class="offline-content">
                 <p class="offline-time">접속하지 않은 시간: <span id="offline-duration">0 시간</span></p>
@@ -179,6 +181,65 @@
                     <p>획득한 골드: <span id="offline-gold">0</span></p>
                 </div>
                 <button class="confirm-btn" id="btn-claim-reward">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 업적 모달 -->
+    <div id="achievements-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>업적</h2>
+                <button class="modal-close" id="btn-close-achievements">&times;</button>
+            </div>
+            <div class="achievements-content">
+                <div class="achievements-header">
+                    <div class="achievements-count" id="achievements-count">0 / 10</div>
+                    <div class="achievements-progress-container">
+                        <div class="achievements-progress" id="achievements-progress"></div>
+                    </div>
+                </div>
+                <div class="achievements-list" id="achievements-list">
+                    <!-- 업적 아이템들 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 통계 모달 -->
+    <div id="statistics-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>통계</h2>
+                <button class="modal-close" id="btn-close-statistics">&times;</button>
+            </div>
+            <div class="statistics-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-label">플레이 시간</div>
+                        <div class="stat-card-value" id="stats-playtime">0 시간</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">처치한 몬스터</div>
+                        <div class="stat-card-value" id="stats-kills">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">최대 스테이지</div>
+                        <div class="stat-card-value" id="stats-max-stage">1</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">레벨업 횟수</div>
+                        <div class="stat-card-value" id="stats-levelups">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">총 골드</div>
+                        <div class="stat-card-value" id="stats-gold">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-label">달성 업적</div>
+                        <div class="stat-card-value" id="stats-achievements">0 개</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
