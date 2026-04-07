@@ -114,14 +114,20 @@ b74d9bc fix: 합성 아이템 이름 디버깅 강화
 - [x] StorageManager 테스트
 - [x] 게임 재시작 후 유지 확인
 
-### 2. findNextGradeItem() 디버깅 🟡 진행중
+### 2. ~~findNextGradeItem() 디버깅~~ 🟢 완료!
 - [x] 콘솔 로그 추가 (상세)
-- [ ] iron_sword grade.9→10 테스트
-- [ ] armor/boots/accessory 합성 테스트
-- [ ] CSV 데이터 type 확인
+- [x] iron_sword grade.9→10 테스트 ✅ 정상!
+- [x] armor/boots/accessory 합성 테스트 ✅ 정상!
+- [x] CSV 데이터 type 확인 ✅ 정상!
+
+**테스트 결과:**
+- rusty_sword: 1→15 (14 단계) ✅
+- rusty_armor: 1→10 (9 단계) ✅
+- leather_boots: 1→10 (9 단계) ✅
+- copper_ring: 1→10 (9 단계) ✅
 
 ### 3. 자동화 테스트 🟡
-- [ ] 전 아이템 합성 경로 테스트
+- [x] 전 아이템 합성 경로 테스트
 - [ ] 에러 자동 감지
 - [ ] 테스트 결과 리포트
 
