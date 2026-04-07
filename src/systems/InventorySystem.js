@@ -28,16 +28,17 @@ class InventorySystem {
      */
     addItem(itemData) {
         const { itemId, name, count = 1, grade, rarity, stats } = itemData;
+        const itemIdStr = itemId.toString();
         
-        if (this.gameState.inventory.items.has(itemId)) {
+        if (this.gameState.inventory.items.has(itemIdStr)) {
             // 기존 아이템 - 카운트 증가
-            const existing = this.gameState.inventory.items.get(itemId);
+            const existing = this.gameState.inventory.items.get(itemIdStr);
             existing.count += count;
             
             gameLogger.debug(`Item stack increased: ${name} x${existing.count}`);
         } else {
             // 새 아이템
-            this.gameState.inventory.items.set(itemId, {
+            this.gameState.inventory.items.set(itemIdStr, {
                 itemId,
                 name,
                 count,
@@ -50,7 +51,7 @@ class InventorySystem {
         }
         
         gameEventBus.emit(GAME_EVENTS.INVENTORY_ITEM_ADDED, {
-            itemId,
+            itemId: itemIdStr,
             name,
             count,
             rarity
@@ -59,25 +60,30 @@ class InventorySystem {
 
     /**
      * 아이템 제거
-     * @param {number} itemId 
+     * @param {number|string} itemId 
      * @param {number} count 
      * @returns {boolean}
      */
     removeItem(itemId, count = 1) {
-        if (!this.gameState.inventory.items.has(itemId)) {
+        const itemIdStr = itemId.toString();
+        
+        if (!this.gameState.inventory.items.has(itemIdStr)) {
+            gameLogger.debug(`Item ${itemIdStr} not found for removal`);
             return false;
         }
         
-        const item = this.gameState.inventory.items.get(itemId);
+        const item = this.gameState.inventory.items.get(itemIdStr);
         
         if (item.count > count) {
             item.count -= count;
+            gameLogger.debug(`Removed ${count} x ${item.name}, remaining: ${item.count}`);
         } else {
-            this.gameState.inventory.items.delete(itemId);
+            this.gameState.inventory.items.delete(itemIdStr);
+            gameLogger.debug(`Removed all x ${item.name}`);
         }
         
         gameEventBus.emit(GAME_EVENTS.INVENTORY_ITEM_REMOVED, {
-            itemId,
+            itemId: itemIdStr,
             count
         });
         
@@ -99,16 +105,19 @@ class InventorySystem {
     /**
      * 장비 합성 (5 개 → 다음 등급 1 개)
      * grade 1-10: 단순 강화 시스템
-     * @param {number} itemId 
+     * @param {number|string} itemId 
      * @returns {Object|null} 합성된 아이템 정보 또는 null
      */
     synthesize(itemId) {
-        if (!this.canSynthesize(itemId)) {
+        // 문자열 키로 통일
+        const itemIdStr = itemId.toString();
+        
+        if (!this.canSynthesize(itemIdStr)) {
             gameLogger.warn(`Cannot synthesize item ${itemId}: not enough count`);
             return null;
         }
         
-        const item = this.gameState.inventory.items.get(itemId.toString());
+        const item = this.gameState.inventory.items.get(itemIdStr);
         const nextGrade = item.grade + 1;
         
         // 최대 등급 확인 (10: silver_ring mythic 등)
@@ -129,8 +138,8 @@ class InventorySystem {
             return null;
         }
         
-        // 재료 아이템 5 개 제거
-        const removed = this.removeItem(item.itemId || itemId, this.synthesizeCount);
+        // 재료 아이템 5 개 제거 (문자열 키 사용!)
+        const removed = this.removeItem(itemIdStr, this.synthesizeCount);
         gameLogger.debug(`Removed ${this.synthesizeCount} x ${item.name}, success: ${removed}`);
         
         // 다음 등급 아이템 1 개 추가
