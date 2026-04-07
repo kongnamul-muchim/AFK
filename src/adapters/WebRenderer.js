@@ -203,9 +203,9 @@ class GameRenderer {
             this.ctx.restore();
         }
         
-        // HP 바 (몬스터 중심에 오른쪽 끝 정렬)
+        // HP 바 (몬스터 중심에 HP 바 중심 정렬)
         const hpBarWidth = 60;
-        const hpBarX = x - hpBarWidth; // HP 바 오른쪽 끝 = 몬스터 중심
+        const hpBarX = x - hpBarWidth / 2; // HP 바 중심 = 몬스터 중심
         const hpBarY = y - baseHeight - 12;
         const monster = this.combatSystem?.currentMonster;
         
