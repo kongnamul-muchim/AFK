@@ -42,6 +42,10 @@
 - 발견 아이템 항상 활성화 (count=0 이어도)
 - findNextGradeItem() 상세 디버깅 로그 추가
 - **전 합성 경로 정상 확인** (45 개 아이템, 41 단계)
+- **getMaxGradeByType() CSV 기반으로 수정** (하드코딩 제거)
+- **addItem() type 저장 디버깅** (CSV 에서 읽은 값 그대로)
+- **createItemSlot() discovered 체크 강화** (count=0 이어도 활성화)
+- UI-코드 일치성 테스트 9/9 통과
 
 ---
 
