@@ -144,9 +144,10 @@ class GameRenderer {
         const sprite = gameImageLoader.get(frameKey);
         
         if (sprite) {
-            // 원본 이미지 크기 사용
-            const displayWidth = sprite.width;
-            const displayHeight = sprite.height;
+            // 원본 이미지 크기 * 0.8 스케일
+            const scale = 0.8;
+            const displayWidth = sprite.width * scale;
+            const displayHeight = sprite.height * scale;
             this.ctx.drawImage(
                 sprite,
                 x - displayWidth/2, y - displayHeight, displayWidth, displayHeight
@@ -154,15 +155,15 @@ class GameRenderer {
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#4a9eff';
-            this.ctx.fillRect(x - 32, y - 64, 64, 64);
+            this.ctx.fillRect(x - 26, y - 51, 51, 51);
         }
         
         // HP 바
         const hpPercent = this.gameState.player.currentHp / this.gameState.player.maxHp;
         this.ctx.fillStyle = '#333';
-        this.ctx.fillRect(x - 32, y - 10, 64, 6);
+        this.ctx.fillRect(x - 26, y - 10, 51, 6);
         this.ctx.fillStyle = '#ef4444';
-        this.ctx.fillRect(x - 32, y - 10, 64 * hpPercent, 6);
+        this.ctx.fillRect(x - 26, y - 10, 51 * hpPercent, 6);
     }
 
     /**
@@ -177,17 +178,21 @@ class GameRenderer {
         const sprite = gameImageLoader.get(frameKey);
         
         if (sprite) {
-            // 원본 이미지 크기 사용
-            const displayWidth = sprite.width;
-            const displayHeight = sprite.height;
-            this.ctx.drawImage(
-                sprite,
-                x - displayWidth/2, y - displayHeight, displayWidth, displayHeight
-            );
+            // 원본 이미지 크기 * 0.8 스케일
+            const scale = 0.8;
+            const displayWidth = sprite.width * scale;
+            const displayHeight = sprite.height * scale;
+            
+            // 몬스터는 왼쪽을 바라보게 (좌우 반전)
+            this.ctx.save();
+            this.ctx.translate(x, y - displayHeight);
+            this.ctx.scale(-1, 1);
+            this.ctx.drawImage(sprite, 0, 0, displayWidth, displayHeight);
+            this.ctx.restore();
         } else {
             // 폴백: 사각형
             this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - 32, y - 64, 64, 64);
+            this.ctx.fillRect(x - 26, y - 51, 51, 51);
         }
         
         // 몬스터 HP 바
@@ -195,9 +200,9 @@ class GameRenderer {
         if (monster && monster.maxHp > 0) {
             const hpPercent = monster.currentHp / monster.maxHp;
             this.ctx.fillStyle = '#333';
-            this.ctx.fillRect(x - 32, y - 10, 64, 6);
+            this.ctx.fillRect(x - 26, y - 10, 51, 6);
             this.ctx.fillStyle = '#ef4444';
-            this.ctx.fillRect(x - 32, y - 10, 64 * hpPercent, 6);
+            this.ctx.fillRect(x - 26, y - 10, 51 * hpPercent, 6);
         }
     }
 
