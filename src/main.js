@@ -73,10 +73,12 @@ class Game {
                     background_normal: 'assets/images/backgrounds/background_normal.png',
                     background_boss: 'assets/images/backgrounds/background_boss.png'
                 });
+                gameLogger.info('Images loaded successfully');
             } catch (error) {
-                gameLogger.warn('Some images failed to load (using fallback graphics)');
+                gameLogger.warn('Some images failed to load (using fallback graphics):', error.message);
             }
             
+            // 로딩 완료 (이미지 실패해도 진행)
             this.updateLoadingProgress(70, 'UI 초기화...');
 
             // 게임 상태 로드 또는 신규 생성
