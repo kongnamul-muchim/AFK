@@ -10,7 +10,7 @@ class InventoryUI {
     constructor(gameState, inventorySystem) {
         this.gameState = gameState;
         this.inventorySystem = inventorySystem;
-        this.currentTab = 'all';
+        this.currentTab = 'weapon'; // 기본 탭: 무기
         this.selectedItemId = null;
         this.tooltip = null;
     }
@@ -95,15 +95,17 @@ class InventoryUI {
         // 모든 아이템 데이터 (도감)
         const allItems = gameDataLoader.get('items') || [];
         
-        // 필터링
-        const filteredItems = this.currentTab === 'all' 
-            ? allItems 
-            : allItems.filter(item => item.type === this.currentTab);
+        // 현재 탭의 아이템만 필터링
+        const tabItems = allItems.filter(item => item.type === this.currentTab);
         
-        // 아이템 렌더링
-        filteredItems.forEach(item => {
-            const slot = this.createItemSlot(item);
-            container.appendChild(slot);
+        // 아이템을 이름별로 그룹화 (나무검_일반, 나무검_희귀 → 나무검 그룹)
+        const groupedItems = this.groupItemsByBase(tabItems);
+        
+        // 그룹별로 렌더링 (한 줄에 5 개 희귀도)
+        Object.keys(groupedItems).forEach(baseName => {
+            const group = groupedItems[baseName];
+            const row = this.createEquipmentRow(baseName, group);
+            container.appendChild(row);
         });
         
         // 골드 업데이트
@@ -113,6 +115,52 @@ class InventoryUI {
         
         // 장착 아이템 업데이트
         this.updateEquipmentPanel();
+    }
+
+    /**
+     * 아이템을 이름별로 그룹화
+     * @param {Array} items 
+     * @returns {Object}
+     */
+    groupItemsByBase(items) {
+        const groups = {};
+        
+        items.forEach(item => {
+            // 이름에서 베이스 이름 추출 (rusty_sword → sword)
+            const baseName = item.name.split('_').slice(1).join('_');
+            
+            if (!groups[baseName]) {
+                groups[baseName] = [];
+            }
+            groups[baseName].push(item);
+        });
+        
+        return groups;
+    }
+
+    /**
+     * 장비 행 생성 (5 희귀도)
+     * @param {string} baseName 
+     * @param {Array} items 
+     * @returns {HTMLElement}
+     */
+    createEquipmentRow(baseName, items) {
+        const row = document.createElement('div');
+        row.className = 'equipment-row';
+        row.style.cssText = 'display: flex; gap: 0.25rem; margin-bottom: 0.5rem;';
+        
+        // 희귀도 순서대로 정렬
+        const rarityOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+        items.sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity));
+        
+        // 각 희귀도 슬롯 생성
+        items.forEach(item => {
+            const slot = this.createItemSlot(item);
+            slot.style.flex = '1';
+            row.appendChild(slot);
+        });
+        
+        return row;
     }
 
     /**
