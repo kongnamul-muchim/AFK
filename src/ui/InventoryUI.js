@@ -297,7 +297,9 @@ class InventoryUI {
         
         if (result) {
             this.showToast(`합성 성공! ${result.name}`);
+            // UI 즉시 갱신
             this.renderInventory();
+            this.updateEquipmentPanel();
         } else {
             this.showToast('합성 실패: 재료가 부족합니다');
         }

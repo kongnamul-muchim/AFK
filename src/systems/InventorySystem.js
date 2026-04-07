@@ -130,10 +130,11 @@ class InventorySystem {
         }
         
         // 재료 아이템 5 개 제거
-        this.removeItem(item.itemId || itemId, this.synthesizeCount);
+        const removed = this.removeItem(item.itemId || itemId, this.synthesizeCount);
+        gameLogger.debug(`Removed ${this.synthesizeCount} x ${item.name}, success: ${removed}`);
         
         // 다음 등급 아이템 1 개 추가
-        this.addItem({
+        const newItemData = {
             itemId: nextGradeItem.id,
             name: nextGradeItem.name,
             count: 1,
@@ -141,7 +142,9 @@ class InventorySystem {
             rarity: nextGradeItem.rarity,
             stats: nextGradeItem.stats_min,
             type: nextGradeItem.type
-        });
+        };
+        this.addItem(newItemData);
+        gameLogger.debug(`Added new item: ${nextGradeItem.name} grade.${nextGradeItem.grade}`);
         
         // 이벤트
         gameEventBus.emit(GAME_EVENTS.INVENTORY_SYNTHESIZE, {
