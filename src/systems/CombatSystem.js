@@ -167,13 +167,6 @@ class CombatSystem {
             maxHp: monster.maxHp
         });
         
-        // 로그 - 크리티컬Hit 만 표시 (로그 과부하 방지)
-        if (isCrit) {
-            gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
-                message: `[크리티컬!] ${damage} 데미지!`
-            });
-        }
-        
         // 몬스터 처치 확인
         if (monster.currentHp <= 0) {
             this.killMonster();
@@ -202,10 +195,6 @@ class CombatSystem {
             monsterId: monster.id,
             exp: monster.expReward,
             gold: monster.goldReward
-        });
-        
-        gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
-            message: `${monster.name}을 (를) 처치했습니다! (+${monster.expReward} Exp, +${monster.goldReward} Gold)`
         });
         
         // 보스 처치
