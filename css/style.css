@@ -435,13 +435,9 @@ body {
     width: 90%;
 }
 
+/* 골드 표시 제거 */
 .gold-display {
-    text-align: center;
-    padding: 0.75rem;
-    background: var(--color-bg-tertiary);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
+    display: none;
 }
 
 /* 설정 행 */
@@ -840,12 +836,15 @@ body {
     }
 }
 
-/* 인벤토리 모달 확장 */
+/* 인벤토리 모달 확장 - flex 레이아웃 */
 .inventory-modal-content {
     max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* 장착 아이템 패널 */
+/* 장착 아이템 패널 - 고정 */
 .equipment-panel {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -853,7 +852,7 @@ body {
     padding: 0.75rem;
     background: var(--color-bg-tertiary);
     border-radius: 8px;
-    margin-bottom: 0.75rem;
+    flex-shrink: 0;
 }
 
 .equipment-slot {
@@ -913,14 +912,15 @@ body {
     font-weight: bold;
 }
 
-/* 인벤토리 탭 */
+/* 인벤토리 탭 - 고정 */
 .inventory-tabs {
     display: flex;
     gap: 0.25rem;
     padding: 0.5rem;
     background: var(--color-bg-tertiary);
     border-radius: 8px;
-    margin-bottom: 0.75rem;
+    margin: 0.5rem 0;
+    flex-shrink: 0;
 }
 
 .inventory-tabs .tab-btn {
@@ -1035,11 +1035,17 @@ body {
     max-width: 100%;
 }
 
-/* 인벤토리 아이템 그리드 래퍼 */
+/* 인벤토리 아이템 그리드 - 스크롤 영역 */
 .inventory-items-wrapper {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 0.5rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    max-height: 400px;
 }
 
 .rarity-row {

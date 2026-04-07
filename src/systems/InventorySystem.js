@@ -116,15 +116,15 @@ class InventorySystem {
             return null;
         }
         
-        // 다음 등급 아이템 찾기
+        // 다음 등급 아이템 찾기 (이름 + 등급으로 검색)
         const items = gameDataLoader.get('items');
         const nextGradeItem = items.find(i => 
-            i.name.includes(item.name.split('_')[1]) && // 이름에서 타입 추출
-            i.grade === nextGrade
+            i.name === item.name &&  // 같은 이름
+            i.grade === nextGrade    // 다음 등급
         );
         
         if (!nextGradeItem) {
-            gameLogger.warn(`No next grade item found for ${itemId}`);
+            gameLogger.warn(`No next grade item found for ${item.name} grade ${nextGrade}`);
             return null;
         }
         
@@ -138,7 +138,8 @@ class InventorySystem {
             count: 1,
             grade: nextGradeItem.grade,
             rarity: nextGradeItem.rarity,
-            stats: nextGradeItem.stats_min
+            stats: nextGradeItem.stats_min,
+            type: nextGradeItem.type
         });
         
         // 이벤트
@@ -147,10 +148,6 @@ class InventorySystem {
             resultId: nextGradeItem.id,
             resultName: nextGradeItem.name,
             resultGrade: nextGradeItem.grade
-        });
-        
-        gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
-            message: `합성 성공! ${nextGradeItem.name} 획득!`
         });
         
         gameLogger.info(`Synthesized: ${item.name} x5 → ${nextGradeItem.name} x1`);
