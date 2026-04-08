@@ -4,6 +4,45 @@
 
 ---
 
+## [2.0.0] - 2026-04-08
+
+### ✨ Added
+
+#### 전투 시스템 대대적 개편
+- **이동/조우/전투/처치 루프** 구현 (Player 이동 → 적 조우 → 전투 → 처치 → 이동 반복)
+- **공격 애니메이션 3프레임** (1→2→3) 구현, attackSpeed에 비례한 속도 조절
+- **데미지 판정 타이밍**: 공격 3번 프레임에서 한 번만 발생
+- **체력 소모 시스템**: 공격시 스테이지 비례 고정 수치 - 방어력 만큼 감소
+- **패배/부활 시스템**: 체력 0시 쓰러짐, 이전 스테이지에서 50% HP로 부활
+- **자동반복 모드**: 패배시 자동 활성화, 동일 스테이지 무한 반복
+- **스테이지 클리어 보상**: 체력 완전 회복
+- **몬스터 등장 애니메이션**: 0(등장전) → 5(돌진) → 4/6(idle)
+- **플레이어/몬스터 Dead 애니메이션**: 6→7, 2→3 (한 번만 재생)
+- **배경 스크롤 효과**: 첫 이동/두 번째 이동 방향 구분
+
+#### UI
+- **자동반복 모드 토글 버튼**: Stage Text 아래 동그란 🔄 버튼
+- **UI null 체크 강화**: formatNumber()에 isNaN() 추가
+
+### 🔧 Changed
+
+- **CombatSystem**: 자동 공격 루프 → 페이즈 기반 전투 시스템
+- **GameState**: combatPhase 상태 추가 (phase, playerState, monsterState, 타이머 등)
+- **WebRenderer**: 상태별 애니메이션 프레임 매핑, 배경 스크롤
+- **EventBus**: COMBAT_PHASE_CHANGED, COMBAT_ENCOUNTER, COMBAT_VICTORY 이벤트 추가
+- **DataLoader**: game_config.csv 중복 ID 검사 제외
+
+### 📝 Fixed
+
+- game_config.csv 중복 ID 경고 수정
+- 공격 애니메이션 무한 반복 버그 수정
+- 플레이어 공격시 체력 소모 타이밍 수정 (데미지 판정과 동기화)
+- 몬스터 돌진 타이밍 조정 (이동 80% → 65%)
+- 이미지 경로 대소문자 수정 (assets/ → Assets/)
+- UI 골드/EXP NaN 표시 문제 수정
+
+---
+
 ## [Unreleased] - 2025-04-07
 
 ### ✨ Added
@@ -46,6 +85,21 @@
 - **addItem() type 저장 디버깅** (CSV 에서 읽은 값 그대로)
 - **createItemSlot() discovered 체크 강화** (count=0 이어도 활성화)
 - UI-코드 일치성 테스트 9/9 통과
+- **stats_min → stats 필드 참조 수정** (InventoryUI, InventorySystem, CombatSystem)
+- **formatStats() 스탯 표시 수정** (attackBonus/defenseBonus/moveSpeed/hpBonus 지원)
+- **updateStatsBonus() 장비 스탯 계산 수정** (새 스탯 구조 적용)
+- **인벤토리 UI 탭/장비 패널 순서 조정** (장신구↔신발 교체)
+- **합성 테스트 성공 확인** (bronze_sword grade 1-3, iron_sword grade 6)
+
+### 🔧 Changed
+
+- GameState 통합 (플레이어, 인벤토리, 설정 일원화)
+- main.js 시스템 통합 (7 개 시스템 초기화)
+- 인벤토리 UI 대폭 개선 (탭, 스크롤, 도감)
+- **items.csv 재생성** (100 개 아이템, 5 재질 x 5 희귀도 x 4 타입)
+- **GameState moveSpeed 스탯 추가** (derivedStats.moveSpeed = 100 + 장비 보너스)
+- **스탯 패널 UI 수정** (크리티컬 → 이동속도 변경)
+- **장비 장착 시 grade/type 필드 추가 저장**
 
 ---
 
