@@ -40,16 +40,20 @@ id,name,grade,type,rarity,stats,dropRate
 1,bronze_sword,1,weapon,common,"{""attackBonus"":2}",0.30
 2,bronze_sword,2,weapon,rare,"{""attackBonus"":2.3}",0.25
 ...
-25,mythril_sword,5,weapon,mythic,"{""attackBonus"":300}",0.01
+5,bronze_sword,5,weapon,mythic,"{""attackBonus"":4}",0.01
+...
+21,steel_sword,11,weapon,common,"{""attackBonus"":30}",0.30
+...
+25,mythril_sword,25,weapon,mythic,"{""attackBonus"":300}",0.01
 26,bronze_armor,1,armor,common,"{""defenseBonus"":2}",0.30
 ...
-50,mythril_armor,5,armor,mythic,"{""defenseBonus"":300}",0.01
+50,mythril_armor,25,armor,mythic,"{""defenseBonus"":300}",0.01
 51,bronze_boots,1,boots,common,"{""moveSpeed"":1}",0.30
 ...
-75,mythril_boots,5,boots,mythic,"{""moveSpeed"":30}",0.01
+75,mythril_boots,25,boots,mythic,"{""moveSpeed"":150}",0.01
 76,bronze_ring,1,accessory,common,"{""hpBonus"":2}",0.30
 ...
-100,mythril_ring,5,accessory,mythic,"{""hpBonus"":300}",0.01
+100,mythril_ring,25,accessory,mythic,"{""hpBonus"":300}",0.01
 ```
 
 ### 스탯 필드
