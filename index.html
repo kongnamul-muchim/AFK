@@ -40,12 +40,19 @@
             </div>
             <div class="stage-info">
                 <span class="stage-text" id="hud-stage">Stage 1</span>
+                <button class="auto-repeat-btn" id="btn-auto-repeat" title="자동반복 모드 토글">🔄</button>
             </div>
-            <div class="gold-info">
-                <span class="gold-icon">💰</span>
-                <span class="gold-text" id="hud-gold">0</span>
+            <div class="right-info">
+                <div class="gold-info">
+                    <span class="gold-icon">💰</span>
+                    <span class="gold-text" id="hud-gold">0</span>
+                </div>
+                <button class="settings-btn" id="btn-settings" title="설정">⚙️</button>
             </div>
         </header>
+
+        <!-- 버프 표시 영역 -->
+        <div class="buff-display" id="buff-display"></div>
 
         <!-- 2D 게임 뷰 (Canvas) -->
         <div class="game-view">
@@ -69,9 +76,9 @@
         <!-- 메뉴 버튼들 -->
         <div class="menu-buttons">
             <button class="menu-btn" id="btn-inventory">인벤토리</button>
-            <button class="menu-btn" id="btn-stats">상태</button>
-            <button class="menu-btn" id="btn-achievements">업적</button>
-            <button class="menu-btn" id="btn-settings">설정</button>
+            <button class="menu-btn" id="btn-upgrade">⬆️ 업그레이드</button>
+            <button class="menu-btn" id="btn-daily-missions">📋 미션</button>
+            <button class="menu-btn" id="btn-gem-shop">💎 상점</button>
         </div>
     </div>
 
@@ -93,20 +100,20 @@
                     <div class="slot-label">갑옷</div>
                     <div class="slot-item" id="equip-armor"></div>
                 </div>
-                <div class="equipment-slot" data-slot="boots">
-                    <div class="slot-label">신발</div>
-                    <div class="slot-item" id="equip-boots"></div>
-                </div>
                 <div class="equipment-slot" data-slot="accessory">
                     <div class="slot-label">장신구</div>
                     <div class="slot-item" id="equip-accessory"></div>
                 </div>
+                <div class="equipment-slot" data-slot="boots">
+                    <div class="slot-label">신발</div>
+                    <div class="slot-item" id="equip-boots"></div>
+                </div>
                 <!-- 스탯 가중치 패널 -->
                 <div class="stats-bonus-panel" id="stats-bonus">
-                    <div class="bonus-stat"><span>공격력:</span><span id="bonus-atk">+0</span></div>
-                    <div class="bonus-stat"><span>방어력:</span><span id="bonus-def">+0</span></div>
-                    <div class="bonus-stat"><span>체력:</span><span id="bonus-hp">+0</span></div>
-                    <div class="bonus-stat"><span>크리티컬:</span><span id="bonus-crit">+0%</span></div>
+                    <div class="bonus-stat"><span>공격력:</span><span id="bonus-atk">+0%</span></div>
+                    <div class="bonus-stat"><span>방어력:</span><span id="bonus-def">+0%</span></div>
+                    <div class="bonus-stat"><span>체력:</span><span id="bonus-hp">+0%</span></div>
+                    <div class="bonus-stat"><span>이동속도:</span><span id="bonus-movespeed">+0</span></div>
                 </div>
             </div>
             
@@ -114,8 +121,8 @@
             <div class="inventory-tabs">
                 <button class="tab-btn active" data-tab="weapon">무기</button>
                 <button class="tab-btn" data-tab="armor">갑옷</button>
-                <button class="tab-btn" data-tab="boots">신발</button>
                 <button class="tab-btn" data-tab="accessory">장신구</button>
+                <button class="tab-btn" data-tab="boots">신발</button>
             </div>
             
             <!-- 아이템 그리드 (도감) -->
@@ -176,44 +183,58 @@
         </div>
     </div>
 
-    <!-- 상태창 모달 -->
-    <div id="stats-modal" class="modal" style="display: none;">
-        <div class="modal-content">
+    <!-- 업그레이드 모달 -->
+    <div id="upgrade-modal" class="modal" style="display: none;">
+        <div class="modal-content upgrade-modal-content">
             <div class="modal-header">
-                <h2>상태</h2>
-                <button class="modal-close" id="btn-close-stats">&times;</button>
+                <h2>업그레이드</h2>
+                <button class="modal-close" id="btn-close-upgrade">&times;</button>
             </div>
-            <div class="stats-content">
-                <div class="stats-info">
-                    <p>레벨: <span id="stats-level">1</span></p>
-                    <p>경험치: <span id="stats-exp">0/100</span></p>
-                    <p>남은 스탯포인트: <span id="stats-points">0</span></p>
-                </div>
-                <div class="stat-allocation">
-                    <div class="stat-row">
-                        <span>힘 (공격력)</span>
-                        <span id="stat-str">5</span>
-                        <button class="stat-plus" data-stat="str">+</button>
-                    </div>
-                    <div class="stat-row">
-                        <span>민첩 (크리티컬)</span>
-                        <span id="stat-agi">5</span>
-                        <button class="stat-plus" data-stat="agi">+</button>
-                    </div>
-                    <div class="stat-row">
-                        <span>지력 (마나)</span>
+            <div class="upgrade-header">
+                <span class="stat-points-display" id="upgrade-points-display" style="display: none;">⭐ 0</span>
+                <span class="gold-display" id="upgrade-gold-display" style="display: none;">💰 0</span>
+            </div>
+            <div class="upgrade-tabs">
+                <button class="tab-btn active" data-tab="gold">골드</button>
+                <button class="tab-btn" data-tab="stat">스탯</button>
+                <button class="tab-btn" data-tab="rebirth">환생</button>
+            </div>
+            <div class="upgrade-grid" id="upgrade-grid"></div>
+        </div>
+    </div>
+
+    <!-- 일일 미션 모달 -->
+    <div id="daily-missions-modal" class="modal" style="display: none;">
+        <div class="modal-content daily-missions-content">
+            <div class="modal-header">
+                <h2>일일 미션</h2>
+                <button class="modal-close" id="btn-close-daily-missions">&times;</button>
+            </div>
+            <div class="missions-header">
+                <span class="gems-display">💎 <span id="missions-gems">0</span></span>
+                <span class="reset-timer" id="missions-reset-timer">다음 갱신까지: --:--:--</span>
+            </div>
+            <div class="missions-grid" id="missions-grid"></div>
+        </div>
+    </div>
+
+    <!-- 보석 상점 모달 -->
+    <div id="gem-shop-modal" class="modal" style="display: none;">
+        <div class="modal-content gem-shop-content">
+            <div class="modal-header">
+                <h2>보석 상점</h2>
+                <button class="modal-close" id="btn-close-gem-shop">&times;</button>
+            </div>
+            <div class="shop-header">
+                <span class="gems-display">💎 <span id="gem-shop-gems">0</span></span>
+            </div>
+            <div class="gem-shop-grid" id="gem-shop-grid"></div>
+        </div>
+    </div>
                         <span id="stat-int">5</span>
                         <button class="stat-plus" data-stat="int">+</button>
                     </div>
                     <div class="stat-row">
-                        <span>체력 (HP)</span>
-                        <span id="stat-vit">10</span>
-                        <button class="stat-plus" data-stat="vit">+</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 오프라인 보상 모달 -->
     <div id="offline-reward-modal" class="modal" style="display: none;">
@@ -229,27 +250,6 @@
                     <p>획득한 골드: <span id="offline-gold">0</span></p>
                 </div>
                 <button class="confirm-btn" id="btn-claim-reward">확인</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 업적 모달 -->
-    <div id="achievements-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>업적</h2>
-                <button class="modal-close" id="btn-close-achievements">&times;</button>
-            </div>
-            <div class="achievements-content">
-                <div class="achievements-header">
-                    <div class="achievements-count" id="achievements-count">0 / 10</div>
-                    <div class="achievements-progress-container">
-                        <div class="achievements-progress" id="achievements-progress"></div>
-                    </div>
-                </div>
-                <div class="achievements-list" id="achievements-list">
-                    <!-- 업적 아이템들 -->
-                </div>
             </div>
         </div>
     </div>
@@ -282,10 +282,6 @@
                     <div class="stat-card">
                         <div class="stat-card-label">총 골드</div>
                         <div class="stat-card-value" id="stats-gold">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-label">달성 업적</div>
-                        <div class="stat-card-value" id="stats-achievements">0 개</div>
                     </div>
                 </div>
             </div>

@@ -123,6 +123,9 @@ const GAME_EVENTS = {
     COMBAT_MONSTER_KILLED: 'combat:monster_killed',
     COMBAT_PLAYER_DIED: 'combat:player_died',
     COMBAT_LOG: 'combat:log',
+    COMBAT_PHASE_CHANGED: 'combat:phase_changed',
+    COMBAT_ENCOUNTER: 'combat:encounter',
+    COMBAT_VICTORY: 'combat:victory',
     
     // 스테이지
     STAGE_CHANGED: 'stage:changed',
@@ -140,9 +143,6 @@ const GAME_EVENTS = {
     TUTORIAL_STEP: 'tutorial:step',
     TUTORIAL_COMPLETED: 'tutorial:completed',
     
-    // 업적
-    ACHIEVEMENT_UNLOCKED: 'achievement:unlocked',
-    
     // 설정
     SETTINGS_CHANGED: 'settings:changed',
     
@@ -153,7 +153,23 @@ const GAME_EVENTS = {
     GAME_RESUMED: 'game:resumed',
     
     // 오프라인
-    OFFLINE_REWARD: 'offline:reward'
+    OFFLINE_REWARD: 'offline:reward',
+
+    // 업그레이드
+    UPGRADE_PURCHASED: 'upgrade:purchased',
+    UPGRADE_INSUFFICIENT_GOLD: 'upgrade:insufficient_gold',
+    UPGRADE_INSUFFICIENT_POINTS: 'upgrade:insufficient_points',
+    UPGRADE_MAX_LEVEL: 'upgrade:max_level',
+
+    // 일일 미션
+    DAILY_MISSIONS_RESET: 'daily:missions_reset',
+    DAILY_MISSION_COMPLETED: 'daily:mission_completed',
+    DAILY_MISSION_CLAIMED: 'daily:mission_claimed',
+    BUFF_ACTIVATED: 'buff:activated',
+
+    // 환생
+    REBIRTH_PERFORMED: 'rebirth:performed',
+    REBIRTH_UPGRADE_PURCHASED: 'rebirth:upgrade_purchased'
 };
 
 export { EventBus, gameEventBus, GAME_EVENTS };

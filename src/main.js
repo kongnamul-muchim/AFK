@@ -19,8 +19,12 @@ import { StageSystem } from './systems/StageSystem.js';
 import { InventorySystem } from './systems/InventorySystem.js';
 import { OfflineRewards } from './systems/OfflineRewards.js';
 import { TutorialSystem } from './systems/TutorialSystem.js';
-import { AchievementSystem } from './systems/AchievementSystem.js';
 import { StatsTracker } from './systems/StatsTracker.js';
+import { DailyMissionSystem } from './systems/DailyMissionSystem.js';
+import { RebirthSystem } from './systems/RebirthSystem.js';
+import { UpgradeUI } from './ui/UpgradeUI.js';
+import { DailyMissionUI } from './ui/DailyMissionUI.js';
+import { GemShopUI } from './ui/GemShopUI.js';
 
 class Game {
     constructor() {
@@ -37,8 +41,9 @@ class Game {
         this.inventorySystem = null;
         this.offlineRewards = null;
         this.tutorialSystem = null;
-        this.achievementSystem = null;
         this.statsTracker = null;
+        this.dailyMissionSystem = null;
+        this.rebirthSystem = null;
         
         this.isRunning = false;
         this.lastFrameTime = 0;
@@ -74,26 +79,26 @@ class Game {
             try {
                 await gameImageLoader.loadAll({
                     // 플레이어 프레임 (8 개)
-                    player_0: 'assets/images/characters/player_spritesheet_0.png',
-                    player_1: 'assets/images/characters/player_spritesheet_1.png',
-                    player_2: 'assets/images/characters/player_spritesheet_2.png',
-                    player_3: 'assets/images/characters/player_spritesheet_3.png',
-                    player_4: 'assets/images/characters/player_spritesheet_4.png',
-                    player_5: 'assets/images/characters/player_spritesheet_5.png',
-                    player_6: 'assets/images/characters/player_spritesheet_6.png',
-                    player_7: 'assets/images/characters/player_spritesheet_7.png',
+                    player_0: 'Assets/images/characters/player_spritesheet_0.png',
+                    player_1: 'Assets/images/characters/player_spritesheet_1.png',
+                    player_2: 'Assets/images/characters/player_spritesheet_2.png',
+                    player_3: 'Assets/images/characters/player_spritesheet_3.png',
+                    player_4: 'Assets/images/characters/player_spritesheet_4.png',
+                    player_5: 'Assets/images/characters/player_spritesheet_5.png',
+                    player_6: 'Assets/images/characters/player_spritesheet_6.png',
+                    player_7: 'Assets/images/characters/player_spritesheet_7.png',
                     // 몬스터 프레임 (8 개 - 순차적)
-                    monster_0: 'assets/images/monsters/slime_spritesheet_0.png',
-                    monster_1: 'assets/images/monsters/slime_spritesheet_1.png',
-                    monster_2: 'assets/images/monsters/slime_spritesheet_2.png',
-                    monster_3: 'assets/images/monsters/slime_spritesheet_3.png',
-                    monster_4: 'assets/images/monsters/slime_spritesheet_4.png',
-                    monster_5: 'assets/images/monsters/slime_spritesheet_5.png',
-                    monster_6: 'assets/images/monsters/slime_spritesheet_6.png',
-                    monster_7: 'assets/images/monsters/slime_spritesheet_7.png',
+                    monster_0: 'Assets/images/monsters/slime_spritesheet_0.png',
+                    monster_1: 'Assets/images/monsters/slime_spritesheet_1.png',
+                    monster_2: 'Assets/images/monsters/slime_spritesheet_2.png',
+                    monster_3: 'Assets/images/monsters/slime_spritesheet_3.png',
+                    monster_4: 'Assets/images/monsters/slime_spritesheet_4.png',
+                    monster_5: 'Assets/images/monsters/slime_spritesheet_5.png',
+                    monster_6: 'Assets/images/monsters/slime_spritesheet_6.png',
+                    monster_7: 'Assets/images/monsters/slime_spritesheet_7.png',
                     // 배경
-                    background_normal: 'assets/images/backgrounds/background_normal.png',
-                    background_boss: 'assets/images/backgrounds/background_boss.png'
+                    background_normal: 'Assets/images/backgrounds/background_normal.png',
+                    background_boss: 'Assets/images/backgrounds/background_boss.png'
                 });
                 gameLogger.info('Images loaded successfully');
             } catch (error) {
@@ -152,11 +157,12 @@ class Game {
             this.tutorialSystem = new TutorialSystem(this.gameState);
             this.tutorialSystem.init();
             
-            this.achievementSystem = new AchievementSystem(this.gameState);
-            this.achievementSystem.init();
-            
             this.statsTracker = new StatsTracker(this.gameState);
             this.statsTracker.init();
+            
+            // 일일 미션 시스템
+            this.dailyMissionSystem = new DailyMissionSystem(this.gameState);
+            this.dailyMissionSystem.init();
             
             this.combatSystem = new CombatSystem(this.gameState);
             this.combatSystem.init();
@@ -164,6 +170,28 @@ class Game {
             // 렌더러 초기화 (combatSystem 전달)
             this.renderer = new GameRenderer(this.gameState, this.combatSystem);
             this.renderer.init();
+            
+            // UI 초기화
+            this.dailyMissionUI = new DailyMissionUI(this.gameState, this.dailyMissionSystem);
+            this.dailyMissionUI.init();
+            
+            this.gemShopUI = new GemShopUI(this.gameState, this.dailyMissionSystem);
+            this.gemShopUI.init();
+            
+            // 환생 시스템
+            this.rebirthSystem = new RebirthSystem(this.gameState);
+            this.rebirthSystem.init();
+            
+            // 업그레이드 UI 초기화 (rebirthSystem 필요)
+            this.upgradeUI = new UpgradeUI(this.gameState, this.rebirthSystem);
+            this.upgradeUI.init();
+            
+            // UI 초기화
+            this.dailyMissionUI = new DailyMissionUI(this.gameState, this.dailyMissionSystem);
+            this.dailyMissionUI.init();
+            
+            this.gemShopUI = new GemShopUI(this.gameState, this.dailyMissionSystem);
+            this.gemShopUI.init();
             
             this.updateLoadingProgress(90, '마지막 준비...');
 
@@ -308,9 +336,11 @@ class Game {
             this.uiManager.updateGameView();
         }
         
-        // 전투 시스템 업데이트 (자동 공격)
-        if (!this.combatSystem.isAttacking) {
+        // 전투 시스템 업데이트 (새로운 루프 시스템)
+        if (!this.combatSystem.isRunning) {
             this.combatSystem.startCombat();
+        } else {
+            this.combatSystem.update(dt);
         }
     }
 

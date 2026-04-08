@@ -17,7 +17,6 @@ class DataLoader {
             'stages'
         ];
         this.optionalFiles = [
-            'achievements',
             'tutorial',
             'audio_definitions'
         ];
@@ -126,12 +125,11 @@ class DataLoader {
             'items': 'id',
             'monsters': 'id',
             'stages': 'stageNumber',
-            'achievements': 'id',
             'tutorial': 'step',
             'audio_definitions': 'sound_id',
-            'game_config': null // 복합 키 (category + key)
+            'game_config': null // 복합 키 (category + key) - ID 검사 안 함
         };
-        return idMap[name] || 'id';
+        return idMap[name] || null; // 기본값을 null로 (ID 검사 안 하는 파일)
     }
 
     /**

@@ -18,6 +18,9 @@ class UIManager {
         this.hudExpText = document.getElementById('hud-exp-text');
         this.hudStatPoints = document.getElementById('hud-stat-points');
         
+        // Auto-repeat button
+        this.btnAutoRepeat = document.getElementById('btn-auto-repeat');
+        
         // Combat log
         this.combatLog = document.getElementById('combat-log');
         
@@ -26,7 +29,6 @@ class UIManager {
         this.settingsModal = document.getElementById('settings-modal');
         this.statsModal = document.getElementById('stats-modal');
         this.offlineRewardModal = document.getElementById('offline-reward-modal');
-        this.achievementsModal = document.getElementById('achievements-modal');
         this.statisticsModal = document.getElementById('statistics-modal');
         this.tutorialOverlay = document.getElementById('tutorial-overlay');
         
@@ -73,13 +75,16 @@ class UIManager {
             this.showModal(this.statsModal);
         });
         
-        document.getElementById('btn-achievements')?.addEventListener('click', () => {
-            this.showModal(this.achievementsModal);
-            this.renderAchievements();
-        });
-        
         document.getElementById('btn-settings')?.addEventListener('click', () => {
             this.showModal(this.settingsModal);
+        });
+        
+        // 자동반복 모드 버튼
+        this.btnAutoRepeat?.addEventListener('click', () => {
+            if (this.game && this.game.combatSystem) {
+                this.game.combatSystem.toggleAutoRepeat();
+                this.updateAutoRepeatButton();
+            }
         });
     }
 
@@ -101,10 +106,6 @@ class UIManager {
         
         document.getElementById('btn-close-offline')?.addEventListener('click', () => {
             this.hideModal(this.offlineRewardModal);
-        });
-        
-        document.getElementById('btn-close-achievements')?.addEventListener('click', () => {
-            this.hideModal(this.achievementsModal);
         });
         
         document.getElementById('btn-close-statistics')?.addEventListener('click', () => {
@@ -238,11 +239,45 @@ class UIManager {
             }
         });
         
-        // 초기화
+        // 데이터 초기화 - 모든 게임 상태 완전 삭제
         document.getElementById('btn-reset-data')?.addEventListener('click', () => {
-            if (confirm('정말로 모든 데이터를 초기화하시겠습니까?')) {
+            // 1단계 경고
+            if (!confirm('⚠️ 경고\n\n정말로 모든 데이터를 초기화하시겠습니까?\n\n초기화되면 다음과 같은 데이터가 모두 삭제됩니다:\n• 레벨, 스탯, 골드\n• 아이템, 업그레이드\n• 진행도, 업적\n• 설정, 세이브 데이터\n\n이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+            
+            // 2단계 최종 확인
+            if (!confirm('정말로 초기화하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                // localStorage 완전 삭제
                 localStorage.clear();
-                location.reload();
+                
+                // 세션 스토리지도 삭제
+                sessionStorage.clear();
+                
+                // 인덱스DB(있는 경우) 삭제
+                if (indexedDB.deleteDatabase) {
+                    // 모든 데이터베이스 삭제 시도
+                    indexedDB.databases()?.then(dbs => {
+                        dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+                    }).catch(() => {});
+                }
+                
+                // 쿠키 삭제
+                document.cookie.split(';').forEach(cookie => {
+                    document.cookie = cookie.replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+                });
+                
+                gameLogger.info('모든 게임 데이터가 초기화되었습니다.');
+                
+                // 페이지 강제 새로고침 (캐시 무시)
+                location.replace(location.href);
+            } catch (error) {
+                gameLogger.error('데이터 초기화 중 오류 발생:', error);
+                alert('데이터 초기화 중 오류가 발생했습니다.');
             }
         });
     }
@@ -280,17 +315,26 @@ class UIManager {
         }
         
         if (this.hudHpFill) {
-            const hpPercent = (player.currentHp / player.maxHp) * 100;
+            const maxHp = player.derivedStats.maxHp || player.maxHp || 1;
+            const hpPercent = (player.currentHp / maxHp) * 100;
             this.hudHpFill.style.width = `${hpPercent}%`;
         }
         
         if (this.hudHpText) {
-            this.hudHpText.textContent = `${player.currentHp}/${player.maxHp}`;
+            const maxHp = player.derivedStats.maxHp || player.maxHp || 1;
+            this.hudHpText.textContent = `${player.currentHp}/${maxHp}`;
         }
         
         if (this.hudStage) {
             this.hudStage.textContent = `Stage ${stage.current}`;
+            // 자동반복 모드 표시
+            if (stage.autoRepeat) {
+                this.hudStage.textContent += ' (자동반복)';
+            }
         }
+        
+        // 자동반복 버튼 상태 업데이트
+        this.updateAutoRepeatButton();
         
         if (this.hudGold) {
             this.hudGold.textContent = this.formatNumber(inventory.gold);
@@ -324,13 +368,35 @@ class UIManager {
     updateStatsPanel() {
         const player = this.gameState.player;
         
-        document.getElementById('stats-level').textContent = player.level;
-        document.getElementById('stats-exp').textContent = `${player.exp}/${player.maxExp}`;
-        document.getElementById('stats-points').textContent = player.statPoints;
-        document.getElementById('stat-str').textContent = player.stats.str;
-        document.getElementById('stat-agi').textContent = player.stats.agi;
-        document.getElementById('stat-int').textContent = player.stats.int;
-        document.getElementById('stat-vit').textContent = player.stats.vit;
+        // 기존 stats-panel 요소 업데이트 (null 체크)
+        const levelEl = document.getElementById('stats-level');
+        if (levelEl) {
+            levelEl.textContent = player.level;
+        }
+        const expEl = document.getElementById('stats-exp');
+        if (expEl) {
+            expEl.textContent = `${player.exp}/${player.maxExp}`;
+        }
+        const pointsEl = document.getElementById('stats-points');
+        if (pointsEl) {
+            pointsEl.textContent = player.statPoints;
+        }
+        const strEl = document.getElementById('stat-str');
+        if (strEl) {
+            strEl.textContent = player.stats.str;
+        }
+        const agiEl = document.getElementById('stat-agi');
+        if (agiEl) {
+            agiEl.textContent = player.stats.agi;
+        }
+        const intEl = document.getElementById('stat-int');
+        if (intEl) {
+            intEl.textContent = player.stats.int;
+        }
+        const vitEl = document.getElementById('stat-vit');
+        if (vitEl) {
+            vitEl.textContent = player.stats.vit;
+        }
     }
 
     /**
@@ -367,9 +433,18 @@ class UIManager {
      * @param {number} gold 
      */
     showOfflineReward(hours, exp, gold) {
-        document.getElementById('offline-duration').textContent = `${hours.toFixed(1)}시간`;
-        document.getElementById('offline-exp').textContent = this.formatNumber(exp);
-        document.getElementById('offline-gold').textContent = this.formatNumber(gold);
+        const durationEl = document.getElementById('offline-duration');
+        if (durationEl) {
+            durationEl.textContent = `${hours.toFixed(1)}시간`;
+        }
+        const expEl = document.getElementById('offline-exp');
+        if (expEl) {
+            expEl.textContent = this.formatNumber(exp);
+        }
+        const goldEl = document.getElementById('offline-gold');
+        if (goldEl) {
+            goldEl.textContent = this.formatNumber(gold);
+        }
         
         document.getElementById('btn-claim-reward')?.addEventListener('click', () => {
             this.hideModal(this.offlineRewardModal);
@@ -423,42 +498,25 @@ class UIManager {
         const minutes = Math.floor((playTimeSeconds % 3600) / 60);
         const seconds = playTimeSeconds % 60;
         
-        document.getElementById('stats-playtime').textContent = 
-            `${hours}시간 ${minutes}분 ${seconds}초`;
-        document.getElementById('stats-kills').textContent = stats.totalKills;
-        document.getElementById('stats-max-stage').textContent = stats.maxStage;
-        document.getElementById('stats-levelups').textContent = stats.totalLevelups;
-        document.getElementById('stats-gold').textContent = this.formatNumber(stats.totalGold);
-        document.getElementById('stats-achievements').textContent = 
-            `${this.gameState.achievements.length}개`;
-    }
-
-    /**
-     * 업적 화면 렌더링
-     */
-    renderAchievements() {
-        const container = document.getElementById('achievements-list');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        // 해제된 업적
-        const unlocked = this.gameState.achievements;
-        const total = 10; // TODO: 데이터에서 읽기
-        const progress = (unlocked.length / total) * 100;
-        
-        // 진행도 업데이트
-        const progressBar = document.getElementById('achievements-progress');
-        if (progressBar) {
-            progressBar.style.width = `${progress}%`;
+        const playtimeEl = document.getElementById('stats-playtime');
+        if (playtimeEl) {
+            playtimeEl.textContent = `${hours}시간 ${minutes}분 ${seconds}초`;
         }
-        
-        document.getElementById('achievements-count').textContent = 
-            `${unlocked.length} / ${total}`;
-        
-        // TODO: 실제 업적 데이터에서 렌더링
-        if (unlocked.length === 0) {
-            container.innerHTML = '<p class="no-achievements">아직 달성한 업적이 없습니다.</p>';
+        const killsEl = document.getElementById('stats-kills');
+        if (killsEl) {
+            killsEl.textContent = stats.totalKills;
+        }
+        const maxStageEl = document.getElementById('stats-max-stage');
+        if (maxStageEl) {
+            maxStageEl.textContent = stats.maxStage;
+        }
+        const levelupsEl = document.getElementById('stats-levelups');
+        if (levelupsEl) {
+            levelupsEl.textContent = stats.totalLevelups;
+        }
+        const goldEl = document.getElementById('stats-gold');
+        if (goldEl) {
+            goldEl.textContent = this.formatNumber(stats.totalGold);
         }
     }
 
@@ -575,42 +633,25 @@ class UIManager {
         const minutes = Math.floor((playTimeSeconds % 3600) / 60);
         const seconds = playTimeSeconds % 60;
         
-        document.getElementById('stats-playtime').textContent = 
-            `${hours}시간 ${minutes}분 ${seconds}초`;
-        document.getElementById('stats-kills').textContent = stats.totalKills;
-        document.getElementById('stats-max-stage').textContent = stats.maxStage;
-        document.getElementById('stats-levelups').textContent = stats.totalLevelups;
-        document.getElementById('stats-gold').textContent = this.formatNumber(stats.totalGold);
-        document.getElementById('stats-achievements').textContent = 
-            `${this.gameState.achievements.length}개`;
-    }
-
-    /**
-     * 업적 화면 렌더링
-     */
-    renderAchievements() {
-        const container = document.getElementById('achievements-list');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        // 해제된 업적
-        const unlocked = this.gameState.achievements;
-        const total = 10; // TODO: 데이터에서 읽기
-        const progress = (unlocked.length / total) * 100;
-        
-        // 진행도 업데이트
-        const progressBar = document.getElementById('achievements-progress');
-        if (progressBar) {
-            progressBar.style.width = `${progress}%`;
+        const playtimeEl = document.getElementById('stats-playtime');
+        if (playtimeEl) {
+            playtimeEl.textContent = `${hours}시간 ${minutes}분 ${seconds}초`;
         }
-        
-        document.getElementById('achievements-count').textContent = 
-            `${unlocked.length} / ${total}`;
-        
-        // TODO: 실제 업적 데이터에서 렌더링
-        if (unlocked.length === 0) {
-            container.innerHTML = '<p class="no-achievements">아직 달성한 업적이 없습니다.</p>';
+        const killsEl = document.getElementById('stats-kills');
+        if (killsEl) {
+            killsEl.textContent = stats.totalKills;
+        }
+        const maxStageEl = document.getElementById('stats-max-stage');
+        if (maxStageEl) {
+            maxStageEl.textContent = stats.maxStage;
+        }
+        const levelupsEl = document.getElementById('stats-levelups');
+        if (levelupsEl) {
+            levelupsEl.textContent = stats.totalLevelups;
+        }
+        const goldEl = document.getElementById('stats-gold');
+        if (goldEl) {
+            goldEl.textContent = this.formatNumber(stats.totalGold);
         }
     }
 
@@ -620,6 +661,9 @@ class UIManager {
      * @returns {string}
      */
     formatNumber(num) {
+        if (num === null || num === undefined || isNaN(num)) {
+            return '0';
+        }
         if (num >= 1000000) {
             return (num / 1000000).toFixed(1) + 'M';
         }
@@ -627,6 +671,20 @@ class UIManager {
             return (num / 1000).toFixed(1) + 'K';
         }
         return num.toString();
+    }
+
+    /**
+     * 자동반복 버튼 상태 업데이트
+     */
+    updateAutoRepeatButton() {
+        if (!this.btnAutoRepeat) return;
+        
+        const isAutoRepeat = this.gameState.stage.autoRepeat || false;
+        if (isAutoRepeat) {
+            this.btnAutoRepeat.classList.add('active');
+        } else {
+            this.btnAutoRepeat.classList.remove('active');
+        }
     }
 }
 
