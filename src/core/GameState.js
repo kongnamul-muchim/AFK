@@ -29,7 +29,9 @@ class GameState {
                 attack: 10,
                 defense: 5,
                 critChance: 0.05,
-                critDamage: 1.5
+                critDamage: 1.5,
+                maxHp: 100,
+                moveSpeed: 100
             }
         };
         this.stage = {
@@ -178,29 +180,44 @@ class GameState {
      * 파생 스탯 재계산
      */
     recalculateDerivedStats() {
-        const stats = this.player.stats;
+        // 장비 보너스 합산
+        let totalAttackBonus = 0;
+        let totalDefenseBonus = 0;
+        let totalHpBonus = 0;
+        let totalMoveSpeed = 0;
         
-        // 공격력 = 기본 10 + 힘 * 2
-        this.player.derivedStats.attack = 10 + stats.str * 2;
+        Object.values(this.player.equipment).forEach(item => {
+            if (item && item.stats) {
+                if (item.stats.attackBonus) totalAttackBonus += item.stats.attackBonus;
+                if (item.stats.defenseBonus) totalDefenseBonus += item.stats.defenseBonus;
+                if (item.stats.hpBonus) totalHpBonus += item.stats.hpBonus;
+                if (item.stats.moveSpeed) totalMoveSpeed += item.stats.moveSpeed;
+            }
+        });
         
-        // 방어력 = 기본 5 + 체력 * 0.5
-        this.player.derivedStats.defense = 5 + stats.vit * 0.5;
+        // 기본 스탯 계산
+        const baseAttack = 10 + this.player.stats.str * 2;
+        const baseDefense = 5 + this.player.stats.vit * 0.5;
+        const baseMaxHp = 100 + this.player.stats.vit * 10;
         
-        // 크리티컬 확률 = 5% + 민첩 * 0.5%
-        this.player.derivedStats.critChance = 0.05 + stats.agi * 0.005;
+        // % 보너스 적용
+        this.player.derivedStats.attack = Math.floor(baseAttack * (1 + totalAttackBonus / 100));
+        this.player.derivedStats.defense = Math.floor(baseDefense * (1 + totalDefenseBonus / 100));
+        this.player.derivedStats.maxHp = Math.floor(baseMaxHp * (1 + totalHpBonus / 100));
+        this.player.derivedStats.moveSpeed = 100 + totalMoveSpeed;
         
-        // 크리티컬 데미지 = 150%
+        // 크리티컬 (기존 유지)
+        this.player.derivedStats.critChance = 0.05 + this.player.stats.agi * 0.005;
         this.player.derivedStats.critDamage = 1.5;
         
-        // 최대 HP = 기본 100 + 체력 * 10
-        const newMaxHp = 100 + stats.vit * 10;
-        const hpRatio = this.player.currentHp / this.player.maxHp;
-        this.player.maxHp = newMaxHp;
-        this.player.currentHp = Math.floor(newMaxHp * hpRatio);
+        // HP 비율 유지
+        if (this.player.currentHp > this.player.derivedStats.maxHp) {
+            this.player.currentHp = this.player.derivedStats.maxHp;
+        }
         
         gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
             currentHp: this.player.currentHp,
-            maxHp: this.player.maxHp
+            maxHp: this.player.derivedStats.maxHp
         });
     }
 
