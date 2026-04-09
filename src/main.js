@@ -193,13 +193,23 @@ class Game {
                     const equipmentDrops = [];
                     const items = gameDataLoader.get('items');
                     if (items) {
+                        // 보석 업그레이드: 드롭 확률 업 (등급별 차등 적용)
+                        const dropRateLevel = this.gameState.gemUpgrades.dropRate || 0;
+                        const dropRates = {
+                            mythic: 0.005 + (dropRateLevel * 0.001),      // 전설: 0.5% → 2.5%
+                            legendary: 0.025 + (dropRateLevel * 0.004),    // 영웅: 2.5% → 10.5%
+                            epic: 0.07 + (dropRateLevel * 0.004),          // 희귀: 7% → 15%
+                            rare: 0.20 + (dropRateLevel * 0.002),          // 고급: 20% → 24%
+                            common: 0.50 + (dropRateLevel * -0.011)        // 일반: 50% → 28%
+                        };
+                        
                         for (let i = 0; i < actualDrops; i++) {
                             const rarityRoll = Math.random();
                             let rarity;
-                            if (rarityRoll < 0.01) rarity = 'mythic';
-                            else if (rarityRoll < 0.05) rarity = 'legendary';
-                            else if (rarityRoll < 0.20) rarity = 'epic';
-                            else if (rarityRoll < 0.50) rarity = 'rare';
+                            if (rarityRoll < dropRates.mythic) rarity = 'mythic';
+                            else if (rarityRoll < dropRates.mythic + dropRates.legendary) rarity = 'legendary';
+                            else if (rarityRoll < dropRates.mythic + dropRates.legendary + dropRates.epic) rarity = 'epic';
+                            else if (rarityRoll < dropRates.mythic + dropRates.legendary + dropRates.epic + dropRates.rare) rarity = 'rare';
                             else rarity = 'common';
                             
                             // 최대 스테이지에 해당하는 등급의 장비 (maxStage에 맞는 grade)
