@@ -114,13 +114,18 @@ class Game {
                 this.gameState = new GameState();
                 this.gameState.fromJSON(savedData);
                 
+                // items.csv ID 체계 리팩토링(v2)으로 인한 세이브 데이터 하드리셋
+                // 기존 세이브 데이터의 아이템 ID가 새 체계와 호환되지 않음
+                gameLogger.info('Performing hard reset of inventory due to ID system refactoring (v2)');
+                this.gameState.hardResetInventory();
+                
                 // 오프라인 보상 계산
                 const offlineSeconds = (Date.now() - savedData.lastSaveTime) / 1000;
                 if (offlineSeconds > 60) {
                     this.calculateOfflineReward(offlineSeconds);
                 }
                 
-                gameLogger.info('Game loaded from save');
+                gameLogger.info('Game loaded from save (inventory reset)');
             } else {
                 this.gameState = new GameState();
                 gameLogger.info('New game created');

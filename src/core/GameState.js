@@ -37,7 +37,8 @@ class GameState {
                 decisiveChance: 0,
                 decisiveDamage: 2,
                 goldBonus: 0,
-                expBonus: 0
+                expBonus: 0,
+                hpRegenAccumulator: 0  // HP 회복 소수점 누적용
             },
             goldUpgrades: {
                 attack: 0,
@@ -147,6 +148,32 @@ class GameState {
         };
         this.lastSaveTime = Date.now();
         this.lastLoginTime = Date.now();
+    }
+
+    /**
+     * 인벤토리 아이템 키 통일 (문자열로)
+     * 런타임에 숫자/문자열 키 중복을 방지
+     */
+    normalizeInventoryKeys() {
+        const normalized = new Map();
+        let merged = false;
+        
+        this.inventory.items.forEach((value, key) => {
+            const strKey = key.toString();
+            if (normalized.has(strKey)) {
+                // 중복 키면 count 합산
+                const existing = normalized.get(strKey);
+                existing.count += value.count || 0;
+                merged = true;
+            } else {
+                normalized.set(strKey, value);
+            }
+        });
+        
+        if (merged) {
+            this.inventory.items = normalized;
+            gameLogger.info(`Inventory keys normalized. Merged duplicate entries.`);
+        }
     }
 
     /**
@@ -290,6 +317,9 @@ class GameState {
      * @returns {boolean} 레벨업 성공 여부
      */
     addExp(amount) {
+        if (this.player.exp === null || this.player.exp === undefined) {
+            this.player.exp = 0;
+        }
         this.player.exp += amount;
         this.stats.totalGold += amount; // TEMP: gold tracking
         
@@ -364,14 +394,28 @@ class GameState {
             }
         });
         
+        // 효율 배율 계산 (10레벨마다 증가)
+        // Lv 1-10: ×1.0, Lv 11-20: ×1.5, Lv 21-30: ×2.0, Lv 31-40: ×2.5, Lv 41+: ×3.0
+        const calcUpgradeValue = (level) => {
+            if (level < 10) return level * 1.0;
+            if (level < 20) return 10 * 1.0 + (level - 10) * 1.5;
+            if (level < 30) return 10 * 1.0 + 10 * 1.5 + (level - 20) * 2.0;
+            if (level < 40) return 10 * 1.0 + 10 * 1.5 + 10 * 2.0 + (level - 30) * 2.5;
+            return 10 * 1.0 + 10 * 1.5 + 10 * 2.0 + 10 * 2.5 + (level - 40) * 3.0;
+        };
+        
         // 골드 업그레이드 + 스탯 업그레이드 합산
         const goldUp = this.player.goldUpgrades;
         const statUp = this.player.statUpgrades;
         
-        // 기본 스탯 계산 + 양쪽 업그레이드 합산
-        const baseAttack = 10 + this.player.stats.str * 2 + (goldUp.attack + statUp.attack) * 2;
-        const baseDefense = 5 + this.player.stats.vit * 0.5 + (goldUp.defense + statUp.defense) * 1;
-        const baseMaxHp = 100 + this.player.stats.vit * 10 + (goldUp.hp + statUp.hp) * 10;
+        // 기본 스탯 계산 + 양쪽 업그레이드 합산 (효율 배율 적용)
+        const attackValue = calcUpgradeValue(goldUp.attack) + calcUpgradeValue(statUp.attack);
+        const defenseValue = calcUpgradeValue(goldUp.defense) + calcUpgradeValue(statUp.defense);
+        const hpValue = calcUpgradeValue(goldUp.hp) * 10 + calcUpgradeValue(statUp.hp) * 10;
+        
+        const baseAttack = 10 + this.player.stats.str * 2 + attackValue * 2;
+        const baseDefense = 5 + this.player.stats.vit * 0.5 + defenseValue * 1;
+        const baseMaxHp = 100 + this.player.stats.vit * 10 + hpValue;
         
         // % 보너스 적용
         this.player.derivedStats.attack = Math.floor(baseAttack * (1 + totalAttackBonus / 100));
@@ -379,17 +423,33 @@ class GameState {
         this.player.derivedStats.maxHp = Math.floor(baseMaxHp * (1 + totalHpBonus / 100));
         this.player.derivedStats.moveSpeed = 100 + totalMoveSpeed;
         
-        // 크리티컬 (기존 + 양쪽 업그레이드 합산)
-        this.player.derivedStats.critChance = 0.05 + this.player.stats.agi * 0.005 + (goldUp.critChance + statUp.critChance) * 0.002;
-        this.player.derivedStats.critDamage = 1.5 + (goldUp.critDamage + statUp.critDamage) * 0.01;
+        // 크리티컬 (기존 + 양쪽 업그레이드 합산, 효율 배율 적용)
+        const critChanceValue = calcUpgradeValue(goldUp.critChance) + calcUpgradeValue(statUp.critChance);
+        this.player.derivedStats.critChance = 0.05 + this.player.stats.agi * 0.005 + critChanceValue * 0.002;
         
-        // 업그레이드 효과 (골드만)
-        this.player.derivedStats.hpRegen = goldUp.hpRegen * 1;
-        this.player.derivedStats.attackSpeed = 100 + goldUp.attackSpeed * 1;
-        this.player.derivedStats.decisiveChance = goldUp.decisiveChance * 0.002;
-        this.player.derivedStats.decisiveDamage = 2 + goldUp.decisiveDamage * 0.01;
-        this.player.derivedStats.goldBonus = goldUp.goldBonus * 1;
-        this.player.derivedStats.expBonus = goldUp.expBonus * 1;
+        const critDamageValue = calcUpgradeValue(goldUp.critDamage) + calcUpgradeValue(statUp.critDamage);
+        this.player.derivedStats.critDamage = 1.5 + critDamageValue * 0.01;
+        
+        // 업그레이드 효과 (골드 + 스탯 합산, 효율 배율 적용)
+        const hpRegenValue = calcUpgradeValue(goldUp.hpRegen) + calcUpgradeValue(statUp.hpRegen);
+        this.player.derivedStats.hpRegen = hpRegenValue * 1;
+        
+        const attackSpeedValue = calcUpgradeValue(goldUp.attackSpeed) + calcUpgradeValue(statUp.attackSpeed);
+        this.player.derivedStats.attackSpeed = 100 + attackSpeedValue * 1;
+        
+        // 결정타 (골드만, 효율 배율 적용)
+        const decisiveChanceValue = calcUpgradeValue(goldUp.decisiveChance);
+        this.player.derivedStats.decisiveChance = decisiveChanceValue * 0.002;
+        
+        const decisiveDamageValue = calcUpgradeValue(goldUp.decisiveDamage);
+        this.player.derivedStats.decisiveDamage = 2 + decisiveDamageValue * 0.01;
+        
+        // 골드/경험치 보너스 (골드만, 효율 배율 적용)
+        const goldBonusValue = calcUpgradeValue(goldUp.goldBonus);
+        this.player.derivedStats.goldBonus = goldBonusValue * 1;
+        
+        const expBonusValue = calcUpgradeValue(goldUp.expBonus);
+        this.player.derivedStats.expBonus = expBonusValue * 1;
         
         // HP 비율 유지
         if (this.player.currentHp > this.player.derivedStats.maxHp) {
@@ -430,6 +490,9 @@ class GameState {
      * @param {number} amount 
      */
     addGold(amount) {
+        if (this.inventory.gold === null || this.inventory.gold === undefined) {
+            this.inventory.gold = 0;
+        }
         this.inventory.gold += amount;
         gameEventBus.emit(GAME_EVENTS.INVENTORY_GOLD_CHANGED, { gold: this.inventory.gold });
         this.notifyChange('inventory.gold');
@@ -566,6 +629,33 @@ class GameState {
     }
 
     /**
+     * 세이브 데이터 하드리셋 (인벤토리 완전 초기화)
+     * items.csv ID 체계 리팩토링(v2) 이후 기존 세이브 데이터 호환성 문제 해결
+     */
+    hardResetInventory() {
+        gameLogger.info('Hard resetting inventory due to ID system refactoring');
+        
+        // 인벤토리 아이템 완전 초기화
+        this.inventory.items = new Map();
+        
+        // 발견된 아이템도 초기화 (도감 리셋)
+        this.inventory.discoveredItems = new Set();
+        
+        // 장비 해제
+        this.player.equipment = {
+            weapon: null,
+            armor: null,
+            accessory: null,
+            boots: null
+        };
+        
+        // 파생 스탯 재계산
+        this.recalculateDerivedStats();
+        
+        gameLogger.info('Inventory hard reset completed');
+    }
+
+    /**
      * 직렬화 (JSON 저장용)
      * @returns {Object}
      */
@@ -601,7 +691,22 @@ class GameState {
         if (data.combatPhase) Object.assign(this.combatPhase, data.combatPhase);
         if (data.inventory) {
             this.inventory.gold = data.inventory.gold ?? 0;
-            this.inventory.items = new Map(data.inventory.items || []);
+            
+            // 아이템 키 통일 (문자열로) - 숫자/문자열 키 중복 방지
+            const normalizedItems = new Map();
+            const itemsData = data.inventory.items || [];
+            itemsData.forEach(([key, value]) => {
+                const strKey = key.toString();
+                if (normalizedItems.has(strKey)) {
+                    // 이미 있는 키면 count 합산
+                    const existing = normalizedItems.get(strKey);
+                    existing.count += value.count || 0;
+                } else {
+                    normalizedItems.set(strKey, value);
+                }
+            });
+            this.inventory.items = normalizedItems;
+            
             // discoveredItems 복원
             if (data.inventory.discoveredItems) {
                 this.inventory.discoveredItems = new Set(data.inventory.discoveredItems);

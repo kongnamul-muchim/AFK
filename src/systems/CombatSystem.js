@@ -114,8 +114,12 @@ class CombatSystem {
     update(dt) {
         if (!this.isRunning) return;
         
-        const phase = this.gameState.combatPhase.phase;
         const now = performance.now();
+        
+        // HP 재생 (모든 페이즈에서 적용 - 초당 hpRegen만큼 회복 + 스테이지 비례 보너스)
+        this.updateHpRegen(dt);
+        
+        const phase = this.gameState.combatPhase.phase;
         
         switch (phase) {
             case 'MOVING':
@@ -146,7 +150,12 @@ class CombatSystem {
     updateMoving(dt, now) {
         const cp = this.gameState.combatPhase;
         cp.phaseTimer += dt;
-        cp.moveProgress = Math.min(1, cp.phaseTimer / this.moveDuration);
+        
+        // 이동 속도 비례 duration 계산 (moveSpeed 100 = 기본, 200 = 2배 빠름)
+        const moveSpeed = this.gameState.player.derivedStats.moveSpeed || 100;
+        const adjustedMoveDuration = this.moveDuration / (moveSpeed / 100);
+        
+        cp.moveProgress = Math.min(1, cp.phaseTimer / adjustedMoveDuration);
         
         // 몬스터 등장 체크 (이동 50% 지점)
         if (cp.moveProgress >= this.monsterAppearProgress && !this.currentMonster) {
@@ -180,6 +189,42 @@ class CombatSystem {
         // 조우 대기 시간 경과 시 전투 시작
         if (cp.phaseTimer >= this.encounterDuration) {
             this.startCombatPhase();
+        }
+    }
+
+    /**
+     * HP 재생 업데이트 (모든 페이즈에서 호출)
+     * 소수점 회복량을 누적했다가 1 이상이 되면 실제 회복 처리
+     */
+    updateHpRegen(dt) {
+        // 플레이어 hpRegen만 사용 (스테이지 보너스 제거 - 플레이어가 직접 업그레이드)
+        const hpRegen = this.gameState.player.derivedStats.hpRegen || 0;
+        
+        if (hpRegen > 0) {
+            const maxHp = this.gameState.player.derivedStats.maxHp;
+            // 이번 프레임의 회복량 (소수점 포함)
+            const regenAmount = hpRegen * (dt / 1000); // dt는 ms이므로 초 변환
+            
+            // 누적기에 이번 회복량 추가
+            let accumulator = this.gameState.player.derivedStats.hpRegenAccumulator || 0;
+            accumulator += regenAmount;
+            
+            // 누적된 값이 1 이상이 되면 실제 HP 회복
+            const healAmount = Math.floor(accumulator);
+            if (healAmount > 0 && this.gameState.player.currentHp < maxHp) {
+                this.gameState.player.currentHp = Math.min(maxHp, this.gameState.player.currentHp + healAmount);
+                // 누적기에서 사용한 만큼 차감
+                accumulator -= healAmount;
+                this.gameState.player.derivedStats.hpRegenAccumulator = accumulator;
+                
+                gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
+                    currentHp: this.gameState.player.currentHp,
+                    maxHp: maxHp
+                });
+            } else {
+                // 회복하지 않았더라도 누적기는 유지
+                this.gameState.player.derivedStats.hpRegenAccumulator = accumulator;
+            }
         }
     }
 
@@ -340,7 +385,9 @@ class CombatSystem {
         let monsterData;
         if (isBoss) {
             // 보스 스테이지 - 보스 몬스터
-            monsterData = gameDataLoader.filter('monsters', m => m.stage === stage && m.isBoss)[0];
+            const bossMonsters = gameDataLoader.filter('monsters', m => m.stage === stage && m.isBoss);
+            monsterData = bossMonsters[0];
+            gameLogger.debug(`Boss search: stage=${stage}, found=${bossMonsters.length}, data=${JSON.stringify(monsterData)}`);
         }
         
         // 일반 몬스터 중 랜덤 선택
@@ -348,14 +395,17 @@ class CombatSystem {
             const stageMonsters = gameDataLoader.filter('monsters', m => 
                 m.stage <= stage && !m.isBoss
             );
+            gameLogger.debug(`Normal monster search: stage=${stage}, found=${stageMonsters.length}`);
             if (stageMonsters.length > 0) {
                 const randomIndex = Math.floor(Math.random() * stageMonsters.length);
                 monsterData = stageMonsters[randomIndex];
+                gameLogger.debug(`Selected monster: ${JSON.stringify(monsterData)}`);
             }
         }
         
         // 데이터가 없으면 기본 몬스터 생성
         if (!monsterData) {
+            gameLogger.warn('No monster data found, using fallback');
             monsterData = {
                 id: 1,
                 name: 'Slime',
@@ -374,16 +424,24 @@ class CombatSystem {
         const scalingMultiplier = gameConfig.combat.monsterScalingMultiplier;
         const stageMultiplier = Math.pow(scalingMultiplier, stage - 1);
         
+        // exp_reward와 gold_reward가 null/undefined인지 확인 (필드명 변형 대응)
+        const expRewardBase = monsterData.exp_reward || monsterData.expReward || 10;
+        const goldRewardBase = monsterData.gold_reward || monsterData.goldReward || 5;
+        
+        gameLogger.debug(`Monster spawn: name=${monsterData.name}, exp_base=${expRewardBase}, gold_base=${goldRewardBase}, stageMultiplier=${stageMultiplier}`);
+        
         this.currentMonster = {
             id: monsterData.id,
             name: monsterData.name,
             maxHp: Math.floor(monsterData.hp_base * stageMultiplier),
             currentHp: Math.floor(monsterData.hp_base * stageMultiplier),
             attack: Math.floor(monsterData.atk_base * stageMultiplier),
-            expReward: Math.floor(monsterData.expReward * stageMultiplier),
-            goldReward: Math.floor(monsterData.goldReward * stageMultiplier),
+            expReward: Math.floor(expRewardBase * stageMultiplier),
+            goldReward: Math.floor(goldRewardBase * stageMultiplier),
             isBoss: monsterData.isBoss
         };
+        
+        gameLogger.info(`Monster spawned: ${this.currentMonster.name} (HP: ${this.currentMonster.maxHp}, EXP: ${this.currentMonster.expReward}, Gold: ${this.currentMonster.goldReward})`);
     }
 
     /**
@@ -440,6 +498,7 @@ class CombatSystem {
         gameEventBus.emit(GAME_EVENTS.COMBAT_DAMAGE, {
             target: 'monster',
             damage,
+            isCrit,
             currentHp: monster.currentHp,
             maxHp: monster.maxHp
         });
@@ -461,11 +520,11 @@ class CombatSystem {
         const stage = this.gameState.stage.current;
         
         // 플레이어 체력 소모 (스테이지 비례 고정 수치 - 방어력)
-        // 공식: (stage * 5) - playerDefense, 최소 1
-        const baseRecoil = stage * 5; // 스테이지당 5 데미지
+        // 공식: (stage * 4) - playerDefense, 최소 1
+        const baseRecoil = stage * 4; // 스테이지당 4 데미지
         const recoilDamage = Math.max(1, baseRecoil - player.derivedStats.defense);
         
-        player.currentHp = Math.max(0, player.currentHp - recoilDamage);
+        player.currentHp = Math.max(0, Math.floor(player.currentHp - recoilDamage));
         
         gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
             currentHp: player.currentHp,
@@ -538,6 +597,11 @@ class CombatSystem {
      * 몬스터 처치
      */
     killMonster() {
+        if (!this.currentMonster) {
+            gameLogger.warn('killMonster called but currentMonster is null');
+            return;
+        }
+        
         const monster = this.currentMonster;
         const player = this.gameState.player;
         
@@ -548,6 +612,8 @@ class CombatSystem {
         // 보상 지급 (버프 적용)
         const expReward = Math.floor(monster.expReward * expBuff);
         const goldReward = Math.floor(monster.goldReward * goldBuff);
+        
+        gameLogger.debug(`Monster killed: ${monster.name}, exp=${expReward}, gold=${goldReward}`);
         
         this.gameState.addExp(expReward);
         this.gameState.addGold(goldReward);
@@ -607,53 +673,109 @@ class CombatSystem {
     }
 
     /**
-     * 아이템 드롭 판정
+     * 아이템 드롭 판정 (리팩토링 v2)
+     * - Stage 1-10: grade 1~5 드롭 (Bronze common~mythic)
+     * - Stage 11-20: grade 2~6 드롭 (Bronze rare~mythic + Iron common)
+     * - Stage 21-30: grade 3~7 드롭
+     * - Stage 31-40: grade 4~8 드롭
+     * - Stage 41-50: grade 5~9 드롭
+     * - Stage 51-60: grade 6~10 드롭 (Iron common~mythic)
+     * - Stage 61-70: grade 7~11 드롭
+     * - ...
+     * - Stage 91+: grade 21~25 드롭 (Mythril, 최대 티어 고정 반복)
+     * 
+     * 희귀도 확률: 선형 감소 (70%, 20%, 7%, 2.5%, 0.5%)
+     * 타입 분포: 균등 25% (weapon/armor/boots/accessory)
      */
     rollItemDrop() {
-        const dropRates = {
-            common: gameDataLoader.getConfigNumber('inventory', 'commonDropRate', 0.6),
-            rare: gameDataLoader.getConfigNumber('inventory', 'rareDropRate', 0.3),
-            epic: gameDataLoader.getConfigNumber('inventory', 'epicDropRate', 0.09),
-            legendary: gameDataLoader.getConfigNumber('inventory', 'legendaryDropRate', 0.01)
-        };
+        const stage = this.gameState.stage.current;
         
-        const roll = Math.random();
-        let rarity = 'common';
-        
-        if (roll < dropRates.legendary) {
-            rarity = 'legendary';
-        } else if (roll < dropRates.epic) {
-            rarity = 'epic';
-        } else if (roll < dropRates.rare) {
-            rarity = 'rare';
+        // Grade 범위 계산
+        let baseGrade;
+        if (stage >= 91) {
+            // Stage 91+는 Mythril(grade 21-25) 고정 반복
+            baseGrade = 21;
+        } else {
+            // Stage 1-90: [baseGrade, baseGrade+4] 범위
+            baseGrade = Math.ceil(stage / 10);
         }
         
-        // 해당 희귀도의 아이템 중 현재 스테이지에 적합한 아이템 선택
+        const dropGrades = [baseGrade, baseGrade + 1, baseGrade + 2, baseGrade + 3, baseGrade + 4];
+        
+        // Grade별 희귀도 매핑 (가장 낮은 희귀도 = common 70%, 가장 높은 희귀도 = mythic 0.5%)
+        // Grade 범위 내에서의 상대적 위치에 따라 희귀도 할당
+        // 예: Stage 1-10 → grades [1,2,3,4,5] → [common,rare,epic,legendary,mythic]
+        const rarityMap = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+        
+        // 선형 감소 확률 (70%, 20%, 7%, 2.5%, 0.5%)
+        const gradeProbabilities = [0.70, 0.20, 0.07, 0.025, 0.005];
+        
+        // Grade 랜덤 선택 (가중치 적용)
+        const selectedGradeIndex = this.weightedRandomIndex(gradeProbabilities);
+        const selectedGrade = dropGrades[selectedGradeIndex];
+        const selectedRarity = rarityMap[selectedGradeIndex];
+        
+        // 타입 랜덤 선택 (균등 25%)
+        const types = ['weapon', 'armor', 'boots', 'accessory'];
+        const selectedType = types[Math.floor(Math.random() * types.length)];
+        
+        // items.csv에서 grade + type 매칭
         const items = gameDataLoader.filter('items', item => 
-            item.rarity === rarity && item.grade <= Math.ceil(this.gameState.stage.current / 10) + 1
+            item.grade === selectedGrade && item.type === selectedType
         );
         
         if (items.length > 0) {
             const randomItem = items[Math.floor(Math.random() * items.length)];
-            this.gameState.inventory.items.set(randomItem.id, {
-                itemId: randomItem.id,
-                name: randomItem.name,
-                count: 1,
-                grade: randomItem.grade,
-                rarity: rarity,
-                stats: randomItem.stats
-            });
+            const itemIdStr = randomItem.id.toString();  // 문자열 키로 통일
+            
+            // 발견 아이템으로 등록 (영구 해제)
+            this.gameState.inventory.discoveredItems.add(itemIdStr);
+            
+            // 기존 아이템이 있으면 count 증가, 없으면 새로 생성
+            const existingItem = this.gameState.inventory.items.get(itemIdStr);
+            if (existingItem) {
+                existingItem.count += 1;
+            } else {
+                this.gameState.inventory.items.set(itemIdStr, {
+                    itemId: randomItem.id,
+                    name: randomItem.name,
+                    count: 1,
+                    grade: randomItem.grade,
+                    rarity: selectedRarity,
+                    stats: randomItem.stats,
+                    type: randomItem.type
+                });
+            }
             
             gameEventBus.emit(GAME_EVENTS.INVENTORY_ITEM_ADDED, {
                 itemId: randomItem.id,
                 name: randomItem.name,
-                rarity: rarity
+                rarity: selectedRarity
             });
             
             gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
-                message: `아이템 획득: ${randomItem.name} (${rarity})`
+                message: `아이템 획득: ${randomItem.name} (${selectedRarity})`
             });
+        } else {
+            gameLogger.warn(`rollItemDrop: No item found for grade=${selectedGrade}, type=${selectedType}`);
         }
+    }
+    
+    /**
+     * 가중치 랜덤 인덱스 선택
+     * @param {number[]} probabilities - 확률 배열 (합=1)
+     * @returns {number} 선택된 인덱스
+     */
+    weightedRandomIndex(probabilities) {
+        const roll = Math.random();
+        let cumulative = 0;
+        for (let i = 0; i < probabilities.length; i++) {
+            cumulative += probabilities[i];
+            if (roll < cumulative) {
+                return i;
+            }
+        }
+        return probabilities.length - 1; // 마지막 인덱스 반환
     }
 
     /**
