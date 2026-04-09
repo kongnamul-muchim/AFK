@@ -24,28 +24,37 @@ class InventorySystem {
     }
 
     /**
-     * 모든 아이템 이름 수정 (rusty_sword_2 → rusty_sword)
+     * 모든 아이템 이름/타입 수정 (rusty_sword_2 → rusty_sword)
      */
     fixAllItemNames() {
         const items = gameDataLoader.get('items');
         if (!items) return;
         
-        // itemId → name 매핑 생성
-        const nameMap = new Map();
+        // itemId → item data 매핑 생성
+        const itemDataMap = new Map();
         items.forEach(item => {
-            nameMap.set(item.id.toString(), item.name);
+            itemDataMap.set(item.id.toString(), {
+                name: item.name,
+                type: item.type
+            });
         });
         
-        // 인벤토리 아이템 이름 수정
+        // 인벤토리 아이템 이름/타입 수정
         this.gameState.inventory.items.forEach((item, itemId) => {
-            const correctName = nameMap.get(itemId);
-            if (correctName && item.name !== correctName) {
-                gameLogger.info(`Fixed item name: "${item.name}" → "${correctName}"`);
-                item.name = correctName;
+            const correctData = itemDataMap.get(itemId);
+            if (correctData) {
+                if (item.name !== correctData.name) {
+                    gameLogger.info(`Fixed item name: "${item.name}" → "${correctData.name}"`);
+                    item.name = correctData.name;
+                }
+                if (item.type !== correctData.type) {
+                    gameLogger.info(`Fixed item type: "${item.type}" → "${correctData.type}"`);
+                    item.type = correctData.type;
+                }
             }
         });
         
-        gameLogger.debug('All item names fixed');
+        gameLogger.debug('All item names/types fixed');
     }
 
     /**
@@ -53,7 +62,7 @@ class InventorySystem {
      * @param {Object} itemData 
      */
     addItem(itemData) {
-        const { itemId, name, count = 1, grade, rarity, stats } = itemData;
+        const { itemId, name, count = 1, grade, rarity, stats, type } = itemData;
         const itemIdStr = itemId.toString();
         
         gameLogger.debug(`addItem: itemId=${itemIdStr}, name="${name}", grade=${grade}`);
@@ -71,6 +80,12 @@ class InventorySystem {
                 existing.name = name;
             }
             
+            // type이 틀렸으면 수정
+            if (type && existing.type !== type) {
+                gameLogger.debug(`Fixing item type: "${existing.type}" → "${type}"`);
+                existing.type = type;
+            }
+            
             existing.count += count;
             
             gameLogger.debug(`Item stack increased: ${name} x${existing.count}, stored.name="${existing.name}"`);
@@ -82,7 +97,8 @@ class InventorySystem {
                 count,
                 grade,
                 rarity,
-                stats
+                stats,
+                type  // 합성 후 type 저장!
             };
             gameLogger.debug(`Storing new item:`, itemToStore);
             this.gameState.inventory.items.set(itemIdStr, itemToStore);
@@ -214,7 +230,7 @@ class InventorySystem {
             count: 1,
             grade: nextGradeItem.grade,
             rarity: nextGradeItem.rarity,
-            stats: nextGradeItem.stats_min,
+            stats: nextGradeItem.stats,
             type: nextGradeItem.type  // CSV 에서 읽은 정확한 타입
         };
         gameLogger.debug(`[addItem] id=${newItemData.itemId}, name="${newItemData.name}", type="${newItemData.type}", grade=${newItemData.grade}`);
@@ -307,6 +323,109 @@ class InventorySystem {
                     count: item.count,
                     grade: item.grade,
                     rarity: item.rarity
+                });
+            }
+        });
+        
+        return result;
+    }
+
+    /**
+     * 탭별 일괄 합성
+     * 해당 타입의 모든 합성 가능한 아이템을 자동으로 합성
+     * @param {string} type - 'weapon', 'armor', 'boots', 'accessory'
+     * @returns {Object} 합성 결과 { successCount, results: [{material, result, count}] }
+     */
+    synthesizeAllByType(type) {
+        const results = [];
+        let successCount = 0;
+        let totalMaterialUsed = 0;
+        
+        // 현재 타입의 모든 아이템 중 합성 가능한 것 찾기
+        const synthesizableItems = [];
+        
+        this.gameState.inventory.items.forEach((item, itemId) => {
+            // 타입이 일치하고 합성 가능 개수 이상인 아이템
+            if (item.type === type && item.count >= this.synthesizeCount) {
+                // 최대 등급 확인
+                const maxGrade = this.getMaxGradeByType(type);
+                if (item.grade < maxGrade) {
+                    synthesizableItems.push({
+                        itemId,
+                        item,
+                        maxGrade
+                    });
+                }
+            }
+        });
+        
+        // 각 아이템에 대해 가능한 만큼 합성
+        for (const { itemId, item, maxGrade } of synthesizableItems) {
+            const itemIdStr = itemId.toString();
+            
+            // 다시 한번 확인 (다른 합성으로 인해 상태가 변했을 수 있음)
+            const currentItem = this.gameState.inventory.items.get(itemIdStr);
+            if (!currentItem || currentItem.count < this.synthesizeCount) continue;
+            
+            // 최대 등급 확인
+            if (currentItem.grade >= maxGrade) continue;
+            
+            // 한 번에 할 수 있는 최대 합성 횟수 계산
+            const possibleSyntheses = Math.floor(currentItem.count / this.synthesizeCount);
+            
+            // 연속 합성 수행
+            for (let i = 0; i < possibleSyntheses; i++) {
+                const result = this.synthesize(itemIdStr);
+                if (result) {
+                    successCount++;
+                    totalMaterialUsed += this.synthesizeCount;
+                    
+                    // 결과 기록
+                    const existingResult = results.find(r => r.result.id === result.id);
+                    if (existingResult) {
+                        existingResult.count++;
+                    } else {
+                        results.push({
+                            material: {
+                                name: currentItem.name,
+                                grade: currentItem.grade - 1 // 합성 전 등급 (synth에서 grade+1됨)
+                            },
+                            result,
+                            count: 1
+                        });
+                    }
+                } else {
+                    // 더 이상 합성 불가 (최대 등급 도달 등)
+                    break;
+                }
+            }
+        }
+        
+        return {
+            successCount,
+            totalMaterialUsed,
+            results
+        };
+    }
+
+    /**
+     * 특정 타입의 합성 가능한 아이템 목록 반환
+     * @param {string} type - 'weapon', 'armor', 'boots', 'accessory'
+     * @returns {Array}
+     */
+    getSynthesizableItemsByType(type) {
+        const result = [];
+        const maxGrade = this.getMaxGradeByType(type);
+        
+        this.gameState.inventory.items.forEach((item, itemId) => {
+            if (item.type === type && item.count >= this.synthesizeCount && item.grade < maxGrade) {
+                result.push({
+                    itemId,
+                    name: item.name,
+                    count: item.count,
+                    grade: item.grade,
+                    rarity: item.rarity,
+                    maxPossibleSyntheses: Math.floor(item.count / this.synthesizeCount)
                 });
             }
         });

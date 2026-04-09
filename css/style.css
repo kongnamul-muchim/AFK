@@ -1025,6 +1025,47 @@ body {
     color: white;
 }
 
+/* 일괄합성 바 */
+.batch-synthesize-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    flex-shrink: 0;
+}
+
+.batch-synthesize-btn {
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.batch-synthesize-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.batch-synthesize-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.batch-synthesize-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
 /* 아이템 툴팁 */
 .item-tooltip {
     position: fixed;
