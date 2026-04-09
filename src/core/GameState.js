@@ -152,6 +152,16 @@ class GameState {
         this.lastSaveTime = Date.now();
         this.lastLoginTime = Date.now();
         this.inventoryResetDone = false; // ID 체계 리팩토링 v2 하드리셋 플래그
+        
+        // 보석 업그레이드 (무한 성장 요소)
+        this.gemUpgrades = {
+            offlineBonus: 0,        // 오프라인 보상 증가 (2%/레벨, 무한)
+            critDamage: 0,          // 치명타 피해 증가 (2%/레벨, 무한)
+            autoCombatDamage: 0,    // 자동 전투 강화 (2%/레벨, 최대 100% / 50레벨)
+            rebirthBonus: 0,        // 환생 보너스 (1개/레벨, 최대 10)
+            dropRate: 0,            // 드롭 확률 업 (등급별 차등, 최대 20레벨)
+            baseStats: 0            // 기본 스탯 % 증가 (1%/레벨, 무한)
+        };
     }
 
     /**
@@ -693,7 +703,8 @@ class GameState {
             stats: { ...this.stats },
             lastSaveTime: this.lastSaveTime,
             lastLoginTime: this.lastLoginTime,
-            inventoryResetDone: this.inventoryResetDone
+            inventoryResetDone: this.inventoryResetDone,
+            gemUpgrades: { ...this.gemUpgrades }
         };
     }
 
@@ -736,6 +747,7 @@ class GameState {
         if (data.stats) Object.assign(this.stats, data.stats);
         if (data.lastSaveTime) this.lastSaveTime = data.lastSaveTime;
         if (data.inventoryResetDone !== undefined) this.inventoryResetDone = data.inventoryResetDone;
+        if (data.gemUpgrades) Object.assign(this.gemUpgrades, data.gemUpgrades);
         
         this.recalculateDerivedStats();
     }
