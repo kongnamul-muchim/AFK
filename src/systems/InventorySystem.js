@@ -331,8 +331,9 @@ class InventorySystem {
     }
 
     /**
-     * 탭별 일괄 합성
+     * 탭별 일괄 합성 (반복적 합성 지원)
      * 해당 타입의 모든 합성 가능한 아이템을 자동으로 합성
+     * 합성 결과로 5개 이상이 쌓이면 자동으로 다시 합성됨 (최대 등급 도달 시까지)
      * @param {string} type - 'weapon', 'armor', 'boots', 'accessory'
      * @returns {Object} 합성 결과 { successCount, results: [{material, result, count}] }
      */
@@ -340,65 +341,85 @@ class InventorySystem {
         const results = [];
         let successCount = 0;
         let totalMaterialUsed = 0;
+        const maxGrade = this.getMaxGradeByType(type);
         
-        // 현재 타입의 모든 아이템 중 합성 가능한 것 찾기
-        const synthesizableItems = [];
+        // 반복문: 더 이상 합성 가능한 아이템이 없을 때까지 계속
+        let hasChanges = true;
+        let iterations = 0;
+        const MAX_ITERATIONS = 100; // 무한 루프 방지
         
-        this.gameState.inventory.items.forEach((item, itemId) => {
-            // 타입이 일치하고 합성 가능 개수 이상인 아이템
-            if (item.type === type && item.count >= this.synthesizeCount) {
-                // 최대 등급 확인
-                const maxGrade = this.getMaxGradeByType(type);
-                if (item.grade < maxGrade) {
-                    synthesizableItems.push({
-                        itemId,
-                        item,
-                        maxGrade
-                    });
-                }
-            }
-        });
-        
-        // 각 아이템에 대해 가능한 만큼 합성
-        for (const { itemId, item, maxGrade } of synthesizableItems) {
-            const itemIdStr = itemId.toString();
+        while (hasChanges && iterations < MAX_ITERATIONS) {
+            hasChanges = false;
+            iterations++;
             
-            // 다시 한번 확인 (다른 합성으로 인해 상태가 변했을 수 있음)
-            const currentItem = this.gameState.inventory.items.get(itemIdStr);
-            if (!currentItem || currentItem.count < this.synthesizeCount) continue;
+            // 현재 타입의 모든 아이템 중 합성 가능한 것 찾기
+            const synthesizableItems = [];
             
-            // 최대 등급 확인
-            if (currentItem.grade >= maxGrade) continue;
-            
-            // 한 번에 할 수 있는 최대 합성 횟수 계산
-            const possibleSyntheses = Math.floor(currentItem.count / this.synthesizeCount);
-            
-            // 연속 합성 수행
-            for (let i = 0; i < possibleSyntheses; i++) {
-                const result = this.synthesize(itemIdStr);
-                if (result) {
-                    successCount++;
-                    totalMaterialUsed += this.synthesizeCount;
-                    
-                    // 결과 기록
-                    const existingResult = results.find(r => r.result.id === result.id);
-                    if (existingResult) {
-                        existingResult.count++;
-                    } else {
-                        results.push({
-                            material: {
-                                name: currentItem.name,
-                                grade: currentItem.grade - 1 // 합성 전 등급 (synth에서 grade+1됨)
-                            },
-                            result,
-                            count: 1
+            this.gameState.inventory.items.forEach((item, itemId) => {
+                // 타입이 일치하고 합성 가능 개수 이상인 아이템
+                if (item.type === type && item.count >= this.synthesizeCount) {
+                    // 최대 등급 미만인 아이템만
+                    if (item.grade < maxGrade) {
+                        synthesizableItems.push({
+                            itemId,
+                            item: { ...item }, // 스냅샷
+                            maxGrade
                         });
                     }
-                } else {
-                    // 더 이상 합성 불가 (최대 등급 도달 등)
-                    break;
+                }
+            });
+            
+            if (synthesizableItems.length === 0) {
+                break; // 합성 가능한 아이템 없음
+            }
+            
+            // 각 아이템에 대해 가능한 만큼 합성
+            for (const { itemId, item, maxGrade: itemMaxGrade } of synthesizableItems) {
+                const itemIdStr = itemId.toString();
+                
+                // 실제 현재 상태 다시 확인 (다른 합성으로 변했을 수 있음)
+                const currentItem = this.gameState.inventory.items.get(itemIdStr);
+                if (!currentItem || currentItem.count < this.synthesizeCount) continue;
+                if (currentItem.grade >= itemMaxGrade) continue;
+                
+                // 한 번에 할 수 있는 최대 합성 횟수 계산
+                const possibleSyntheses = Math.floor(currentItem.count / this.synthesizeCount);
+                
+                if (possibleSyntheses > 0) {
+                    hasChanges = true;
+                }
+                
+                // 연속 합성 수행
+                for (let i = 0; i < possibleSyntheses; i++) {
+                    const result = this.synthesize(itemIdStr);
+                    if (result) {
+                        successCount++;
+                        totalMaterialUsed += this.synthesizeCount;
+                        
+                        // 결과 기록
+                        const existingResult = results.find(r => r.result.id === result.id);
+                        if (existingResult) {
+                            existingResult.count++;
+                        } else {
+                            results.push({
+                                material: {
+                                    name: currentItem.name,
+                                    grade: currentItem.grade - 1 // 합성 전 등급 (synth에서 grade+1됨)
+                                },
+                                result,
+                                count: 1
+                            });
+                        }
+                    } else {
+                        // 더 이상 합성 불가 (최대 등급 도달 등)
+                        break;
+                    }
                 }
             }
+        }
+        
+        if (iterations >= MAX_ITERATIONS) {
+            gameLogger.warn('synthesizeAllByType: max iterations reached, possible infinite loop');
         }
         
         return {
