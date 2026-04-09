@@ -162,6 +162,68 @@ body {
     white-space: nowrap;
 }
 
+/* 아이템 드롭 이펙트 */
+.item-drop-effects {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.item-drop-effect {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    animation: itemDropSlideUp 1.5s ease-out forwards;
+    white-space: nowrap;
+}
+
+.item-drop-effect .item-icon {
+    font-size: 1.1rem;
+}
+
+.item-drop-effect .item-name {
+    color: var(--color-text-primary);
+}
+
+.item-drop-effect.common { border: 1px solid var(--rarity-common); }
+.item-drop-effect.rare { border: 1px solid var(--rarity-rare); }
+.item-drop-effect.epic { border: 1px solid var(--rarity-epic); }
+.item-drop-effect.legendary { border: 1px solid var(--rarity-legendary); }
+.item-drop-effect.mythic { border: 1px solid var(--rarity-mythic); }
+
+@keyframes itemDropSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+    15% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(0.9);
+    }
+}
+
 .hp-bar-container {
     flex: 0 0 150px;
     height: 14px;
@@ -1585,4 +1647,93 @@ body {
 
 .stat-points-display {
     color: var(--color-accent);
+}
+
+/* 오프라인 보상 모달 스타일 */
+.offline-equipment {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.offline-equipment h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--color-text-secondary);
+}
+
+.offline-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.offline-item.common { background: rgba(156, 163, 175, 0.15); border: 1px solid rgba(156, 163, 175, 0.3); }
+.offline-item.rare { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); }
+.offline-item.epic { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
+.offline-item.legendary { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
+.offline-item.mythic { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.offline-item .item-icon { font-size: 16px; }
+.offline-item .item-name { flex: 1; font-size: 12px; }
+.offline-item .item-rarity { font-size: 11px; opacity: 0.7; }
+
+.offline-item-more {
+    text-align: center;
+    padding: 8px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+}
+
+/* Statistics Modal */
+.statistics-modal-content {
+    max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.stats-section {
+    margin-bottom: 20px;
+}
+
+.stats-section h3 {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
+
+.stat-card {
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid rgba(74, 158, 255, 0.1);
+}
+
+.stat-card-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+}
+
+.stat-card-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--color-accent);
+}
 }

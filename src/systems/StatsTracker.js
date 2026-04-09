@@ -66,8 +66,7 @@ class StatsTracker {
             totalKills: this.gameState.stats.totalKills,
             maxStage: this.gameState.stats.maxStage,
             totalLevelups: this.gameState.stats.totalLevelups,
-            totalGold: this.gameState.inventory.gold, // 현재 골드 (총 획득은 별도)
-            achievementsUnlocked: this.gameState.achievements.length
+            totalGold: this.gameState.inventory.gold // 현재 골드 (총 획득은 별도)
         };
     }
 

@@ -24,6 +24,17 @@ class UIManager {
         // Combat log
         this.combatLog = document.getElementById('combat-log');
         
+        // 아이템 드롭 이펙트 컨테이너
+        this.itemDropEffects = document.getElementById('item-drop-effects');
+        
+        // 아이템 타입별 아이콘
+        this.itemIcons = {
+            'weapon': '⚔️',
+            'armor': '🛡️',
+            'boots': '👟',
+            'accessory': '💍'
+        };
+        
         // Modals
         this.inventoryModal = document.getElementById('inventory-modal');
         this.settingsModal = document.getElementById('settings-modal');
@@ -52,9 +63,67 @@ class UIManager {
         this.setupSettingsHandlers();
         this.setupStatAllocation();
         this.setupDataManagement();
+        this.setupItemDropEffects();
         this.updateHUD();
         this.updateStatsPanel();
         gameLogger.debug('UIManager initialized');
+    }
+
+    /**
+     * 아이템 드롭 이펙트 이벤트 설정
+     */
+    setupItemDropEffects() {
+        gameEventBus.on(GAME_EVENTS.INVENTORY_ITEM_ADDED, (data) => {
+            this.showItemDropEffect(data);
+        });
+    }
+
+    /**
+     * 아이템 드롭 이펙트 표시 (플레이어 머리 위에서 위로 슬라이드)
+     */
+    showItemDropEffect(data) {
+        if (!this.itemDropEffects) return;
+        
+        const { itemId, name, rarity } = data;
+        
+        // 아이템 타입 추출 (name에서 weapon/armor/boots/accessory 판별)
+        let itemType = 'weapon';
+        const nameLower = name.toLowerCase();
+        if (nameLower.includes('armor')) itemType = 'armor';
+        else if (nameLower.includes('boot')) itemType = 'boots';
+        else if (nameLower.includes('ring') || nameLower.includes('accessory')) itemType = 'accessory';
+        
+        const icon = this.itemIcons[itemType] || '⚔️';
+        
+        // canvas 위치 기준으로 플레이어 머리 위 계산
+        const canvas = document.getElementById('game-canvas');
+        if (canvas) {
+            const canvasRect = canvas.getBoundingClientRect();
+            const containerRect = document.getElementById('game-container').getBoundingClientRect();
+            
+            // 플레이어 머리 위 위치 (canvas 상단에서 약 30% 지점)
+            const playerHeadY = canvasRect.top - containerRect.top + canvasRect.height * 0.3;
+            
+            this.itemDropEffects.style.top = `${playerHeadY}px`;
+        }
+        
+        // 이펙트 엘리먼트 생성
+        const effect = document.createElement('div');
+        effect.className = `item-drop-effect ${rarity}`;
+        effect.innerHTML = `
+            <span class="item-icon">${icon}</span>
+            <span class="item-name">${name}</span>
+        `;
+        
+        // 컨테이너에 추가
+        this.itemDropEffects.appendChild(effect);
+        
+        // 애니메이션 완료 후 제거 (1.5초)
+        setTimeout(() => {
+            if (effect.parentNode) {
+                effect.parentNode.removeChild(effect);
+            }
+        }, 1500);
     }
 
     /**
@@ -73,6 +142,10 @@ class UIManager {
         
         document.getElementById('btn-stats')?.addEventListener('click', () => {
             this.showModal(this.statsModal);
+        });
+        
+        document.getElementById('btn-statistics')?.addEventListener('click', () => {
+            this.showStatisticsModal();
         });
         
         document.getElementById('btn-settings')?.addEventListener('click', () => {
@@ -341,12 +414,16 @@ class UIManager {
         }
         
         if (this.hudExpFill) {
-            const expPercent = (player.exp / player.maxExp) * 100;
+            const exp = player.exp || 0;
+            const maxExp = player.maxExp || 1;
+            const expPercent = (exp / maxExp) * 100;
             this.hudExpFill.style.width = `${expPercent}%`;
         }
         
         if (this.hudExpText) {
-            this.hudExpText.textContent = `Exp: ${player.exp}/${player.maxExp}`;
+            const exp = player.exp || 0;
+            const maxExp = player.maxExp || 1;
+            this.hudExpText.textContent = `Exp: ${this.formatNumber(exp)}/${this.formatNumber(maxExp)}`;
         }
         
         if (this.hudStatPoints) {
@@ -427,7 +504,7 @@ class UIManager {
     }
 
     /**
-     * 오프라인 보상 표시
+     * 오프라인 보상 표시 (기존 - 레거시)
      * @param {number} hours 
      * @param {number} exp 
      * @param {number} gold 
@@ -451,6 +528,107 @@ class UIManager {
         });
         
         this.showModal(this.offlineRewardModal);
+    }
+
+    /**
+     * 오프라인 보상 상세 표시 (새 버전)
+     */
+    showOfflineRewardDetailed(data) {
+        const { hours, kills, gold, exp, equipment } = data;
+        
+        // 오프라인 시간
+        const durationEl = document.getElementById('offline-duration');
+        if (durationEl) {
+            durationEl.textContent = `${hours.toFixed(1)}시간`;
+        }
+        
+        // 처치 수
+        const killsEl = document.getElementById('offline-kills');
+        if (killsEl) {
+            killsEl.textContent = `${kills.toLocaleString()}마리`;
+        }
+        
+        // 골드
+        const goldEl = document.getElementById('offline-gold');
+        if (goldEl) {
+            goldEl.textContent = this.formatNumber(gold);
+        }
+        
+        // 경험치
+        const expEl = document.getElementById('offline-exp');
+        if (expEl) {
+            expEl.textContent = this.formatNumber(exp);
+        }
+        
+        // 장비 드롭 목록
+        const equipmentListEl = document.getElementById('offline-equipment-list');
+        if (equipmentListEl) {
+            equipmentListEl.innerHTML = '';
+            
+            if (equipment && equipment.length > 0) {
+                const equipmentSection = document.getElementById('offline-equipment-section');
+                if (equipmentSection) {
+                    equipmentSection.style.display = 'block';
+                }
+                
+                const equipmentHeader = document.createElement('p');
+                equipmentHeader.textContent = `드롭된 장비 (${equipment.length}개):`;
+                equipmentListEl.appendChild(equipmentHeader);
+                
+                // 최대 10개만 표시
+                const displayCount = Math.min(equipment.length, 10);
+                for (let i = 0; i < displayCount; i++) {
+                    const equip = equipment[i];
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `offline-item ${equip.rarity}`;
+                    itemDiv.innerHTML = `
+                        <span class="item-icon">${this.getItemIcon(equip.type)}</span>
+                        <span class="item-name">${equip.name}</span>
+                        <span class="item-rarity">${this.getRarityName(equip.rarity)}</span>
+                    `;
+                    equipmentListEl.appendChild(itemDiv);
+                }
+                
+                if (equipment.length > 10) {
+                    const moreDiv = document.createElement('div');
+                    moreDiv.className = 'offline-item-more';
+                    moreDiv.textContent = `...외 ${equipment.length - 10}개`;
+                    equipmentListEl.appendChild(moreDiv);
+                }
+            }
+        }
+        
+        // 확인 버튼 이벤트
+        const claimBtn = document.getElementById('btn-claim-reward');
+        if (claimBtn) {
+            claimBtn.onclick = () => {
+                this.hideModal(this.offlineRewardModal);
+            };
+        }
+        
+        // 모달 표시
+        this.showModal(this.offlineRewardModal);
+    }
+
+    getItemIcon(type) {
+        const icons = {
+            'weapon': '⚔️',
+            'armor': '🛡️',
+            'boots': '👟',
+            'accessory': '💍'
+        };
+        return icons[type] || '⚔️';
+    }
+
+    getRarityName(rarity) {
+        const names = {
+            'common': '일반',
+            'rare': '희귀',
+            'epic': '영웅',
+            'legendary': '전설',
+            'mythic': '신화'
+        };
+        return names[rarity] || rarity;
     }
 
     /**
@@ -685,6 +863,51 @@ class UIManager {
         } else {
             this.btnAutoRepeat.classList.remove('active');
         }
+    }
+
+    /**
+     * 통계 모달 표시 (상세 스탯)
+     */
+    showStatisticsModal() {
+        // 플레이어 스탯
+        const player = this.gameState.player;
+        const derivedStats = player.derivedStats;
+        
+        document.getElementById('stats-level').textContent = player.level;
+        document.getElementById('stats-atk').textContent = Math.floor(derivedStats.attack || 0);
+        document.getElementById('stats-def').textContent = Math.floor(derivedStats.defense || 0);
+        document.getElementById('stats-hp').textContent = Math.floor(derivedStats.maxHp || 0);
+        document.getElementById('stats-movespeed').textContent = Math.floor(derivedStats.moveSpeed || 0);
+        document.getElementById('stats-critrate').textContent = ((derivedStats.critChance || 0) * 100).toFixed(1) + '%';
+        document.getElementById('stats-critdmg').textContent = (derivedStats.critDamage * 100).toFixed(0) + '%';
+        
+        // 진행 상황
+        const stage = this.gameState.stage;
+        const stats = this.gameState.stats;
+        document.getElementById('stats-current-stage').textContent = stage.current || 1;
+        document.getElementById('stats-max-stage').textContent = stats.maxStage || stage.max || 1;
+        document.getElementById('stats-stage-clears').textContent = stats.totalClears || 0;
+        document.getElementById('stats-kills').textContent = stats.totalKills;
+        document.getElementById('stats-boss-kills').textContent = stats.bossKills || 0;
+        
+        // 재화
+        const inventory = this.gameState.inventory;
+        document.getElementById('stats-gold').textContent = this.formatNumber(inventory.gold);
+        document.getElementById('stats-gems').textContent = this.formatNumber(inventory.gems || 0);
+        document.getElementById('stats-total-gold').textContent = this.formatNumber(this.gameState.stats.totalGold || 0);
+        
+        // 기타 통계 (playTime은 밀리초 단위)
+        const playtimeMs = stats.playTime || 0;
+        const playtimeSeconds = Math.floor(playtimeMs / 1000);
+        const hours = Math.floor(playtimeSeconds / 3600);
+        const minutes = Math.floor((playtimeSeconds % 3600) / 60);
+        const seconds = playtimeSeconds % 60;
+        document.getElementById('stats-playtime').textContent = `${hours}시간 ${minutes}분 ${seconds}초`;
+        document.getElementById('stats-levelups').textContent = stats.totalLevelups || 0;
+        document.getElementById('stats-rebirth').textContent = this.gameState.rebirth.count || 0;
+        document.getElementById('stats-inventory').textContent = this.gameState.inventory.items.size;
+        
+        this.showModal(this.statisticsModal);
     }
 }
 

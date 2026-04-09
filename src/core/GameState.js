@@ -145,10 +145,13 @@ class GameState {
             totalKills: 0,
             maxStage: 1,
             totalGold: 0,
-            totalLevelups: 0
+            totalLevelups: 0,
+            bossKills: 0,
+            totalClears: 0
         };
         this.lastSaveTime = Date.now();
         this.lastLoginTime = Date.now();
+        this.inventoryResetDone = false; // ID 체계 리팩토링 v2 하드리셋 플래그
     }
 
     /**
@@ -689,7 +692,8 @@ class GameState {
             rebirth: { ...this.rebirth },
             stats: { ...this.stats },
             lastSaveTime: this.lastSaveTime,
-            lastLoginTime: this.lastLoginTime
+            lastLoginTime: this.lastLoginTime,
+            inventoryResetDone: this.inventoryResetDone
         };
     }
 
@@ -731,6 +735,7 @@ class GameState {
         if (data.rebirth) Object.assign(this.rebirth, data.rebirth);
         if (data.stats) Object.assign(this.stats, data.stats);
         if (data.lastSaveTime) this.lastSaveTime = data.lastSaveTime;
+        if (data.inventoryResetDone !== undefined) this.inventoryResetDone = data.inventoryResetDone;
         
         this.recalculateDerivedStats();
     }

@@ -53,21 +53,26 @@ class StorageManager {
     debouncedSave() {
         if (this.debouncedSaveTimer) clearTimeout(this.debouncedSaveTimer);
         this.debouncedSaveTimer = setTimeout(() => {
-            this.save(this.gameState ? this.gameState.toJSON() : null);
+            this.save();
         }, this.DEBOUNCE_DELAY);
     }
 
     /**
      * 게임 상태 저장
-     * @param {Object} gameState - GameState.toJSON() 결과
+     * @param {Object} gameState - GameState.toJSON() 결과 (선택사항, 없으면 this.gameState 사용)
      * @returns {boolean} 성공 여부
      */
     save(gameState) {
+        // 인자가 없으면 this.gameState 사용
+        if (!gameState && this.gameState) {
+            gameState = this.gameState.toJSON();
+        }
         if (!gameState) {
-            // gameLogger.warn('Save called without gameState');
+            gameLogger.warn('Save called without gameState and no initialized gameState');
             return false;
         }
         try {
+            // 저장 시 lastSaveTime을 현재 시간으로 업데이트
             gameState.lastSaveTime = Date.now();
             const data = {
                 version: CURRENT_VERSION,
@@ -76,7 +81,7 @@ class StorageManager {
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             gameEventBus.emit(GAME_EVENTS.GAME_SAVED);
-            // gameLogger.debug('Game saved');  // 로그 끄기
+            gameLogger.debug(`Game saved, lastSaveTime=${gameState.lastSaveTime}`);
             return true;
         } catch (error) {
             gameLogger.error('Failed to save game:', error);

@@ -110,19 +110,131 @@ class Game {
 
             // 게임 상태 로드 또는 신규 생성
             const savedData = this.storageManager.load();
+            let offlineRewardData = null; // 오프라인 보상 데이터 저장용
+            
             if (savedData) {
                 this.gameState = new GameState();
                 this.gameState.fromJSON(savedData);
                 
                 // items.csv ID 체계 리팩토링(v2)으로 인한 세이브 데이터 하드리셋
                 // 기존 세이브 데이터의 아이템 ID가 새 체계와 호환되지 않음
-                gameLogger.info('Performing hard reset of inventory due to ID system refactoring (v2)');
-                this.gameState.hardResetInventory();
+                // 단, 한 번만 실행 (플래그로 관리)
+                if (!this.gameState.inventoryResetDone) {
+                    gameLogger.info('Performing hard reset of inventory due to ID system refactoring (v2)');
+                    this.gameState.hardResetInventory();
+                    this.gameState.inventoryResetDone = true;
+                    this.storageManager.save(); // 플래그 저장
+                }
                 
-                // 오프라인 보상 계산
+                // 오프라인 보상 계산 (UI 표시는 나중에)
                 const offlineSeconds = (Date.now() - savedData.lastSaveTime) / 1000;
+                gameLogger.info(`Offline seconds: ${offlineSeconds}, condition: ${offlineSeconds > 60}`);
                 if (offlineSeconds > 60) {
-                    this.calculateOfflineReward(offlineSeconds);
+                    // 1. 오프라인 시간 계산
+                    const hours = Math.min(offlineSeconds / 3600, gameConfig.offline.maxHours || 24);
+                    
+                    // 2. 최대 스테이지 가져오기 (환생 시 초기화됨)
+                    const maxStage = this.gameState.stage.maxStage || 1;
+                    
+                    // 3. 처치 수 계산 (최대 스테이지 몬스터 기준)
+                    const attackSpeedMs = 100; // 기본 공격 속도
+                    const baseInterval = 100; // combat.attackInterval
+                    const actualIntervalMs = baseInterval / (attackSpeedMs / 100);
+                    const attacksPerSecond = 1000 / actualIntervalMs;
+                    
+                    // 몬스터 HP/골드/경험치 (스테이지 기반)
+                    // monsters.csv에서 최대 스테이지 몬스터 정보 가져오기
+                    const monsters = gameDataLoader.get('monsters');
+                    let monsterData = null;
+                    if (monsters && monsters.length > 0) {
+                        // maxStage에 해당하는 몬스터 찾기 (없으면 첫 번째 몬스터)
+                        monsterData = monsters.find(m => m.stage === maxStage) || monsters[0];
+                    }
+                    
+                    const monsterHpBase = monsterData ? monsterData.hp_base : 50;
+                    const monsterHpScale = monsterData ? monsterData.hp_scale : 15;
+                    const monsterHp = monsterHpBase + (maxStage - 1) * monsterHpScale;
+                    
+                    const goldPerKillBase = monsterData ? monsterData.gold_reward : 5;
+                    const goldPerKillScale = monsterData ? monsterData.gold_scale : 1;
+                    const goldPerKill = goldPerKillBase + (maxStage - 1) * goldPerKillScale;
+                    
+                    const expPerKillBase = monsterData ? monsterData.exp_reward : 10;
+                    const expPerKillScale = monsterData ? monsterData.exp_scale : 2;
+                    const expPerKill = expPerKillBase + (maxStage - 1) * expPerKillScale;
+                    
+                    const playerDamage = this.gameState.player.derivedStats.attack || 10;
+                    const attacksPerKill = Math.ceil(Math.max(1, monsterHp / playerDamage));
+                    const killsPerSecond = attacksPerSecond / attacksPerKill;
+                    const kills = Math.floor(killsPerSecond * offlineSeconds);
+                    
+                    // 4. 골드/경험치 계산
+                    const totalGold = Math.floor(kills * goldPerKill);
+                    const totalExp = Math.floor(kills * expPerKill);
+                    
+                    // 5. 장비 드롭 계산 (최대 스테이지에 해당하는 등급의 장비)
+                    const maxDropsPerHour = 12.5;
+                    const maxDrops = Math.floor(maxDropsPerHour * hours);
+                    const variance = 0.8 + Math.random() * 0.4;
+                    const actualDrops = Math.floor(maxDrops * variance);
+                    
+                    // 6. 골드/경험치 1/10 배율 적용 (온라인의 10%)
+                    // 장비 드롭은 그대로 유지
+                    const rewardScale = 0.1;
+                    const scaledKills = Math.max(1, Math.floor(kills * rewardScale));
+                    const scaledGold = Math.max(1, Math.floor(totalGold * rewardScale));
+                    const scaledExp = Math.max(1, Math.floor(totalExp * rewardScale));
+                    
+                    const equipmentDrops = [];
+                    const items = gameDataLoader.get('items');
+                    if (items) {
+                        for (let i = 0; i < actualDrops; i++) {
+                            const rarityRoll = Math.random();
+                            let rarity;
+                            if (rarityRoll < 0.01) rarity = 'mythic';
+                            else if (rarityRoll < 0.05) rarity = 'legendary';
+                            else if (rarityRoll < 0.20) rarity = 'epic';
+                            else if (rarityRoll < 0.50) rarity = 'rare';
+                            else rarity = 'common';
+                            
+                            // 최대 스테이지에 해당하는 등급의 장비 (maxStage에 맞는 grade)
+                            // grade 1-5는 stage 1-5, grade 6-10은 stage 6-10, ...
+                            const targetGrade = Math.min(maxStage, 50); // 최대 50
+                            const gradeRange = 5; // ±5 범위
+                            const minGrade = Math.max(1, targetGrade - gradeRange);
+                            const maxGrade = Math.min(50, targetGrade + gradeRange);
+                            
+                            const candidates = items.filter(item => 
+                                (item.type === 'weapon' || item.type === 'armor' || 
+                                 item.type === 'boots' || item.type === 'accessory') &&
+                                item.grade >= minGrade && item.grade <= maxGrade &&
+                                item.rarity === rarity
+                            );
+                            
+                            if (candidates.length > 0) {
+                                const selected = candidates[Math.floor(Math.random() * candidates.length)];
+                                equipmentDrops.push({
+                                    itemId: selected.id,
+                                    name: selected.name,
+                                    grade: selected.grade,
+                                    rarity: selected.rarity,
+                                    type: selected.type,
+                                    stats: selected.stats
+                                });
+                            }
+                        }
+                    }
+                    
+                    // 오프라인 보상 데이터 저장 (UI 표시는 나중에)
+                    offlineRewardData = {
+                        hours,
+                        kills: scaledKills,
+                        gold: scaledGold,
+                        exp: scaledExp,
+                        equipment: equipmentDrops
+                    };
+                    
+                    gameLogger.info(`Offline reward calculated: ${hours.toFixed(1)}h, ${kills} kills, ${totalGold} gold, ${totalExp} exp, ${equipmentDrops.length} equipment`);
                 }
                 
                 gameLogger.info('Game loaded from save (inventory reset)');
@@ -215,6 +327,28 @@ class Game {
             this.isRunning = true;
             this.lastFrameTime = performance.now();
             this.gameLoop();
+            
+            // 오프라인 보상이 있으면 UI 표시 (로딩 완료 후)
+            if (offlineRewardData && this.uiManager) {
+                // 약간의 지연 후 표시 (UI 안정화)
+                setTimeout(() => {
+                    this.uiManager.showOfflineRewardDetailed(offlineRewardData);
+                    
+                    // 보상 지급 (UI 표시 후)
+                    this.gameState.addGold(offlineRewardData.gold);
+                    this.gameState.addExp(offlineRewardData.exp);
+                    
+                    offlineRewardData.equipment.forEach(equip => {
+                        this.gameState.inventory.addItem(equip);
+                    });
+                    
+                    // 저장 시간 업데이트 (오프라인 보상 지급 후)
+                    this.gameState.lastSaveTime = Date.now();
+                    this.storageManager.save(); // 즉시 저장
+                    
+                    gameLogger.info('Offline reward UI displayed and rewards granted');
+                }, 500);
+            }
             
         } catch (error) {
             gameLogger.error('Failed to initialize game:', error);
@@ -420,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 페이지 이탈 시 저장
 window.addEventListener('beforeunload', () => {
     if (game.gameState) {
-        game.storageManager.save(game.gameState.toJSON());
+        game.storageManager.save();
     }
 });
 

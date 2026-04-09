@@ -31,6 +31,9 @@
     <div id="game-container" class="game-container" style="display: none;">
         <!-- HUD 상단 -->
         <header class="hud-top">
+            <!-- 아이템 획득 이펙트 컨테이너 -->
+            <div class="item-drop-effects" id="item-drop-effects"></div>
+            
             <div class="player-info">
                 <span class="player-level" id="hud-level">Lv.1</span>
                 <div class="hp-bar-container">
@@ -47,6 +50,7 @@
                     <span class="gold-icon">💰</span>
                     <span class="gold-text" id="hud-gold">0</span>
                 </div>
+                <button class="settings-btn" id="btn-statistics" title="스탯">📊</button>
                 <button class="settings-btn" id="btn-settings" title="설정">⚙️</button>
             </div>
         </header>
@@ -246,8 +250,13 @@
             <div class="offline-content">
                 <p class="offline-time">접속하지 않은 시간: <span id="offline-duration">0 시간</span></p>
                 <div class="offline-rewards">
-                    <p>획득한 경험치: <span id="offline-exp">0</span></p>
+                    <p>처치한 몬스터: <span id="offline-kills">0</span>마리</p>
                     <p>획득한 골드: <span id="offline-gold">0</span></p>
+                    <p>획득한 경험치: <span id="offline-exp">0</span></p>
+                </div>
+                <div class="offline-equipment" id="offline-equipment-section" style="display: none;">
+                    <h3>드롭된 장비</h3>
+                    <div id="offline-equipment-list"></div>
                 </div>
                 <button class="confirm-btn" id="btn-claim-reward">확인</button>
             </div>
@@ -256,32 +265,113 @@
 
     <!-- 통계 모달 -->
     <div id="statistics-modal" class="modal" style="display: none;">
-        <div class="modal-content">
+        <div class="modal-content statistics-modal-content">
             <div class="modal-header">
-                <h2>통계</h2>
+                <h2>스탯 정보</h2>
                 <button class="modal-close" id="btn-close-statistics">&times;</button>
             </div>
             <div class="statistics-content">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-card-label">플레이 시간</div>
-                        <div class="stat-card-value" id="stats-playtime">0 시간</div>
+                <!-- 플레이어 스탯 -->
+                <div class="stats-section">
+                    <h3>플레이어 스탯</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-label">레벨</div>
+                            <div class="stat-card-value" id="stats-level">1</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">공격력</div>
+                            <div class="stat-card-value" id="stats-atk">10</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">방어력</div>
+                            <div class="stat-card-value" id="stats-def">5</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">체력</div>
+                            <div class="stat-card-value" id="stats-hp">100</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">이동속도</div>
+                            <div class="stat-card-value" id="stats-movespeed">200</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">치명확률</div>
+                            <div class="stat-card-value" id="stats-critrate">5%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">치명피해</div>
+                            <div class="stat-card-value" id="stats-critdmg">150%</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-label">처치한 몬스터</div>
-                        <div class="stat-card-value" id="stats-kills">0</div>
+                </div>
+
+                <!-- 진행 상황 -->
+                <div class="stats-section">
+                    <h3>진행 상황</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-label">현재 스테이지</div>
+                            <div class="stat-card-value" id="stats-current-stage">1</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">최대 스테이지</div>
+                            <div class="stat-card-value" id="stats-max-stage">1</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">스테이지 클리어</div>
+                            <div class="stat-card-value" id="stats-stage-clears">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">총 처치 수</div>
+                            <div class="stat-card-value" id="stats-kills">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">보스 처치</div>
+                            <div class="stat-card-value" id="stats-boss-kills">0</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-label">최대 스테이지</div>
-                        <div class="stat-card-value" id="stats-max-stage">1</div>
+                </div>
+
+                <!-- 재화 -->
+                <div class="stats-section">
+                    <h3>재화</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-label">골드</div>
+                            <div class="stat-card-value" id="stats-gold">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">보석</div>
+                            <div class="stat-card-value" id="stats-gems">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">총 획득 골드</div>
+                            <div class="stat-card-value" id="stats-total-gold">0</div>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-card-label">레벨업 횟수</div>
-                        <div class="stat-card-value" id="stats-levelups">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-label">총 골드</div>
-                        <div class="stat-card-value" id="stats-gold">0</div>
+                </div>
+
+                <!-- 기타 통계 -->
+                <div class="stats-section">
+                    <h3>기타</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-label">플레이 시간</div>
+                            <div class="stat-card-value" id="stats-playtime">0 시간</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">레벨업 횟수</div>
+                            <div class="stat-card-value" id="stats-levelups">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">환생 횟수</div>
+                            <div class="stat-card-value" id="stats-rebirth">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-label">인벤토리 아이템</div>
+                            <div class="stat-card-value" id="stats-inventory">0</div>
+                        </div>
                     </div>
                 </div>
             </div>
