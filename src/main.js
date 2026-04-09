@@ -180,7 +180,12 @@ class Game {
                     
                     // 6. 골드/경험치 1/10 배율 적용 (온라인의 10%)
                     // 장비 드롭은 그대로 유지
-                    const rewardScale = 0.1;
+                    let rewardScale = 0.1;
+                    
+                    // 보석 업그레이드: 오프라인 보상 증가 (2%/레벨)
+                    const offlineBonus = this.gameState.gemUpgrades.offlineBonus || 0;
+                    rewardScale *= (1 + offlineBonus * 0.02);
+                    
                     const scaledKills = Math.max(1, Math.floor(kills * rewardScale));
                     const scaledGold = Math.max(1, Math.floor(totalGold * rewardScale));
                     const scaledExp = Math.max(1, Math.floor(totalExp * rewardScale));
