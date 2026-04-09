@@ -382,25 +382,32 @@ class UpgradeUI {
             ? `Lv.${currentLevel}/${maxLevel}` 
             : `Lv.${currentLevel}`;
         
+        // 현재 값과 다음 레벨 값 계산
+        const currentValue = def.getValue(currentLevel);
+        const nextLevel = isMaxLevel ? currentLevel : currentLevel + 1;
+        const nextValue = isMaxLevel ? '' : def.getValue(nextLevel);
+        
         container.innerHTML = `
-            <div class="upgrade-item-header">
+            <div class="upgrade-info">
                 <span class="upgrade-name">${def.name}</span>
                 <span class="upgrade-level ${isMaxLevel ? 'max' : ''}">${levelDisplay}</span>
             </div>
-            <div class="upgrade-item-description">${def.description}</div>
-            <div class="upgrade-item-value">${def.getValue(currentLevel)}</div>
-            <button class="upgrade-buy-btn ${canAfford ? '' : 'disabled'}" 
-                    ${!canAfford ? 'disabled' : ''}>
-                💎 ${this.formatNumber(cost)}
+            <div class="upgrade-stats">
+                <span class="upgrade-current">${currentValue}</span>
+                <span class="upgrade-next">${isMaxLevel ? '' : '→ ' + nextValue}</span>
+            </div>
+            <button class="upgrade-button ${!canAfford && !isMaxLevel ? 'disabled' : ''} ${isMaxLevel ? 'max-level' : ''}"
+                    ${!canAfford && !isMaxLevel ? 'disabled' : ''}>
+                ${isMaxLevel ? '최대 레벨' : `💎 ${this.formatNumber(cost)}`}
             </button>
         `;
         
-        const buyBtn = container.querySelector('.upgrade-buy-btn');
-        buyBtn.addEventListener('click', () => {
-            if (canAfford) {
+        const buyBtn = container.querySelector('.upgrade-button');
+        if (!isMaxLevel && canAfford) {
+            buyBtn.addEventListener('click', () => {
                 this.purchaseGemUpgrade(key, def, currentLevel);
-            }
-        });
+            });
+        }
         
         return container;
     }
