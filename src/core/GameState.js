@@ -3,6 +3,7 @@
  * 모든 게임 데이터는 이 객체를 통해 접근하고 수정해야 함
  */
 import { gameEventBus, GAME_EVENTS } from './EventBus.js';
+import { gameLogger } from './Logger.js';
 
 class GameState {
     constructor() {
