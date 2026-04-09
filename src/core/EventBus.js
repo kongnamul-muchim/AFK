@@ -161,6 +161,9 @@ const GAME_EVENTS = {
     UPGRADE_INSUFFICIENT_POINTS: 'upgrade:insufficient_points',
     UPGRADE_MAX_LEVEL: 'upgrade:max_level',
 
+    // 보석 업그레이드
+    GEM_UPGRADE_PURCHASED: 'gem:upgrade_purchased',
+
     // 일일 미션
     DAILY_MISSIONS_RESET: 'daily:missions_reset',
     DAILY_MISSION_COMPLETED: 'daily:mission_completed',
