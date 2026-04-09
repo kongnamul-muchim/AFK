@@ -171,6 +171,77 @@ class UpgradeUI {
                 tabs: ['gold']
             }
         };
+        
+        // 보석 업그레이드 정의
+        this.gemUpgradeDefinitions = {
+            offlineBonus: {
+                name: '오프라인 보상 증가',
+                description: '오프라인 보상 2% 증가',
+                maxLevel: null,
+                gemCostBase: 10,
+                getValue: (level) => `+${(level + 1) * 2}%`,
+                effect: 'offline'
+            },
+            critDamage: {
+                name: '치명타 피해 증가',
+                description: '치명타 피해 2% 증가',
+                maxLevel: null,
+                gemCostBase: 15,
+                getValue: (level) => `+${(level + 1) * 2}%`,
+                effect: 'critDmg'
+            },
+            autoCombatDamage: {
+                name: '자동 전투 강화',
+                description: '자동 전투 시 데미지 2% 증가',
+                maxLevel: 50,
+                gemCostBase: 20,
+                getValue: (level) => `+${Math.min(100, (level + 1) * 2)}%`,
+                effect: 'autoDmg'
+            },
+            rebirthBonus: {
+                name: '환생 보너스',
+                description: '환생 시 보너스 포인트 1개 추가',
+                maxLevel: 10,
+                gemCostBase: 50,
+                getValue: (level) => `+${level + 1} 포인트`,
+                effect: 'rebirth'
+            },
+            dropRate: {
+                name: '드롭 확률 업',
+                description: '레어 아이템 드롭률 증가 (등급별 차등)',
+                maxLevel: 20,
+                gemCostBase: 25,
+                getValue: (level) => {
+                    const rates = this.getDropRateValues(level);
+                    return `일반:${rates.common}%, 고급:${rates.rare}%, 희귀:${rates.epic}%`;
+                },
+                effect: 'drop'
+            },
+            baseStats: {
+                name: '기본 스탯 증가',
+                description: '공격력/방어력/체력 1% 증가',
+                maxLevel: null,
+                gemCostBase: 15,
+                getValue: (level) => `+${(level + 1) * 1}%`,
+                effect: 'stats'
+            }
+        };
+    }
+    
+    /**
+     * 드롭 확률업 레벨별 값 계산
+     */
+    getDropRateValues(level) {
+        const baseRates = { common: 70, rare: 20, epic: 7, heroic: 2.5, legendary: 0.5 };
+        const changesPerLevel = { common: -1.1, rare: 0.2, epic: 0.4, heroic: 0.4, legendary: 0.1 };
+        
+        return {
+            common: Math.max(10, Math.floor((baseRates.common + changesPerLevel.common * level) * 10) / 10),
+            rare: Math.floor((baseRates.rare + changesPerLevel.rare * level) * 10) / 10,
+            epic: Math.floor((baseRates.epic + changesPerLevel.epic * level) * 10) / 10,
+            heroic: Math.floor((baseRates.heroic + changesPerLevel.heroic * level) * 10) / 10,
+            legendary: Math.floor((baseRates.legendary + changesPerLevel.legendary * level) * 10) / 10
+        };
     }
 
     /**
@@ -265,6 +336,12 @@ class UpgradeUI {
             return;
         }
 
+        // 보석 탭인 경우
+        if (this.currentTab === 'gem') {
+            this.renderGemUpgradeGrid(grid);
+            return;
+        }
+
         // 일반 탭 (골드/스탯)
         const stats = Object.entries(this.statDefinitions).filter(([key, def]) => {
             return def.tabs.includes(this.currentTab);
@@ -274,6 +351,85 @@ class UpgradeUI {
             const item = this.createUpgradeItem(key, def);
             grid.appendChild(item);
         });
+    }
+
+    /**
+     * 보석 업그레이드 그리드 렌더링
+     */
+    renderGemUpgradeGrid(grid) {
+        const gemUpgrades = this.gameState.gemUpgrades;
+        
+        Object.entries(this.gemUpgradeDefinitions).forEach(([key, def]) => {
+            const item = this.createGemUpgradeItem(key, def, gemUpgrades[key] || 0);
+            grid.appendChild(item);
+        });
+    }
+
+    /**
+     * 보석 업그레이드 아이템 생성
+     */
+    createGemUpgradeItem(key, def, currentLevel) {
+        const container = document.createElement('div');
+        container.className = 'upgrade-item';
+        
+        const maxLevel = def.maxLevel;
+        const isMaxLevel = maxLevel !== null && currentLevel >= maxLevel;
+        const cost = Math.floor(def.gemCostBase * Math.pow(1.15, currentLevel));
+        const gems = this.gameState.inventory.gems || 0;
+        const canAfford = gems >= cost && !isMaxLevel;
+        
+        const levelDisplay = maxLevel !== null 
+            ? `Lv.${currentLevel}/${maxLevel}` 
+            : `Lv.${currentLevel}`;
+        
+        container.innerHTML = `
+            <div class="upgrade-item-header">
+                <span class="upgrade-name">${def.name}</span>
+                <span class="upgrade-level ${isMaxLevel ? 'max' : ''}">${levelDisplay}</span>
+            </div>
+            <div class="upgrade-item-description">${def.description}</div>
+            <div class="upgrade-item-value">${def.getValue(currentLevel)}</div>
+            <button class="upgrade-buy-btn ${canAfford ? '' : 'disabled'}" 
+                    ${!canAfford ? 'disabled' : ''}>
+                💎 ${this.formatNumber(cost)}
+            </button>
+        `;
+        
+        const buyBtn = container.querySelector('.upgrade-buy-btn');
+        buyBtn.addEventListener('click', () => {
+            if (canAfford) {
+                this.purchaseGemUpgrade(key, def, currentLevel);
+            }
+        });
+        
+        return container;
+    }
+
+    /**
+     * 보석 업그레이드 구매
+     */
+    purchaseGemUpgrade(key, def, currentLevel) {
+        const cost = Math.floor(def.gemCostBase * Math.pow(1.15, currentLevel));
+        const gems = this.gameState.inventory.gems || 0;
+        
+        if (gems < cost) return;
+        
+        // 보석 차감
+        this.gameState.inventory.gems -= cost;
+        
+        // 업그레이드 레벨 증가
+        this.gameState.gemUpgrades[key] = (this.gameState.gemUpgrades[key] || 0) + 1;
+        
+        gameLogger.info(`Gem upgrade purchased: ${key} → Lv.${this.gameState.gemUpgrades[key]}`);
+        
+        // UI 업데이트
+        this.updateDisplay();
+        this.renderUpgradeGrid();
+        
+        // 파생 스탯 재계산 (기본 스탯 증가 등의 효과 적용)
+        this.gameState.recalculateDerivedStats();
+        
+        gameEventBus.emit(GAME_EVENTS.GEM_UPGRADE_PURCHASED, { key, level: this.gameState.gemUpgrades[key] });
     }
 
     /**
@@ -628,7 +784,9 @@ class UpgradeUI {
     updateDisplay() {
         const goldEl = document.getElementById('upgrade-gold-display');
         const pointsEl = document.getElementById('upgrade-points-display');
+        const gemsEl = document.getElementById('upgrade-gems-display');
         
+        // 골드 표시
         if (goldEl) {
             if (this.currentTab === 'gold') {
                 const gold = this.gameState.inventory.gold || 0;
@@ -639,15 +797,29 @@ class UpgradeUI {
             }
         }
         
+        // 스탯 포인트/보너스 포인트 표시
         if (pointsEl) {
             if (this.currentTab === 'gold') {
                 pointsEl.style.display = 'none';
             } else if (this.currentTab === 'stat') {
                 pointsEl.textContent = `⭐ ${this.gameState.player.statPoints || 0}`;
                 pointsEl.style.display = 'flex';
+            } else if (this.currentTab === 'gem') {
+                pointsEl.style.display = 'none';
             } else {
                 pointsEl.textContent = `💎 ${this.gameState.rebirth.bonusPoints || 0}`;
                 pointsEl.style.display = 'flex';
+            }
+        }
+        
+        // 보석 표시 (gem 탭일 때)
+        if (gemsEl) {
+            if (this.currentTab === 'gem') {
+                const gems = this.gameState.inventory.gems || 0;
+                gemsEl.textContent = `💎 ${gems.toLocaleString()}`;
+                gemsEl.style.display = 'flex';
+            } else {
+                gemsEl.style.display = 'none';
             }
         }
     }

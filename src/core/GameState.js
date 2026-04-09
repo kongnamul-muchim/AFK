@@ -468,6 +468,22 @@ class GameState {
         const expBonusValue = calcUpgradeValue(goldUp.expBonus);
         this.player.derivedStats.expBonus = expBonusValue * 1;
         
+        // 보석 업그레이드 효과 적용
+        const gemUp = this.gemUpgrades;
+        
+        // 치명타 피해 증가 (2%/레벨)
+        if (gemUp.critDamage > 0) {
+            this.player.derivedStats.critDamage = (this.player.derivedStats.critDamage || 1.5) + gemUp.critDamage * 0.02;
+        }
+        
+        // 기본 스탯 % 증가 (1%/레벨)
+        if (gemUp.baseStats > 0) {
+            const statBonus = 1 + gemUp.baseStats * 0.01;
+            this.player.derivedStats.attack = Math.floor(this.player.derivedStats.attack * statBonus);
+            this.player.derivedStats.defense = Math.floor(this.player.derivedStats.defense * statBonus);
+            this.player.derivedStats.maxHp = Math.floor(this.player.derivedStats.maxHp * statBonus);
+        }
+        
         // HP 비율 유지
         if (this.player.currentHp > this.player.derivedStats.maxHp) {
             this.player.currentHp = this.player.derivedStats.maxHp;
