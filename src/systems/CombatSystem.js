@@ -475,15 +475,22 @@ class CombatSystem {
         // 버프 확인 (공격력 2배)
         const attackBuff = this.getBuffMultiplier('attackDouble');
         
+        // 보석 업그레이드: 자동 전투 강화 (자동 반복 시 2%/레벨, 최대 100%)
+        let autoCombatBonus = 1;
+        if (this.gameState.stage.autoRepeat) {
+            const autoCombatLevel = this.gameState.gemUpgrades.autoCombatDamage || 0;
+            autoCombatBonus = 1 + Math.min(1.0, autoCombatLevel * 0.02);
+        }
+        
         // 크리티컬 판정
         const isCrit = Math.random() < player.derivedStats.critChance;
         const critMultiplier = isCrit ? player.derivedStats.critDamage : 1;
         
-        // 데미지 계산: (player.attack - 5) * critMultiplier * buffMultiplier * stageMultiplier
+        // 데미지 계산: (player.attack - 5) * critMultiplier * buffMultiplier * stageMultiplier * autoCombatBonus
         const minDamage = gameConfig.combat.minDamage;
         const stageMultiplier = 1 + (stage - 1) * 0.1;
         let damage = Math.max(minDamage, player.derivedStats.attack - 5);
-        damage = Math.floor(damage * critMultiplier * attackBuff * stageMultiplier);
+        damage = Math.floor(damage * critMultiplier * attackBuff * stageMultiplier * autoCombatBonus);
         
         // 몬스터 HP 감소
         monster.currentHp = Math.max(0, monster.currentHp - damage);
