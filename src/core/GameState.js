@@ -117,9 +117,9 @@ class GameState {
             lastReset: Date.now(),
             buffs: {
                 attackDouble: 0,  // 공격력 2배 (종료 시간)
-                defenseDouble: 0,  // 방어력 2배
-                goldDouble: 0,  // 골드 2배 드롭
-                expDouble: 0  // 경험치 2배
+                hpDouble: 0,      // 체력 2배 (종료 시간)
+                goldDouble: 0,    // 골드 2배 드롭
+                expDouble: 0      // 경험치 2배
             }
         };
         this.rebirth = {
@@ -418,10 +418,13 @@ class GameState {
         const baseDefense = 5 + this.player.stats.vit * 0.5 + defenseValue * 1;
         const baseMaxHp = 100 + this.player.stats.vit * 10 + hpValue;
         
+        // HP 버프 확인 (체력 2배)
+        const hpBuff = this.hasActiveHpBuff() ? 2.0 : 1.0;
+        
         // % 보너스 적용
         this.player.derivedStats.attack = Math.floor(baseAttack * (1 + totalAttackBonus / 100));
         this.player.derivedStats.defense = Math.floor(baseDefense * (1 + totalDefenseBonus / 100));
-        this.player.derivedStats.maxHp = Math.floor(baseMaxHp * (1 + totalHpBonus / 100));
+        this.player.derivedStats.maxHp = Math.floor(baseMaxHp * (1 + totalHpBonus / 100) * hpBuff);
         this.player.derivedStats.moveSpeed = 100 + totalMoveSpeed;
         
         // 크리티컬 (기존 + 양쪽 업그레이드 합산, 효율 배율 적용)
@@ -555,6 +558,15 @@ class GameState {
      */
     canRebirth() {
         return this.player.level >= this.rebirth.minLevel;
+    }
+
+    /**
+     * HP 버프 활성화 확인
+     * @returns {boolean}
+     */
+    hasActiveHpBuff() {
+        const buffTime = this.dailyMissions.buffs.hpDouble;
+        return buffTime > Date.now();
     }
 
     /**
