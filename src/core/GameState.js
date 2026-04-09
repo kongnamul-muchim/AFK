@@ -606,7 +606,13 @@ class GameState {
         // 레벨 50부터 시작, 레벨 높을수록 증가
         const bonusLevel = Math.max(0, this.player.level - this.rebirth.minLevel + 1);
         // 레벨당 1 카운트 + 보너스 (높은 레벨일수록 더 많이)
-        return Math.floor(bonusLevel * (1 + bonusLevel * 0.1));
+        let basePoints = Math.floor(bonusLevel * (1 + bonusLevel * 0.1));
+        
+        // 보석 업그레이드: 환생 보너스 (1개/레벨, 최대 10)
+        const rebirthBonusLevel = this.gemUpgrades.rebirthBonus || 0;
+        basePoints += Math.min(10, rebirthBonusLevel);
+        
+        return basePoints;
     }
 
     /**
