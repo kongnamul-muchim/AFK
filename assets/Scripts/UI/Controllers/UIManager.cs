@@ -1084,10 +1084,19 @@ public class UIManager : MonoBehaviour
             if (costLabel != null) costLabel.text = $"{item.costType}: {item.cost}";
             if (buyBtn != null)
             {
-                buyBtn.clicked = null; // 기존 이벤트 제거
+                buyBtn.clicked -= null; // 이벤트 초기화 (실제로는 매번 새로 바인딩)
                 buyBtn.clicked += () => OnUpgradePurchase(item.name, item.costType, item.cost);
             }
         }
+    }
+    
+    /// <summary>
+    /// 업그레이드 구매 이벤트
+    /// </summary>
+    private void OnUpgradePurchase(string name, string costType, int cost)
+    {
+        Debug.Log($"업그레이드 구매: {name} (비용: {costType} {cost})");
+        // 실제 구매 로직 구현
     }
     
     // ========== 미션 리스트 ==========
