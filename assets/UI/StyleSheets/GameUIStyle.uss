@@ -464,14 +464,34 @@
     font-size: 30px;
 }
 
-/* 아이템 그리드 */
-.items-grid {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
+/* 아이템 리스트 (Infinity Scroll) */
+.items-list {
+    flex-direction: column;
     max-height: 500px;
-    overflow: hidden;
     margin-bottom: 30px;
+    -unity-content-offset: 10px;
+}
+
+/* 인벤토리 아이템 컨테이너 */
+.inventory-item-container {
+    min-width: 80px;
+    min-height: 80px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: var(--color-bg-tertiary);
+    border-top-left-radius: 8;
+    border-top-right-radius: 8;
+    border-bottom-left-radius: 8;
+    border-bottom-right-radius: 8;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.inventory-item-container:hover {
+    background-color: var(--color-accent-dark);
 }
 
 /* 인벤토리 아이템 컨테이너 */
@@ -624,10 +644,11 @@
     margin-bottom: 40px;
 }
 
-.upgrade-grid {
+.upgrade-list {
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     max-height: 750px;
+    -unity-content-offset: 10px;
 }
 
 /* 미션 모달 */
@@ -652,10 +673,11 @@
     margin-bottom: 40px;
 }
 
-.missions-grid {
+.missions-list {
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     max-height: 750px;
+    -unity-content-offset: 10px;
 }
 
 /* 보석 상점 */

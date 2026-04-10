@@ -142,8 +142,14 @@
                 <ui:Button name="BatchSynthesizeBtn" text="일괄 합성" class="batch-synthesize-btn" />
             </ui:VisualElement>
             
-            <!-- 아이템 그리드 -->
-            <ui:VisualElement name="InventoryItems" class="items-grid" />
+            <!-- 아이템 리스트 (Infinity Scroll) -->
+            <ui:ListView name="InventoryItems" class="items-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false">
+                <ui:VisualElement class="inventory-item-template">
+                    <ui:Label name="ItemIcon" class="item-icon" />
+                    <ui:Label name="ItemName" class="item-name" />
+                    <ui:Label name="ItemQuantity" class="item-quantity" />
+                </ui:VisualElement>
+            </ui:ListView>
             
             <ui:VisualElement name="GoldDisplay" class="gold-display">
                 <ui:Label name="GoldDisplayLabel" text="💰 골드:" class="gold-display-label" />
@@ -218,7 +224,7 @@
                 <ui:Button name="UpgradeTabGem" text="💎 보석" class="tab-btn" />
                 <ui:Button name="UpgradeTabRebirth" text="환생" class="tab-btn" />
             </ui:VisualElement>
-            <ui:VisualElement name="UpgradeGrid" class="upgrade-grid" />
+            <ui:ListView name="UpgradeGrid" class="upgrade-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false" />
         </ui:VisualElement>
     </ui:VisualElement>
     
@@ -237,7 +243,7 @@
                 <ui:Button name="MissionsTabDaily" text="일일 미션" class="tab-btn active" />
                 <ui:Button name="MissionsTabWeekly" text="주간 미션" class="tab-btn" />
             </ui:VisualElement>
-            <ui:VisualElement name="MissionsGrid" class="missions-grid" />
+            <ui:ListView name="MissionsGrid" class="missions-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false" />
         </ui:VisualElement>
     </ui:VisualElement>
     
