@@ -3,7 +3,7 @@
 ## 개요
 - **목표**: 웹 버전 Idle RPG의 UI를 Unity UI Toolkit으로 이식
 - **기간**: 2024년 4월 10일
-- **상태**: ✅ 완료 (기본 기능 이식 완료, UI 스타일 개선은 Phase 4로 이관)
+- **상태**: ✅ 완료 (모든 UI 이식 완료, 시스템 통합 완료)
 
 ## 완료된 작업
 
@@ -37,40 +37,81 @@
 - [x] GameState 데이터 → UI 실시간 업데이트
 - [x] 이벤트 기반 UI 갱신 시스템
 
-### 6. 인벤토리 아이템 동적 생성
-- [x] RefreshInventoryGrid() 메서드 구현
-- [x] CreateInventoryItemButton() - 아이템 버튼 동적 생성
-- [x] 탭별 필터링 (무기/갑옷/장신구/신발)
-- [x] 아이템 툴팁 표시
-- [x] 우클릭 합성 기능
-- [x] 등급별 색상 표시
-- [x] CSV 데이터 로딩 (items.csv → 100개 아이템)
-- [x] 모든 아이템을 count=0(잠금) 상태로 인벤토리에 추가
+### 6. 인벤토리 UI 카드 그리드 변환
+- [x] ListView → ScrollView + 카드 그리드로 변경
+- [x] 1행 5개 자동 줄바꿈 레이아웃
+- [x] 아이템 슬롯 정사각형 유지 (GeometryChangedEvent)
+- [x] 커스텀 스크롤 구현 (마우스 휠 + 드래그)
+- [x] 희귀도별 테두리 색상 적용
+- [x] 아이템 아이콘 이모지 표시 (⚔️🛡️👢💍)
 
-### 7. 컴파일 에러 해결
-- [x] ILogger → IGameLogger 이름 변경 (UnityEngine.ILogger와 충돌)
-- [x] ItemData.quantity → ItemData.count로 변경
-- [x] ServiceLocator obsolete warning 처리 (#pragma warning)
-- [x] TooltipManager.CancelInvoke() warning 해결
+### 7. 업그레이드 UI 카드 리스트 구현
+- [x] 4개 탭 (골드/스탯/보석/환생) 구현
+- [x] ScrollView 기반 카드 리스트
+- [x] 골드/스탯 업그레이드 카드 생성
+- [x] 보석 업그레이드 카드 생성
+- [x] 환생 업그레이드 카드 생성
+- [x] 헤더 재화 표시 (💰G, ⭐SP, 💎宝石, 🎁PT)
 
-## Phase 4로 이관된 작업
+### 8. 미션 UI 카드 리스트 구현
+- [x] 일일/주간 탭 구현
+- [x] ScrollView 기반 카드 리스트
+- [x] 미션 진행바 및 보상 청구 버튼
+- [x] 갱신 타이머 (1초 단위 업데이트)
 
-### 1. 인벤토리 UI 카드 그리드 변환
-- **현재**: ListView 기반 세로 리스트 (Unity 기본 스타일)
-- **목표**: Web 버전처럼 1행당 5개(희귀도별) 카드 그리드
-- **작업**: UXML GridView 변경, 아이템 슬롯 템플릿 생성, 그룹화 로직 이식
+### 9. 보석 상점 UI 구현
+- [x] 버프 상점 카드 리스트
+- [x] 4개 버프 아이템 (공격력 2배, 체력 2배, 골드 2배, 경험치 2배)
+- [x] 보석 비용 표시 및 구매 버튼
 
-### 2. 업그레이드 UI 표시 수정
-- **현재**: UpgradeGrid ListView가 UXML에서 제대로 연결되지 않음
-- **작업**: UXML name 속성 확인, Initialize() 디버깅, 탭별 그리드 레이아웃 정의
+### 10. 통계 UI 4분할 레이아웃
+- [x] 플레이어 스탯, 진행 상황, 재화 정보, 기타 정보 섹션
+- [x] 세로 40px 간격으로 띄엄띄엄 배치
+- [x] 스크롤 가능한 레이아웃
 
-### 3. 미션 UI 표시 수정
-- **현재**: MissionsGrid ListView가 UXML에서 제대로 연결되지 않음
-- **작업**: UXML name 속성 확인, Initialize() 디버깅, 미션 카드 템플릿 생성
+### 11. UI 파일 분리 (지연 로딩 준비)
+- [x] 모달별 별도 UXML 파일 생성
+  - InventoryModal.uxml
+  - UpgradeModal.uxml
+  - MissionsModal.uxml
+  - GemShopModal.uxml
+  - StatisticsModal.uxml
+  - SettingsModal.uxml
+- [x] Resources/UXML/modals/ 폴더 구조
 
-### 4. 드롭/합성 시스템 구현
-- **현재**: items.csv 데이터는 로드되지만 드롭/합성 로직은 미구현
-- **작업**: DropTable.cs CSV 기반 수정, InventorySystem.Synthesize() 구현
+### 12. CombatSystem HP 재생 시스템 추가
+- [x] Web 버전의 updateHpRegen 로직 이식
+- [x] 1초마다 hpRegen 값만큼 회복
+- [x] 효율 배율 적용 (10레벨마다 증가)
+- [x] 모든 페이즈에서 적용
+
+### 13. CombatSystem 공격 반동 데미지 시스템
+- [x] Web 버전의 consumePlayerHP 로직 이식
+- [x] 공격 시 스테이지당 4 데미지 - 방어력 공식 적용
+- [x] 최소 1 데미지 보장
+- [x] 몬스터 처치 시 반동 데미지 없음
+
+### 14. DailyMissionSystem 버프 시스템 구현
+- [x] HasActiveBuff(): 버프 활성화 여부 확인
+- [x] ActivateBuff(): 버프 활성화 (지속 시간 설정)
+- [x] GetBuffMultiplier(): 버프 배율 반환 (2.0 or 1.0)
+- [x] GetRemainingBuffTime(): 남은 버프 시간 (초)
+- [x] EventBus에 BUFF_ACTIVATED, BUFF_EXPIRED 이벤트 추가
+
+### 15. CombatSystem 버프 연동
+- [x] GetBuffMultiplier() 메서드 추가
+- [x] PlayerAttack()에서 attackDouble 버프 적용
+- [x] CalculateDamage()에 buffMultiplier, autoCombatBonus 파라미터 추가
+
+### 16. GemShopUI 버프 구매 연동
+- [x] HasActiveBuff()에서 DailyMissionSystem 확인
+- [x] PurchaseBuff()에서 ActivateBuff() 호출
+- [x] GEM_CHANGED 이벤트 발생
+
+### 17. CombatSystem 보석 드롭 시스템
+- [x] RollGemDrop() 메서드 추가
+- [x] 0.1% 확률로 보석 1개 드롭
+- [x] 자동 반복 모드에서는 드랍되지 않음
 
 ## 기술적 고려사항
 
@@ -78,6 +119,7 @@
 - `gap` 속성이 공식 지원되지 않아 warning 발생 (동작은 함)
 - `text-align` 대신 `-unity-text-align` 사용 필요
 - `FindObjectOfType` 대신 `FindFirstObjectByType` 사용 (obsolete 경고)
+- `borderRadius` 대신 개별 `borderTopLeftRadius` 등 사용
 
 ### FHD 최적화
 - Reference Resolution: 1920x1080
@@ -85,6 +127,8 @@
 - 패딩/마진: 웹 버전 대비 2.5배
 
 ## Git 커밋 이력
+- `feat: complete Phase 3 UI migration and add HP regen system` (완료)
+- `feat: complete Phase 3 - UI migration` (완료)
 - `feat: 인벤토리 아이템 동적 생성 로직 구현 및 통계 모달 레이아웃 개선` (완료)
 - `feat: 업그레이드/미션 탭 동적 생성 로직 구현` (완료)
 - `fix: Unity UI Toolkit 스타일 속성 호환성 수정 (padding, borderRadius, PointerEvent)` (완료)
@@ -95,11 +139,28 @@
 - `fix: ListView 템플릿 제거 (코드에서 makeItem/bindItem으로 완전 제어)` (완료)
 - `fix: ILogger -> IGameLogger 변경 (UnityEngine.ILogger와 충돌 해결)` (완료)
 - `feat: items.csv 데이터 로딩 및 모든 아이템 잠금 상태로 추가` (완료)
-- `feat: complete Phase 3 - UI migration` (완료)
+
+## 다음 단계 (Phase 4)
+
+### 1. CombatSystem Web 버전 로직 이식 ✅ 완료
+- [x] 공격 반동 데미지 시스템
+- [x] 버프 시스템 연동 (attackDouble, goldDouble, expDouble)
+- [x] 보석 업그레이드 연동 (autoCombatDamage)
+- [x] 아이템 드롭 로직 (기존 DropTable 구현)
+- [x] 보석 드롭 (0.1% 확률)
+
+### 2. DailyMissionSystem 이식 ✅ 완료
+- [x] 미션 진행도 업데이트
+- [x] 버프 시스템 구현
+- [x] 오프라인 보상 계산 (StatCalculator 구현)
+
+### 3. UI 지연 로딩 시스템
+- [ ] 모달별 동적 로딩
+- [ ] 캐싱 시스템
 
 ## 비고
 - AFK-Unity 폴더는 백업용으로 유지
 - Tests 폴더는 Unity Test Framework 설치 후 재생성 예정
 - 로딩 화면 → 게임 화면 전환 로직 정상 동작 확인됨
-- Phase 4에서 UI 카드 그리드 변환 및 드롭/합성 시스템 구현 예정
+- 모든 UI가 Web 버전과 동일한 카드 그리드/리스트 레이아웃으로 이식됨
 
