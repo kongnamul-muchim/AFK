@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
-        xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements"
         noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/StyleSheets/GameUIStyle.uss?fileID=7433441132597879392&amp;type=3#MainGameUI" />
     
@@ -142,8 +142,10 @@
                 <ui:Button name="BatchSynthesizeBtn" text="일괄 합성" class="batch-synthesize-btn" />
             </ui:VisualElement>
             
-            <!-- 아이템 리스트 (Infinity Scroll) -->
-            <ui:ListView name="InventoryItems" class="items-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false" />
+            <!-- 아이템 리스트 (카드 그리드) - ScrollView 사용 (스크롤바 숨김) -->
+            <ui:ScrollView name="InventoryScrollContainer" class="inventory-scroll" show-vertical-scroller="false" horizontal-scrolling="false" vertical-scrolling="true">
+                <ui:VisualElement name="InventoryItems" class="items-grid" />
+            </ui:ScrollView>
             
             <ui:VisualElement name="GoldDisplay" class="gold-display">
                 <ui:Label name="GoldDisplayLabel" text="💰 골드:" class="gold-display-label" />
@@ -209,7 +211,7 @@
             </ui:VisualElement>
             <ui:VisualElement name="UpgradeHeader" class="upgrade-header">
                 <ui:Label name="UpgradePointsDisplay" text="⭐ 0" class="stat-points-display" style="display: none;" />
-                <ui:Label name="UpgradeGoldDisplay" text="💰 0" class="gold-display" style="display: none;" />
+                <ui:Label name="UpgradeGoldDisplay" text="💰 0" class="upgrade-gold-display" style="display: none;" />
                 <ui:Label name="UpgradeGemsDisplay" text="💎 0" class="gems-display" style="display: none;" />
             </ui:VisualElement>
             <ui:VisualElement name="UpgradeTabs" class="upgrade-tabs">
@@ -218,7 +220,8 @@
                 <ui:Button name="UpgradeTabGem" text="💎 보석" class="tab-btn" />
                 <ui:Button name="UpgradeTabRebirth" text="환생" class="tab-btn" />
             </ui:VisualElement>
-            <ui:ListView name="UpgradeGrid" class="upgrade-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false" />
+            <ui:ScrollView name="UpgradeGrid" class="upgrade-list" show-vertical-scroller="false" horizontal-scrolling="false" vertical-scrolling="true">
+            </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>
     
@@ -237,7 +240,8 @@
                 <ui:Button name="MissionsTabDaily" text="일일 미션" class="tab-btn active" />
                 <ui:Button name="MissionsTabWeekly" text="주간 미션" class="tab-btn" />
             </ui:VisualElement>
-            <ui:ListView name="MissionsGrid" class="missions-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false" />
+            <ui:ScrollView name="MissionsGrid" class="missions-list" show-vertical-scroller="false" horizontal-scrolling="false" vertical-scrolling="true">
+            </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>
     
@@ -251,7 +255,8 @@
             <ui:VisualElement name="GemShopHeader" class="shop-header">
                 <ui:Label name="GemShopGems" text="💎 0" class="gems-display" />
             </ui:VisualElement>
-            <ui:VisualElement name="GemShopGrid" class="gem-shop-grid" />
+            <ui:ScrollView name="GemShopGrid" class="gem-shop-grid" show-vertical-scroller="false" horizontal-scrolling="false" vertical-scrolling="true">
+            </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>
     

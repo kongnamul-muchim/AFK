@@ -366,11 +366,69 @@
     color: var(--color-text-primary);
 }
 
-/* 장비 패널 */
+/* 장비 패널 - 통합 배경 */
 .equipment-panel {
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 30px;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: 12px;
+}
+
+/* 장비 슬롯 행 */
+.equipment-slots-row {
+    flex-direction: row;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.equipment-slot {
+    flex: 1;
+    min-height: 100px;
+    background-color: var(--color-bg-secondary);
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 10px;
+}
+
+.slot-label {
+    color: var(--color-text-secondary);
+    font-size: 18;
+    margin-bottom: 5;
+    -unity-text-align: middle-center;
+}
+
+.slot-item {
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: 6px;
+}
+
+/* 스탯 보너스 행 - 배경 제거 (equipment-panel에 통합) */
+.stats-bonus-row {
+    flex-direction: row;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.stat-bonus-card {
+    flex: 1;
+    min-height: 50px;
+    background-color: var(--color-bg-secondary);
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+}
+
+.bonus-stat {
+    color: var(--color-text-secondary);
+    font-size: 16;
+    -unity-text-align: middle-center;
 }
 
 /* 장비 슬롯 행 */
@@ -451,7 +509,7 @@
 /* 일괄합성 바 */
 .batch-synthesize-bar {
     flex-direction: row;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .batch-synthesize-btn {
@@ -464,11 +522,38 @@
     font-size: 30px;
 }
 
+/* 인벤토리 스크롤 영역 - Web 버전과 동일하게 */
+.inventory-scroll {
+    flex: 1;
+    min-height: 500px;
+    max-height: 800px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: 8px;
+    padding: 10px;
+    /* 클리핑 필수 - 카드가 밖으로 안 나오게 */
+    overflow: hidden;
+    position: relative;
+    /* 이벤트 수신 명시 */
+    pointer-events: all;
+}
+
+/* 아이템 그리드 컨테이너 */
+.items-grid {
+    /* 콘텐츠 높이에 맞춰 자유롭게 */
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    /* 너비를 부모에 맞춤 */
+    width: 100%;
+    /* 스크롤 이벤트 전파 허용 */
+    pointer-events: all;
+}
+
 /* 아이템 리스트 (Infinity Scroll) */
 .items-list {
     flex-direction: column;
     min-height: 400px;
-    max-height: 500px;
+    max-height: 750px;
     margin-bottom: 30px;
 }
 
@@ -481,10 +566,10 @@
     padding-top: 5px;
     padding-bottom: 5px;
     background-color: var(--color-bg-tertiary);
-    border-top-left-radius: 8;
-    border-top-right-radius: 8;
-    border-bottom-left-radius: 8;
-    border-bottom-right-radius: 8;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -632,6 +717,12 @@
     font-size: 35px;
 }
 
+.upgrade-gold-display {
+    color: var(--color-gold);
+    -unity-font-style: bold;
+    font-size: 35px;
+}
+
 .gems-display {
     color: var(--color-accent);
     -unity-font-style: bold;
@@ -735,8 +826,38 @@
 
 /* 통계 모달 */
 .statistics-modal-content {
-    min-width: 1000px;
+    flex-direction: column;
+    min-width: 100%;
     max-height: 85%;
+}
+
+.statistics-content {
+    flex-direction: column;
+    gap: 40px; /* 섹션 간격 넓게 */
+    max-height: 100%;
+    padding: 20px;
+    overflow: scroll-y;
+}
+
+.stats-section {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    padding: 20px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: 12px;
+    min-height: 150px;
+    margin-bottom: 40px; /* 섹션 간격 */
+}
+
+.stats-section-title {
+    font-size: 24;
+    -unity-font-style: bold;
+    color: var(--color-accent);
+    padding: 10px 16px;
+    background-color: var(--color-bg-secondary);
+    border-radius: 8px;
+    -unity-text-align: middle-left;
 }
 
 .statistics-content {
@@ -811,10 +932,60 @@
 
 .tutorial-guide {
     background-color: var(--color-bg-secondary);
-    border-radius: 30px;
     padding: 60px;
-    max-width: 1000px;
+    border-radius: 16px;
+    max-width: 800px;
+}
+
+.tutorial-message {
+    color: var(--color-text-primary);
+    font-size: 32px;
+    margin-bottom: 40px;
     -unity-text-align: middle-center;
+}
+
+.tutorial-next {
+    padding: 20px 60px;
+    background-color: var(--color-accent);
+    color: white;
+    border-radius: 8px;
+    font-size: 28px;
+    -unity-font-style: bold;
+}
+
+/* 스크롤바 커스터마이징 - Web 버전 스타일 */
+.inventory-scroll {
+    -unity-overflow-clip-visual-element: true;
+}
+
+/* 기본 스크롤바 완전히 숨김 */
+.inventory-scroll .unity-scroll-view-vertical-scroller {
+    display: none;
+    width: 0;
+}
+
+/* 커스텀 스크롤바 컨테이너 (UXML에 추가 필요) */
+.custom-scrollbar-track {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    bottom: 4px;
+    width: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.custom-scrollbar-thumb {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    min-height: 20px;
+}
+
+.custom-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5);
 }
 
 .tutorial-message {
