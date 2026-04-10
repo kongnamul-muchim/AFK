@@ -1,0 +1,404 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+        xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements"
+        noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/StyleSheets/GameUIStyle.uss?fileID=7433441132597879392&amp;type=3#MainGameUI" />
+    
+    <!-- 로딩 화면 -->
+    <ui:VisualElement name="LoadingScreen" class="loading-screen">
+        <ui:VisualElement name="LoadingContent" class="loading-content">
+            <ui:Label name="LoadingLogo" text="Idle RPG" class="loading-logo" />
+            <ui:VisualElement name="LoadingProgress" class="loading-progress">
+                <ui:VisualElement name="LoadingBar" class="loading-bar">
+                    <ui:VisualElement name="LoadingBarFill" class="loading-bar-fill" />
+                </ui:VisualElement>
+                <ui:Label name="LoadingPercent" text="0%" class="loading-percent" />
+            </ui:VisualElement>
+            <ui:Label name="LoadingTip" text="로딩 중..." class="loading-tip" />
+            <ui:Label name="LoadingVersion" text="v1.0.0" class="loading-version" />
+            <ui:Button name="LoadingRetry" text="재시도" class="loading-retry" style="display: none;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 게임 컨테이너 -->
+    <ui:VisualElement name="GameContainer" class="game-container" style="display: none;">
+        
+        <!-- HUD 상단 -->
+        <ui:VisualElement name="HUDTop" class="hud-top">
+            <!-- 아이템 드롭 이펙트 -->
+            <ui:VisualElement name="ItemDropEffects" class="item-drop-effects" />
+            
+            <!-- 플레이어 정보 -->
+            <ui:VisualElement name="PlayerInfo" class="player-info">
+                <ui:Label name="PlayerLevel" text="Lv.1" class="player-level" />
+                <ui:VisualElement name="HPBarContainer" class="hp-bar-container">
+                    <ui:VisualElement name="HPBarFill" class="hp-bar-fill" />
+                </ui:VisualElement>
+                <ui:Label name="HPText" text="100/100" class="hp-text" />
+            </ui:VisualElement>
+            
+            <!-- 오른쪽 정보 -->
+            <ui:VisualElement name="RightInfo" class="right-info">
+                <ui:VisualElement name="GoldInfo" class="gold-info">
+                    <ui:Label name="GoldIcon" text="💰" class="gold-icon" />
+                    <ui:Label name="GoldText" text="0" class="gold-text" />
+                </ui:VisualElement>
+                <ui:Button name="StatisticsBtn" text="📊" class="settings-btn" />
+                <ui:Button name="SettingsBtn" text="⚙️" class="settings-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- 스테이지 정보 (메인 화면 상단 중앙) -->
+        <ui:VisualElement name="StageInfoBar" class="stage-info-bar">
+            <ui:Label name="StageText" text="Stage 1" class="stage-text" />
+            <ui:Button name="AutoRepeatBtn" text="🔄" class="auto-repeat-btn" />
+        </ui:VisualElement>
+        
+        <!-- 버프 표시 영역 -->
+        <ui:VisualElement name="BuffDisplay" class="buff-display" />
+        
+        <!-- 게임 뷰 (Canvas 대체) -->
+        <ui:VisualElement name="GameView" class="game-view">
+            <ui:VisualElement name="GameCanvas" class="game-canvas" />
+            <ui:VisualElement name="CombatLog" class="combat-log" />
+        </ui:VisualElement>
+        
+        <!-- HUD 하단 -->
+        <ui:VisualElement name="HUDBottom" class="hud-bottom">
+            <ui:VisualElement name="EXPBarContainer" class="exp-bar-container">
+                <ui:VisualElement name="EXPBarFill" class="exp-bar-fill" />
+            </ui:VisualElement>
+            <ui:VisualElement name="BottomStats" class="bottom-stats">
+                <ui:Label name="EXPText" text="Exp: 0/100" class="stat-text" />
+                <ui:Label name="StatPoints" text="SP: 0" class="stat-points" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- 메뉴 버튼들 -->
+        <ui:VisualElement name="MenuButtons" class="menu-buttons">
+            <ui:Button name="InventoryBtn" text="인벤토리" class="menu-btn" />
+            <ui:Button name="UpgradeBtn" text="⬆️ 업그레이드" class="menu-btn" />
+            <ui:Button name="DailyMissionsBtn" text="📋 미션" class="menu-btn" />
+            <ui:Button name="GemShopBtn" text="💎 상점" class="menu-btn" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 인벤토리 모달 -->
+    <ui:VisualElement name="InventoryModal" class="modal" style="display: none;">
+        <ui:VisualElement name="InventoryModalContent" class="modal-content inventory-modal-content">
+            <ui:VisualElement name="InventoryModalHeader" class="modal-header">
+                <ui:Label name="InventoryTitle" text="인벤토리" class="modal-title" />
+                <ui:Button name="CloseInventoryBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            
+            <!-- 장착 아이템 패널 -->
+            <ui:VisualElement name="EquipmentPanel" class="equipment-panel">
+                <!-- 1행: 장비 슬롯들 -->
+                <ui:VisualElement name="EquipmentSlotsRow" class="equipment-slots-row">
+                    <ui:VisualElement name="EquipWeapon" class="equipment-slot" data-slot="weapon">
+                        <ui:Label name="WeaponSlotLabel" text="무기" class="slot-label" />
+                        <ui:VisualElement name="WeaponSlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="EquipArmor" class="equipment-slot" data-slot="armor">
+                        <ui:Label name="ArmorSlotLabel" text="갑옷" class="slot-label" />
+                        <ui:VisualElement name="ArmorSlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="EquipAccessory" class="equipment-slot" data-slot="accessory">
+                        <ui:Label name="AccessorySlotLabel" text="장신구" class="slot-label" />
+                        <ui:VisualElement name="AccessorySlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="EquipBoots" class="equipment-slot" data-slot="boots">
+                        <ui:Label name="BootsSlotLabel" text="신발" class="slot-label" />
+                        <ui:VisualElement name="BootsSlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                
+                <!-- 2행: 스탯 가중치들 -->
+                <ui:VisualElement name="StatsBonusRow" class="stats-bonus-row">
+                    <ui:VisualElement name="StatAtkCard" class="stat-bonus-card">
+                        <ui:Label name="BonusAtk" text="공격력: +0%" class="bonus-stat" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="StatDefCard" class="stat-bonus-card">
+                        <ui:Label name="BonusDef" text="방어력: +0%" class="bonus-stat" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="StatHPCard" class="stat-bonus-card">
+                        <ui:Label name="BonusHP" text="체력: +0%" class="bonus-stat" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="StatMoveSpeedCard" class="stat-bonus-card">
+                        <ui:Label name="BonusMoveSpeed" text="이동속도: +0" class="bonus-stat" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+            <!-- 인벤토리 탭 -->
+            <ui:VisualElement name="InventoryTabs" class="inventory-tabs">
+                <ui:Button name="TabWeapon" text="무기" class="tab-btn active" />
+                <ui:Button name="TabArmor" text="갑옷" class="tab-btn" />
+                <ui:Button name="TabAccessory" text="장신구" class="tab-btn" />
+                <ui:Button name="TabBoots" text="신발" class="tab-btn" />
+            </ui:VisualElement>
+            
+            <!-- 일괄합성 버튼 -->
+            <ui:VisualElement name="BatchSynthesizeBar" class="batch-synthesize-bar">
+                <ui:Button name="BatchSynthesizeBtn" text="✨ 일괄 합성" class="batch-synthesize-btn" />
+                <ui:Label name="BatchSynthesizeHint" text="탭의 모든 아이템 자동 합성" class="batch-synthesize-hint" />
+            </ui:VisualElement>
+            
+            <!-- 아이템 그리드 -->
+            <ui:VisualElement name="InventoryItems" class="items-grid" />
+            
+            <ui:VisualElement name="GoldDisplay" class="gold-display">
+                <ui:Label name="GoldDisplayLabel" text="💰 골드:" class="gold-display-label" />
+                <ui:Label name="InventoryGold" text="0" class="gold-display-value" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- 아이템 툴팁 -->
+        <ui:VisualElement name="ItemTooltip" class="item-tooltip" style="display: none;">
+            <ui:Label name="TooltipName" text="" class="tooltip-name" />
+            <ui:Label name="TooltipGrade" text="" class="tooltip-grade" />
+            <ui:VisualElement name="TooltipStats" class="tooltip-stats" />
+            <ui:VisualElement name="TooltipActions" class="tooltip-actions">
+                <ui:Label name="TooltipEquipAction" text="좌클릭: 장착" class="tooltip-action" />
+                <ui:Label name="TooltipSynthesizeAction" text="우클릭: 합성 (x5)" class="tooltip-action" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 설정 모달 -->
+    <ui:VisualElement name="SettingsModal" class="modal" style="display: none;">
+        <ui:VisualElement name="SettingsModalContent" class="modal-content">
+            <ui:VisualElement name="SettingsModalHeader" class="modal-header">
+                <ui:Label name="SettingsTitle" text="설정" class="modal-title" />
+                <ui:Button name="CloseSettingsBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="SettingsContent" class="settings-content">
+                <ui:VisualElement name="SFXVolumeRow" class="setting-row">
+                    <ui:Label name="SFXVolumeLabel" text="효과음" class="setting-label" />
+                    <ui:Slider name="SFXVolumeSlider" class="setting-slider" low-value="0" high-value="100" value="80" />
+                    <ui:Label name="SFXVolumeValue" text="80%" class="setting-value" />
+                </ui:VisualElement>
+                <ui:VisualElement name="BGMVolumeRow" class="setting-row">
+                    <ui:Label name="BGMVolumeLabel" text="BGM" class="setting-label" />
+                    <ui:Slider name="BGMVolumeSlider" class="setting-slider" low-value="0" high-value="100" value="60" />
+                    <ui:Label name="BGMVolumeValue" text="60%" class="setting-value" />
+                </ui:VisualElement>
+                <ui:VisualElement name="VibrationRow" class="setting-row">
+                    <ui:Label name="VibrationLabel" text="진동" class="setting-label" />
+                    <ui:Toggle name="VibrationToggle" class="setting-toggle" value="true" />
+                </ui:VisualElement>
+                <ui:VisualElement name="NotificationsRow" class="setting-row">
+                    <ui:Label name="NotificationsLabel" text="알림" class="setting-label" />
+                    <ui:Toggle name="NotificationsToggle" class="setting-toggle" value="true" />
+                </ui:VisualElement>
+                <ui:VisualElement name="DataButtonsRow" class="setting-row">
+                    <ui:Button name="ExportDataBtn" text="데이터 내보내기" class="data-btn" />
+                    <ui:Button name="ImportDataBtn" text="데이터 가져오기" class="data-btn" />
+                </ui:VisualElement>
+                <ui:VisualElement name="ResetDataRow" class="setting-row">
+                    <ui:Button name="ResetDataBtn" text="데이터 초기화" class="data-btn danger" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 업그레이드 모달 -->
+    <ui:VisualElement name="UpgradeModal" class="modal" style="display: none;">
+        <ui:VisualElement name="UpgradeModalContent" class="modal-content upgrade-modal-content">
+            <ui:VisualElement name="UpgradeModalHeader" class="modal-header">
+                <ui:Label name="UpgradeTitle" text="업그레이드" class="modal-title" />
+                <ui:Button name="CloseUpgradeBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="UpgradeHeader" class="upgrade-header">
+                <ui:Label name="UpgradePointsDisplay" text="⭐ 0" class="stat-points-display" style="display: none;" />
+                <ui:Label name="UpgradeGoldDisplay" text="💰 0" class="gold-display" style="display: none;" />
+                <ui:Label name="UpgradeGemsDisplay" text="💎 0" class="gems-display" style="display: none;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="UpgradeTabs" class="upgrade-tabs">
+                <ui:Button name="UpgradeTabGold" text="골드" class="tab-btn active" />
+                <ui:Button name="UpgradeTabStat" text="스탯" class="tab-btn" />
+                <ui:Button name="UpgradeTabGem" text="💎 보석" class="tab-btn" />
+                <ui:Button name="UpgradeTabRebirth" text="환생" class="tab-btn" />
+            </ui:VisualElement>
+            <ui:VisualElement name="UpgradeGrid" class="upgrade-grid" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 미션 모달 -->
+    <ui:VisualElement name="DailyMissionsModal" class="modal" style="display: none;">
+        <ui:VisualElement name="DailyMissionsContent" class="modal-content daily-missions-content">
+            <ui:VisualElement name="MissionsModalHeader" class="modal-header">
+                <ui:Label name="MissionsTitle" text="미션" class="modal-title" />
+                <ui:Button name="CloseMissionsBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MissionsHeader" class="missions-header">
+                <ui:Label name="MissionsGems" text="💎 0" class="gems-display" />
+                <ui:Label name="MissionsResetTimer" text="다음 갱신까지: --:--:--" class="reset-timer" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MissionsTabs" class="missions-tabs">
+                <ui:Button name="MissionsTabDaily" text="일일 미션" class="tab-btn active" />
+                <ui:Button name="MissionsTabWeekly" text="주간 미션" class="tab-btn" />
+            </ui:VisualElement>
+            <ui:VisualElement name="MissionsGrid" class="missions-grid" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 보석 상점 모달 -->
+    <ui:VisualElement name="GemShopModal" class="modal" style="display: none;">
+        <ui:VisualElement name="GemShopContent" class="modal-content gem-shop-content">
+            <ui:VisualElement name="GemShopModalHeader" class="modal-header">
+                <ui:Label name="GemShopTitle" text="보석 상점" class="modal-title" />
+                <ui:Button name="CloseGemShopBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="GemShopHeader" class="shop-header">
+                <ui:Label name="GemShopGems" text="💎 0" class="gems-display" />
+            </ui:VisualElement>
+            <ui:VisualElement name="GemShopGrid" class="gem-shop-grid" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 오프라인 보상 모달 -->
+    <ui:VisualElement name="OfflineRewardModal" class="modal" style="display: none;">
+        <ui:VisualElement name="OfflineRewardContent" class="modal-content">
+            <ui:VisualElement name="OfflineRewardHeader" class="modal-header">
+                <ui:Label name="OfflineRewardTitle" text="오프라인 보상" class="modal-title" />
+                <ui:Button name="CloseOfflineBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="OfflineContent" class="offline-content">
+                <ui:Label name="OfflineTime" text="접속하지 않은 시간: 0 시간" class="offline-time" />
+                <ui:VisualElement name="OfflineRewards" class="offline-rewards">
+                    <ui:Label name="OfflineKills" text="처치한 몬스터: 0 마리" />
+                    <ui:Label name="OfflineGold" text="획득한 골드: 0" />
+                    <ui:Label name="OfflineExp" text="획득한 경험치: 0" />
+                </ui:VisualElement>
+                <ui:VisualElement name="OfflineEquipmentSection" class="offline-equipment" style="display: none;">
+                    <ui:Label name="OfflineEquipmentTitle" text="드롭된 장비" />
+                    <ui:VisualElement name="OfflineEquipmentList" class="offline-equipment-list" />
+                </ui:VisualElement>
+                <ui:Button name="ClaimRewardBtn" text="확인" class="confirm-btn" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 통계 모달 -->
+    <ui:VisualElement name="StatisticsModal" class="modal" style="display: none;">
+        <ui:VisualElement name="StatisticsContent" class="modal-content statistics-modal-content">
+            <ui:VisualElement name="StatisticsModalHeader" class="modal-header">
+                <ui:Label name="StatisticsTitle" text="스탯 정보" class="modal-title" />
+                <ui:Button name="CloseStatisticsBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="StatisticsBody" class="statistics-content">
+                <!-- 플레이어 스탯 -->
+                <ui:VisualElement name="PlayerStatsSection" class="stats-section">
+                    <ui:Label name="PlayerStatsTitle" text="플레이어 스탯" class="stats-section-title" />
+                    <ui:VisualElement name="PlayerStatsGrid" class="stats-grid">
+                        <ui:VisualElement name="StatsLevelCard" class="stat-card">
+                            <ui:Label name="StatsLevelLabel" text="레벨" class="stat-card-label" />
+                            <ui:Label name="StatsLevelValue" text="1" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsAtkCard" class="stat-card">
+                            <ui:Label name="StatsAtkLabel" text="공격력" class="stat-card-label" />
+                            <ui:Label name="StatsAtkValue" text="10" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsDefCard" class="stat-card">
+                            <ui:Label name="StatsDefLabel" text="방어력" class="stat-card-label" />
+                            <ui:Label name="StatsDefValue" text="5" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsHPCard" class="stat-card">
+                            <ui:Label name="StatsHPLabel" text="체력" class="stat-card-label" />
+                            <ui:Label name="StatsHPValue" text="100" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsMoveSpeedCard" class="stat-card">
+                            <ui:Label name="StatsMoveSpeedLabel" text="이동속도" class="stat-card-label" />
+                            <ui:Label name="StatsMoveSpeedValue" text="200" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsCritRateCard" class="stat-card">
+                            <ui:Label name="StatsCritRateLabel" text="치명확률" class="stat-card-label" />
+                            <ui:Label name="StatsCritRateValue" text="5%" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsCritDmgCard" class="stat-card">
+                            <ui:Label name="StatsCritDmgLabel" text="치명피해" class="stat-card-label" />
+                            <ui:Label name="StatsCritDmgValue" text="150%" class="stat-card-value" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                
+                <!-- 진행 상황 -->
+                <ui:VisualElement name="ProgressSection" class="stats-section">
+                    <ui:Label name="ProgressTitle" text="진행 상황" class="stats-section-title" />
+                    <ui:VisualElement name="ProgressGrid" class="stats-grid">
+                        <ui:VisualElement name="StatsCurrentStageCard" class="stat-card">
+                            <ui:Label name="StatsCurrentStageLabel" text="현재 스테이지" class="stat-card-label" />
+                            <ui:Label name="StatsCurrentStageValue" text="1" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsMaxStageCard" class="stat-card">
+                            <ui:Label name="StatsMaxStageLabel" text="최대 스테이지" class="stat-card-label" />
+                            <ui:Label name="StatsMaxStageValue" text="1" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsStageClearsCard" class="stat-card">
+                            <ui:Label name="StatsStageClearsLabel" text="스테이지 클리어" class="stat-card-label" />
+                            <ui:Label name="StatsStageClearsValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsKillsCard" class="stat-card">
+                            <ui:Label name="StatsKillsLabel" text="총 처치 수" class="stat-card-label" />
+                            <ui:Label name="StatsKillsValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsBossKillsCard" class="stat-card">
+                            <ui:Label name="StatsBossKillsLabel" text="보스 처치" class="stat-card-label" />
+                            <ui:Label name="StatsBossKillsValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                
+                <!-- 재화 -->
+                <ui:VisualElement name="CurrencySection" class="stats-section">
+                    <ui:Label name="CurrencyTitle" text="재화" class="stats-section-title" />
+                    <ui:VisualElement name="CurrencyGrid" class="stats-grid">
+                        <ui:VisualElement name="StatsGoldCard" class="stat-card">
+                            <ui:Label name="StatsGoldLabel" text="골드" class="stat-card-label" />
+                            <ui:Label name="StatsGoldValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsGemsCard" class="stat-card">
+                            <ui:Label name="StatsGemsLabel" text="보석" class="stat-card-label" />
+                            <ui:Label name="StatsGemsValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsTotalGoldCard" class="stat-card">
+                            <ui:Label name="StatsTotalGoldLabel" text="총 획득 골드" class="stat-card-label" />
+                            <ui:Label name="StatsTotalGoldValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                
+                <!-- 기타 통계 -->
+                <ui:VisualElement name="OtherStatsSection" class="stats-section">
+                    <ui:Label name="OtherStatsTitle" text="기타" class="stats-section-title" />
+                    <ui:VisualElement name="OtherStatsGrid" class="stats-grid">
+                        <ui:VisualElement name="StatsPlaytimeCard" class="stat-card">
+                            <ui:Label name="StatsPlaytimeLabel" text="플레이 시간" class="stat-card-label" />
+                            <ui:Label name="StatsPlaytimeValue" text="0 시간" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsLevelupsCard" class="stat-card">
+                            <ui:Label name="StatsLevelupsLabel" text="레벨업 횟수" class="stat-card-label" />
+                            <ui:Label name="StatsLevelupsValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsRebirthCard" class="stat-card">
+                            <ui:Label name="StatsRebirthLabel" text="환생 횟수" class="stat-card-label" />
+                            <ui:Label name="StatsRebirthValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="StatsInventoryCard" class="stat-card">
+                            <ui:Label name="StatsInventoryLabel" text="인벤토리 아이템" class="stat-card-label" />
+                            <ui:Label name="StatsInventoryValue" text="0" class="stat-card-value" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    
+    <!-- 튜토리얼 가이드 오버레이 -->
+    <ui:VisualElement name="TutorialOverlay" class="tutorial-overlay" style="display: none;">
+        <ui:VisualElement name="TutorialGuide" class="tutorial-guide">
+            <ui:Label name="TutorialMessage" text="" class="tutorial-message" />
+            <ui:Button name="TutorialNext" text="다음" class="tutorial-next" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
