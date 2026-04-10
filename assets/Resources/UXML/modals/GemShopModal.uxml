@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns="UnityEngine.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="UnityEngine.UIElements ../UIElements.xsd">
+    <!-- 보석 상점 모달 -->
+    <ui:VisualElement name="GemShopModal" class="modal" style="display: none;">
+        <ui:VisualElement name="GemShopContent" class="modal-content gem-shop-content">
+            <ui:VisualElement name="GemShopModalHeader" class="modal-header">
+                <ui:Label name="GemShopTitle" text="보석 상점" class="modal-title" />
+                <ui:Button name="CloseGemShopBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement name="GemShopHeader" class="shop-header">
+                <ui:Label name="GemShopGems" text="💎 0" class="gems-display" />
+            </ui:VisualElement>
+            <ui:ScrollView name="GemShopGrid" class="gem-shop-grid" show-vertical-scroller="false" horizontal-scrolling="false" vertical-scrolling="true">
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</UXML>

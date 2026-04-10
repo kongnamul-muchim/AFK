@@ -3,7 +3,7 @@
 ## 개요
 - **목표**: 웹 버전 Idle RPG의 UI를 Unity UI Toolkit으로 이식
 - **기간**: 2024년 4월 10일
-- **상태**: 진행 중 (UI 표시 및 레이아웃 조정 단계)
+- **상태**: ✅ 완료 (기본 기능 이식 완료, UI 스타일 개선은 Phase 4로 이관)
 
 ## 완료된 작업
 
@@ -19,11 +19,11 @@
 - [x] UIManager, PopupManager 스크립트 구현
 
 ### 3. UI 마크업 및 스타일
-- [x] MainGameUI.uxml 생성 (393줄)
+- [x] MainGameUI.uxml 생성 (403줄)
   - 로딩 화면
   - 게임 컨테이너 (HUD 상/하단, 메뉴 버튼)
   - 모달 UI (인벤토리, 설정, 업그레이드, 미션, 상점, 오프라인보상, 통계)
-- [x] GameUIStyle.uss 생성 (761줄)
+- [x] GameUIStyle.uss 생성 (798줄)
   - FHD 최적화 (2.5배 폰트/패딩)
   - Unity 6 호환 (gap 속성 warning 있음)
 
@@ -37,59 +37,40 @@
 - [x] GameState 데이터 → UI 실시간 업데이트
 - [x] 이벤트 기반 UI 갱신 시스템
 
-## 현재 문제점 (디버깅 중)
+### 6. 인벤토리 아이템 동적 생성
+- [x] RefreshInventoryGrid() 메서드 구현
+- [x] CreateInventoryItemButton() - 아이템 버튼 동적 생성
+- [x] 탭별 필터링 (무기/갑옷/장신구/신발)
+- [x] 아이템 툴팁 표시
+- [x] 우클릭 합성 기능
+- [x] 등급별 색상 표시
+- [x] CSV 데이터 로딩 (items.csv → 100개 아이템)
+- [x] 모든 아이템을 count=0(잠금) 상태로 인벤토리에 추가
 
-### 1. 인벤토리 장비 슬롯 미표시
-- **증상**: 인벤토리 모달에서 장비 슬롯(무기/갑옷/장신구/신발)이 보이지 않음
-- **원인 추정**: flex 레이아웃 또는 표시 여부(style.display) 문제
-- **해결 방향**: UXML 구조 확인, USS flex 속성 조정
-- **진행 상황**: ✅ `.stats-bonus-panel`의 flex-direction을 `row`로 수정 완료 (기존 column → row)
+### 7. 컴파일 에러 해결
+- [x] ILogger → IGameLogger 이름 변경 (UnityEngine.ILogger와 충돌)
+- [x] ItemData.quantity → ItemData.count로 변경
+- [x] ServiceLocator obsolete warning 처리 (#pragma warning)
+- [x] TooltipManager.CancelInvoke() warning 해결
 
-### 2. 업그레이드/미션/상점 탭 UI 미표시
-- **증상**: 모달 Panel만 보이고 탭별 아이템 그리드가 표시되지 않음
-- **원인 추정**: items-grid, upgrade-grid 등의 레이아웃 설정 누락
-- **실제 원인**: UIManager에 아이템을 생성해서 그리드에 추가하는 코드가 없음
-- **해결 방향**: 인벤토리/업그레이드/미션 아이템 동적 생성 로직 구현 필요
+## Phase 4로 이관된 작업
 
-### 3. 인벤토리 스탯 표시 오류
-- **증상**: 공격력/방어력/체력/이동속도가 4줄이 아닌 한줄로 표시됨
-- **원인**: .stats-bonus-panel의 flex-direction이 column으로 설정됨
-- **해결 상태**: ✅ 수정 완료 (row + flex-wrap으로 변경)
+### 1. 인벤토리 UI 카드 그리드 변환
+- **현재**: ListView 기반 세로 리스트 (Unity 기본 스타일)
+- **목표**: Web 버전처럼 1행당 5개(희귀도별) 카드 그리드
+- **작업**: UXML GridView 변경, 아이템 슬롯 템플릿 생성, 그룹화 로직 이식
 
-### 4. 자동진행 버튼 위치
-- **증상**: 자동반복 버튼이 스테이지 텍스트 옆이 아닌 아래에 위치
-- **원인 추정**: .stage-info의 flex-direction 또는 align-items 설정 문제
-- **확인 결과**: USS에서 .stage-info는 `flex-direction: row`로 정상. 실제 런타임 문제일 가능성
+### 2. 업그레이드 UI 표시 수정
+- **현재**: UpgradeGrid ListView가 UXML에서 제대로 연결되지 않음
+- **작업**: UXML name 속성 확인, Initialize() 디버깅, 탭별 그리드 레이아웃 정의
 
-### 5. 통계 창 크기
-- **증상**: 통계 모달이 화면에 비해 너무 큼
-- **원인**: .statistics-modal-content의 min-width가 1250px로 너무 큼
-- **해결 상태**: ✅ 수정 완료 (1250px → 900px)
+### 3. 미션 UI 표시 수정
+- **현재**: MissionsGrid ListView가 UXML에서 제대로 연결되지 않음
+- **작업**: UXML name 속성 확인, Initialize() 디버깅, 미션 카드 템플릿 생성
 
-## 다음 작업
-
-### 1. UI 레이아웃 디버깅 (우선순위 높음)
-- [x] 인벤토리 스탯 4줄 표시 수정 (완료: flex-direction row 변경)
-- [x] 통계 창 크기 조정 (완료: 1250px → 900px)
-- [ ] 인벤토리 장비 슬롯 표시 문제 해결 (테스트 필요)
-- [ ] 자동진행 버튼 위치 조정 (런타임 확인 필요)
-
-### 2. UI-게임 로직 연동 강화 (핵심 작업)
-- [ ] 인벤토리 아이템 실제 표시 (동적 생성 로직 구현)
-- [ ] 업그레이드 항목 실제 표시 (동적 생성 로직 구현)
-- [ ] 미션 목록 실제 표시 (동적 생성 로직 구현)
-- [ ] 상점 아이템 실제 표시 (동적 생성 로직 구현)
-- [ ] 버튼 클릭 이벤트 처리 (장착, 합성, 구매 등)
-
-### 3. 최적화
-- [ ] gap 속성 warning 해결 (margin으로 대체 고려)
-- [ ] USS 파일 정리 및 최적화
-- [ ] 불필요한 스타일 제거
-
-### 3. 최적화
-- [ ] gap 속성 warning 해결 (margin으로 대체 고려)
-- [ ] USS 파일 정리 및 최적화
-- [ ] 불필요한 스타일 제거
+### 4. 드롭/합성 시스템 구현
+- **현재**: items.csv 데이터는 로드되지만 드롭/합성 로직은 미구현
+- **작업**: DropTable.cs CSV 기반 수정, InventorySystem.Synthesize() 구현
 
 ## 기술적 고려사항
 
@@ -104,9 +85,21 @@
 - 패딩/마진: 웹 버전 대비 2.5배
 
 ## Git 커밋 이력
-- `feat: complete Phase 3 - UI migration` (예정)
+- `feat: 인벤토리 아이템 동적 생성 로직 구현 및 통계 모달 레이아웃 개선` (완료)
+- `feat: 업그레이드/미션 탭 동적 생성 로직 구현` (완료)
+- `fix: Unity UI Toolkit 스타일 속성 호환성 수정 (padding, borderRadius, PointerEvent)` (완료)
+- `fix: PointerEvent -> MouseDownEvent로 변경 (Unity UI Toolkit 호환성)` (완료)
+- `feat: ListView 기반 Infinity Scroll 구현 (인벤토리/업그레이드/미션 리스트로 변경)` (완료)
+- `fix: using System.Collections.Generic; 추가` (완료)
+- `fix: OnUpgradePurchase 메서드 추가 및 clicked 이벤트 수정` (완료)
+- `fix: ListView 템플릿 제거 (코드에서 makeItem/bindItem으로 완전 제어)` (완료)
+- `fix: ILogger -> IGameLogger 변경 (UnityEngine.ILogger와 충돌 해결)` (완료)
+- `feat: items.csv 데이터 로딩 및 모든 아이템 잠금 상태로 추가` (완료)
+- `feat: complete Phase 3 - UI migration` (완료)
 
 ## 비고
 - AFK-Unity 폴더는 백업용으로 유지
 - Tests 폴더는 Unity Test Framework 설치 후 재생성 예정
 - 로딩 화면 → 게임 화면 전환 로직 정상 동작 확인됨
+- Phase 4에서 UI 카드 그리드 변환 및 드롭/합성 시스템 구현 예정
+

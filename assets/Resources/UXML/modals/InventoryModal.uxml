@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns="UnityEngine.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="UnityEngine.UIElements ../UIElements.xsd">
+    <!-- 인벤토리 모달 -->
+    <ui:VisualElement name="InventoryModal" class="modal" style="display: none;">
+        <ui:VisualElement name="InventoryContent" class="modal-content inventory-content">
+            <ui:VisualElement name="InventoryModalHeader" class="modal-header">
+                <ui:Label name="InventoryTitle" text="인벤토리" class="modal-title" />
+                <ui:Button name="CloseInventoryBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            
+            <!-- 장착 아이템 패널 -->
+            <ui:VisualElement name="EquipmentPanel" class="equipment-panel">
+                <!-- 1행: 장비 슬롯들 -->
+                <ui:VisualElement name="EquipmentSlotsRow" class="equipment-slots-row">
+                    <ui:VisualElement name="EquipWeapon" class="equipment-slot" data-slot="weapon">
+                        <ui:Label name="WeaponSlotLabel" text="무기" class="slot-label" />
+                        <ui:VisualElement name="WeaponSlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="EquipArmor" class="equipment-slot" data-slot="armor">
+                        <ui:Label name="ArmorSlotLabel" text="갑옷" class="slot-label" />
+                        <ui:VisualElement name="ArmorSlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="EquipAccessory" class="equipment-slot" data-slot="accessory">
+                        <ui:Label name="AccessorySlotLabel" text="장신구" class="slot-label" />
+                        <ui:VisualElement name="AccessorySlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="EquipBoots" class="equipment-slot" data-slot="boots">
+                        <ui:Label name="BootsSlotLabel" text="신발" class="slot-label" />
+                        <ui:VisualElement name="BootsSlotItem" class="slot-item" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                
+                <!-- 2행: 스탯 가중치들 -->
+                <ui:VisualElement name="StatsBonusRow" class="stats-bonus-row">
+                    <ui:VisualElement name="StatAtkCard" class="stat-bonus-card">
+                        <ui:Label name="BonusAtk" text="공격력: +0%" class="bonus-stat" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="StatDefCard" class="stat-bonus-card">
+                        <ui:Label name="BonusDef" text="방어력: +0%" class="bonus-stat" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="StatHPCard" class="stat-bonus-card">
+                        <ui:Label name="BonusHP" text="체력: +0%" class="bonus-stat" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="StatMoveSpeedCard" class="stat-bonus-card">
+                        <ui:Label name="BonusMoveSpeed" text="이동속도: +0" class="bonus-stat" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+            <!-- 탭 버튼 -->
+            <ui:VisualElement name="InventoryTabs" class="inventory-tabs">
+                <ui:Button name="TabWeapon" text="⚔️ 무기" class="tab-btn active" />
+                <ui:Button name="TabArmor" text="🛡️ 방어구" class="tab-btn" />
+                <ui:Button name="TabAccessory" text="💍 장신구" class="tab-btn" />
+                <ui:Button name="TabBoots" text="👢 신발" class="tab-btn" />
+            </ui:VisualElement>
+            
+            <!-- 아이템 리스트 (카드 그리드) -->
+            <ui:ScrollView name="InventoryScrollContainer" class="inventory-scroll" show-vertical-scroller="false" horizontal-scrolling="false" vertical-scrolling="true">
+                <ui:VisualElement name="InventoryItems" class="items-grid" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</UXML>

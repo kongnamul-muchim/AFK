@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UXML xmlns="UnityEngine.UIElements" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="UnityEngine.UIElements ../UIElements.xsd">
+    <!-- 통계 모달 -->
+    <ui:VisualElement name="StatisticsModal" class="modal" style="display: none;">
+        <ui:VisualElement name="StatisticsContent" class="modal-content statistics-modal-content">
+            <ui:VisualElement name="StatisticsModalHeader" class="modal-header">
+                <ui:Label name="StatisticsTitle" text="스탯 정보" class="modal-title" />
+                <ui:Button name="CloseStatisticsBtn" text="×" class="modal-close" />
+            </ui:VisualElement>
+            <ui:ScrollView name="StatisticsBody" class="statistics-content" horizontal-scrolling="false" vertical-scrolling="true">
+                <!-- 플레이어 스탯 -->
+                <ui:VisualElement name="PlayerStatsSection" class="stats-section">
+                        <ui:Label name="PlayerStatsTitle" text="플레이어 스탯" class="stats-section-title" />
+                        <ui:VisualElement name="PlayerStatsGrid" class="stats-grid">
+                            <ui:VisualElement name="StatsLevelCard" class="stat-card">
+                                <ui:Label name="StatsLevelLabel" text="레벨" class="stat-card-label" />
+                                <ui:Label name="StatsLevelValue" text="1" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsAtkCard" class="stat-card">
+                                <ui:Label name="StatsAtkLabel" text="공격력" class="stat-card-label" />
+                                <ui:Label name="StatsAtkValue" text="10" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsDefCard" class="stat-card">
+                                <ui:Label name="StatsDefLabel" text="방어력" class="stat-card-label" />
+                                <ui:Label name="StatsDefValue" text="5" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsHPCard" class="stat-card">
+                                <ui:Label name="StatsHPLabel" text="체력" class="stat-card-label" />
+                                <ui:Label name="StatsHPValue" text="100" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsMoveSpeedCard" class="stat-card">
+                                <ui:Label name="StatsMoveSpeedLabel" text="이동속도" class="stat-card-label" />
+                                <ui:Label name="StatsMoveSpeedValue" text="200" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsCritRateCard" class="stat-card">
+                                <ui:Label name="StatsCritRateLabel" text="치명확률" class="stat-card-label" />
+                                <ui:Label name="StatsCritRateValue" text="5%" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsCritDmgCard" class="stat-card">
+                                <ui:Label name="StatsCritDmgLabel" text="치명피해" class="stat-card-label" />
+                                <ui:Label name="StatsCritDmgValue" text="150%" class="stat-card-value" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                    <!-- 진행 상황 -->
+                    <ui:VisualElement name="ProgressSection" class="stats-section">
+                        <ui:Label name="ProgressTitle" text="진행 상황" class="stats-section-title" />
+                        <ui:VisualElement name="ProgressGrid" class="stats-grid">
+                            <ui:VisualElement name="StatsCurrentStageCard" class="stat-card">
+                                <ui:Label name="StatsCurrentStageLabel" text="현재 스테이지" class="stat-card-label" />
+                                <ui:Label name="StatsCurrentStageValue" text="1" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsMaxStageCard" class="stat-card">
+                                <ui:Label name="StatsMaxStageLabel" text="최대 스테이지" class="stat-card-label" />
+                                <ui:Label name="StatsMaxStageValue" text="1" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsTotalKillsCard" class="stat-card">
+                                <ui:Label name="StatsTotalKillsLabel" text="총 처치 수" class="stat-card-label" />
+                                <ui:Label name="StatsTotalKillsValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsBossKillsCard" class="stat-card">
+                                <ui:Label name="StatsBossKillsLabel" text="보스 처치" class="stat-card-label" />
+                                <ui:Label name="StatsBossKillsValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsTotalGoldCard" class="stat-card">
+                                <ui:Label name="StatsTotalGoldLabel" text="총 골드 획득" class="stat-card-label" />
+                                <ui:Label name="StatsTotalGoldValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsRebirthsCard" class="stat-card">
+                                <ui:Label name="StatsRebirthsLabel" text="환생 횟수" class="stat-card-label" />
+                                <ui:Label name="StatsRebirthsValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                    <!-- 재화 정보 -->
+                    <ui:VisualElement name="CurrencySection" class="stats-section">
+                        <ui:Label name="CurrencyTitle" text="재화 정보" class="stats-section-title" />
+                        <ui:VisualElement name="CurrencyGrid" class="stats-grid">
+                            <ui:VisualElement name="StatsGoldCard" class="stat-card">
+                                <ui:Label name="StatsGoldLabel" text="골드" class="stat-card-label" />
+                                <ui:Label name="StatsGoldValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsGemsCard" class="stat-card">
+                                <ui:Label name="StatsGemsLabel" text="보석" class="stat-card-label" />
+                                <ui:Label name="StatsGemsValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsStatPointsCard" class="stat-card">
+                                <ui:Label name="StatsStatPointsLabel" text="스탯 포인트" class="stat-card-label" />
+                                <ui:Label name="StatsStatPointsValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    
+                    <!-- 기타 정보 -->
+                    <ui:VisualElement name="EtcSection" class="stats-section">
+                        <ui:Label name="EtcTitle" text="기타 정보" class="stats-section-title" />
+                        <ui:VisualElement name="EtcGrid" class="stats-grid">
+                            <ui:VisualElement name="StatsRebirthCountCard" class="stat-card">
+                                <ui:Label name="StatsRebirthCountLabel" text="환생 횟수" class="stat-card-label" />
+                                <ui:Label name="StatsRebirthCountValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsBonusPointsCard" class="stat-card">
+                                <ui:Label name="StatsBonusPointsLabel" text="보너스 포인트" class="stat-card-label" />
+                                <ui:Label name="StatsBonusPointsValue" text="0" class="stat-card-value" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="StatsPlayTimeCard" class="stat-card">
+                                <ui:Label name="StatsPlayTimeLabel" text="플레이 시간" class="stat-card-label" />
+                                <ui:Label name="StatsPlayTimeValue" text="0시간" class="stat-card-value" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</UXML>
