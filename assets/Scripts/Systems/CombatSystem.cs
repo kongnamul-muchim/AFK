@@ -55,7 +55,7 @@ public class CombatSystem : MonoBehaviour
     
     private IGameState _gameState;
     private IEventBus _eventBus;
-    private ILogger _logger;
+    private IGameLogger _logger;
     
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
@@ -67,7 +67,7 @@ public class CombatSystem : MonoBehaviour
         if (_eventBus == null)
             _eventBus = ServiceLocator.Instance.Get<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<ILogger>();
+            _logger = ServiceLocator.Instance.Get<IGameLogger>();
     }
 
     // ========== 전투 설정 ==========
@@ -80,6 +80,9 @@ public class CombatSystem : MonoBehaviour
     
     /// <summary>자동 반복 모드 여부</summary>
     private bool _autoRepeatMode = false;
+    
+    /// <summary>HP 재생 타이머 (ms)</summary>
+    private float _hpRegenTimer = 0f;
 
     // ========== 현재 상태 ==========
     
@@ -210,6 +213,9 @@ public class CombatSystem : MonoBehaviour
     {
         float deltaTime = Time.deltaTime;
         _phaseTimer += deltaTime;
+        
+        // HP 재생 (모든 페이즈에서 적용)
+        UpdateHpRegen(deltaTime);
         
         // 페이즈별 시간 기반 전이
         switch (_currentPhase)
@@ -354,6 +360,57 @@ public class CombatSystem : MonoBehaviour
     // ========== 공격/데미지 ==========
     
     /// <summary>
+    /// HP 재생 업데이트 (모든 페이즈에서 호출)
+    /// 정확히 1초마다 한 번씩 hpRegen 값만큼 회복
+    /// </summary>
+    private void UpdateHpRegen(float deltaTime)
+    {
+        // hpRegen 계산: (goldUpgrades["hpRegen"] + statUpgrades["hpRegen"]) * baseValue
+        // Web 버전: hpRegen baseValue = 1
+        int hpRegenLevel = 0;
+        if (_gameState.Player.goldUpgrades.ContainsKey("hpRegen"))
+            hpRegenLevel += _gameState.Player.goldUpgrades["hpRegen"];
+        if (_gameState.Player.statUpgrades.ContainsKey("hpRegen"))
+            hpRegenLevel += _gameState.Player.statUpgrades["hpRegen"];
+        
+        // 효율 배율 계산 (Web 버전과 동일: 10레벨마다 증가)
+        float efficiencyMultiplier = 1f;
+        if (hpRegenLevel >= 40) efficiencyMultiplier = 3f;
+        else if (hpRegenLevel >= 30) efficiencyMultiplier = 2.5f;
+        else if (hpRegenLevel >= 20) efficiencyMultiplier = 2f;
+        else if (hpRegenLevel >= 10) efficiencyMultiplier = 1.5f;
+        
+        // hpRegen 값 = 누적값 * baseValue(1)
+        float hpRegen = 0;
+        for (int i = 0; i < hpRegenLevel; i++)
+        {
+            hpRegen += efficiencyMultiplier;
+        }
+        
+        if (hpRegen <= 0) return;
+        
+        float maxHp = _gameState.GetTotalHealth();
+        var player = _gameState.Player;
+        
+        // 1초 타이머에 deltaTime 누적 (deltaTime은 초)
+        _hpRegenTimer += deltaTime;
+        
+        // 정확히 1초마다 회복
+        if (_hpRegenTimer >= 1f)
+        {
+            if (player.currentHP < maxHp)
+            {
+                player.currentHP = Mathf.Min(maxHp, player.currentHP + hpRegen);
+                _gameState.Player = player;
+                
+                _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
+            }
+            // 타이머 리셋 (남은 시간은 다음 주기로 이월)
+            _hpRegenTimer -= 1f;
+        }
+    }
+    
+    /// <summary>
     /// 플레이어 공격
     /// </summary>
     private void PlayerAttack()
@@ -380,6 +437,40 @@ public class CombatSystem : MonoBehaviour
             monster.currentHP = 0;
             combatPhase.monsterState = monster;
             ChangePhase(CombatPhase.VICTORY);
+            return; // 몬스터가 죽었으면 반동 데미지 없음
+        }
+        
+        // 공격 반동 데미지: 플레이어 체력 소모
+        // 공식: (stage * 4) - playerDefense, 최소 1
+        ConsumePlayerHP();
+    }
+
+    /// <summary>
+    /// 플레이어 체력 소모 (공격 반동)
+    /// Web 버전과 동일한 로직: 스테이지당 4 데미지 - 방어력, 최소 1
+    /// </summary>
+    private void ConsumePlayerHP()
+    {
+        int stage = _gameState.Stage.currentStage;
+        float playerDefense = _gameState.GetTotalDefense();
+        
+        // 플레이어 체력 소모 (스테이지 비례 고정 수치 - 방어력)
+        // 공식: (stage * 4) - playerDefense, 최소 1
+        float baseRecoil = stage * 4f; // 스테이지당 4 데미지
+        float recoilDamage = Mathf.Max(1f, baseRecoil - playerDefense);
+        
+        var player = _gameState.Player;
+        player.currentHP = Mathf.Max(0f, player.currentHP - recoilDamage);
+        _gameState.Player = player;
+        
+        _logger.Debug($"공격 반동 데미지: {recoilDamage:F1}, 플레이어 HP: {player.currentHP:F1}/{_gameState.GetTotalHealth():F1}");
+        
+        // 플레이어 사망 확인
+        if (player.currentHP <= 0)
+        {
+            player.currentHP = 0;
+            _gameState.Player = player;
+            ChangePhase(CombatPhase.DEFEATED);
         }
     }
 
@@ -463,113 +554,29 @@ public class CombatSystem : MonoBehaviour
 
     // ========== 몬스터 시스템 ==========
     
+    // 분리된 컴포넌트
+    private MonsterFactory _monsterFactory;
+    private DropTable _dropTable;
+    
     /// <summary>
-    /// 몬스터 생성
+    /// 몬스터 생성 (MonsterFactory로 위임)
     /// </summary>
     private void SpawnMonster()
     {
         int stage = _gameState.Stage.currentStage;
         
-        // 보스 여부 판정 (10스테이지마다)
-        bool isBoss = (stage % 10 == 0);
+        // MonsterFactory를 사용하여 몬스터 생성
+        if (_monsterFactory == null)
+            _monsterFactory = new MonsterFactory();
         
-        // 몬스터 스펙 계산
-        MonsterData monster = CreateMonsterData(stage, isBoss);
+        MonsterData monster = _monsterFactory.CreateMonster(stage);
         var combatPhase = _gameState.CombatPhase;
         combatPhase.monsterState = monster;
         
         // 몬스터 공격 속도 설정
-        _monsterAttackSpeed = 1f; // 기본값, 몬스터 종류에 따라 변경 가능
+        _monsterAttackSpeed = _monsterFactory.GetMonsterAttackSpeed(monster);
         
-        _logger.Info($"몬스터 등장 - {monster.name} (스테이지 {stage}, {(isBoss ? "보스" : "일반")})");
-    }
-
-    /// <summary>
-    /// 몬스터 데이터 생성
-    /// </summary>
-    private MonsterData CreateMonsterData(int stage, bool isBoss)
-    {
-        // 최대 스테이지 기반 몬스터 스펙 계산
-        int effectiveStage = Mathf.Max(stage, _gameState.Stage.maxStage);
-        
-        float baseHP = GameConfig.BaseMonsterHP;
-        float baseAttack = GameConfig.BaseMonsterAttack;
-        float baseDefense = GameConfig.BaseMonsterDefense;
-        
-        // 스테이지 비례 증가
-        float hpMultiplier = 1f + (effectiveStage - 1) * GameConfig.MonsterStatPerStage;
-        float attackMultiplier = 1f + (effectiveStage - 1) * GameConfig.MonsterStatPerStage * 0.8f;
-        float defenseMultiplier = 1f + (effectiveStage - 1) * GameConfig.MonsterStatPerStage * 0.6f;
-        
-        float hp = baseHP * hpMultiplier;
-        float attack = baseAttack * attackMultiplier;
-        float defense = baseDefense * defenseMultiplier;
-        
-        // 보스 배율
-        if (isBoss)
-        {
-            hp *= GameConfig.BossStatMultiplier;
-            attack *= GameConfig.BossStatMultiplier;
-            defense *= GameConfig.BossStatMultiplier;
-        }
-        
-        // 몬스터 등급 (보스는 항상 영웅 이상)
-        int grade = isBoss ? 3 : GetMonsterGrade(effectiveStage);
-        
-        // 등급별 스탯 보정
-        float gradeMult = GameConfig.GradeStatMultipliers[Mathf.Min(grade, 4)];
-        
-        hp *= gradeMult;
-        attack *= gradeMult;
-        defense *= gradeMult;
-        
-        return new MonsterData
-        {
-            name = GetMonsterName(stage, isBoss),
-            stage = stage,
-            currentHP = hp,
-            maxHP = hp,
-            attack = attack,
-            defense = defense,
-            grade = grade
-        };
-    }
-
-    /// <summary>
-    /// 몬스터 등급 결정
-    /// </summary>
-    private int GetMonsterGrade(int stage)
-    {
-        // 스테이지가 높을수록 고등급 몬스터 등장 확률 증가
-        float[] rates = _gameState.GetDropRates();
-        
-        float roll = Random.value;
-        float cumulative = 0f;
-        
-        for (int i = 0; i < rates.Length; i++)
-        {
-            cumulative += rates[i];
-            if (roll < cumulative)
-            {
-                return i;
-            }
-        }
-        
-        return 0; // 일반
-    }
-
-    /// <summary>
-    /// 몬스터 이름 생성
-    /// </summary>
-    private string GetMonsterName(int stage, bool isBoss)
-    {
-        string[] prefixes = new string[] { "작은 ", "일반 ", "강한 ", "엘리트 ", "보스 " };
-        string[] monsterTypes = new string[] { "슬라임", "고블린", "오크", "트롤", "드래곤" };
-        
-        int typeIndex = Mathf.Min(stage / 10, monsterTypes.Length - 1);
-        string prefix = isBoss ? "보스 " : prefixes[Mathf.Min(stage / 5, prefixes.Length - 1)];
-        
-        return prefix + monsterTypes[typeIndex];
+        _logger.Info($"몬스터 등장 - {monster.name} (스테이지 {stage}, {(monster.grade >= 3 ? "보스" : "일반")})");
     }
 
     // ========== 승리/패배 처리 ==========
@@ -665,87 +672,51 @@ public class CombatSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 경험치 보상 계산
+    /// 경험치 보상 계산 (DropTable로 위임)
     /// </summary>
     private long CalculateExpReward()
     {
+        if (_dropTable == null)
+            _dropTable = new DropTable();
+        
         int stage = _gameState.Stage.currentStage;
         bool isBoss = (stage % 10 == 0);
         
-        long baseExp = 10 * stage;
-        
-        if (isBoss)
-        {
-            baseExp *= 5;
-        }
-        
-        return baseExp;
+        return _dropTable.GetExpReward(stage, isBoss);
     }
 
     /// <summary>
-    /// 골드 드롭량 계산
+    /// 골드 드롭량 계산 (DropTable로 위임)
     /// </summary>
     private int CalculateGoldDrop()
     {
+        if (_dropTable == null)
+            _dropTable = new DropTable();
+        
         int stage = _gameState.Stage.currentStage;
         bool isBoss = (stage % 10 == 0);
         int monsterGrade = _gameState.CombatPhase.monsterState.grade;
         
-        int baseGold = 5 * stage;
-        
-        // 등급 보정
-        float gradeMult = GameConfig.GradeStatMultipliers[monsterGrade];
-        
-        // 보스 보정
-        if (isBoss)
-        {
-            gradeMult *= 3;
-        }
-        
-        // 변동폭
-        float variance = Random.Range(GameConfig.GoldDropVarianceMin, GameConfig.GoldDropVarianceMax);
-        
-        return Mathf.RoundToInt(baseGold * gradeMult * variance);
+        return _dropTable.GetGoldDrop(monsterGrade, stage, isBoss);
     }
 
     /// <summary>
-    /// 아이템 드롭
+    /// 아이템 드롭 (DropTable로 위임)
     /// </summary>
     private void DropLoot()
     {
-        // 드롭 확률 확인
-        if (Random.value > GameConfig.ItemDropRate)
-        {
-            return; // 드롭 없음
-        }
+        if (_dropTable == null)
+            _dropTable = new DropTable();
         
-        // 등급 결정
-        float[] dropRates = _gameState.GetDropRates();
-        int grade = 0;
-        float roll = Random.value;
-        float cumulative = 0f;
+        int monsterGrade = _gameState.CombatPhase.monsterState.grade;
+        int stage = _gameState.Stage.currentStage;
         
-        for (int i = 0; i < dropRates.Length; i++)
-        {
-            cumulative += dropRates[i];
-            if (roll < cumulative)
-            {
-                grade = i;
-                break;
-            }
-        }
+        ItemData? dropItem = _dropTable.GetDrop(monsterGrade, stage);
         
-        // 아이템 생성
-        string itemId = GenerateItemId(grade);
-        string itemName = GenerateItemName(grade);
+        if (dropItem == null)
+            return;
         
-        ItemData item = new ItemData
-        {
-            id = itemId,
-            name = itemName,
-            grade = grade,
-            quantity = 1
-        };
+        ItemData item = dropItem.Value;
         
         // 인벤토리에 추가
         var inventory = _gameState.Inventory;
@@ -753,9 +724,9 @@ public class CombatSystem : MonoBehaviour
         _gameState.Inventory = inventory;
         
         // 발견 아이템 등록
-        if (!inventory.discoveredItems.Contains(itemId))
+        if (!inventory.discoveredItems.Contains(item.id))
         {
-            inventory.discoveredItems.Add(itemId);
+            inventory.discoveredItems.Add(item.id);
             var stats = _gameState.Stats;
             stats.totalItemsDiscovered++;
             _gameState.Stats = stats;
@@ -764,31 +735,7 @@ public class CombatSystem : MonoBehaviour
         
         _eventBus.Emit(GameEvents.ITEM_ACQUIRED);
         
-        _logger.Info($"아이템 드롭: {itemName} ({GetGradeName(grade)}등급)");
-    }
-
-    private string GenerateItemId(int grade)
-    {
-        string[] types = new string[] { "sword", "armor", "boots", "accessory" };
-        string type = types[Random.Range(0, types.Length)];
-        return $"{type}_grade{grade}_{Random.Range(1000, 9999)}";
-    }
-
-    private string GenerateItemName(int grade)
-    {
-        string[] prefixes = new string[] { "일반 ", "고급 ", "희귀 ", "영웅 ", "전설 " };
-        string[] types = new string[] { "검", "방어구", "신발", "장신구" };
-        
-        string prefix = prefixes[grade];
-        string type = types[Random.Range(0, types.Length)];
-        
-        return prefix + type;
-    }
-
-    private string GetGradeName(int grade)
-    {
-        string[] names = new string[] { "일반", "고급", "희귀", "영웅", "전설" };
-        return names[Mathf.Min(grade, names.Length - 1)];
+        _logger.Info($"아이템 드롭: {item.name} ({_dropTable.GetGradeName(item.grade)}등급)");
     }
 
     // ========== 유틸리티 ==========
