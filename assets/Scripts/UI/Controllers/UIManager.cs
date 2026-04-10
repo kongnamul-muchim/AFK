@@ -708,9 +708,15 @@ public class UIManager : MonoBehaviour
         container.style.justifyContent = Justify.Center;
         container.style.minWidth = 80;
         container.style.minHeight = 80;
-        container.style.padding = 5;
+        container.style.paddingLeft = 5;
+        container.style.paddingRight = 5;
+        container.style.paddingTop = 5;
+        container.style.paddingBottom = 5;
         container.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.26f)); // --color-bg-tertiary
-        container.style.borderRadius = 8;
+        container.style.borderTopLeftRadius = 8;
+        container.style.borderTopRightRadius = 8;
+        container.style.borderBottomLeftRadius = 8;
+        container.style.borderBottomRightRadius = 8;
         
         // 아이템 아이콘 (텍스트로 대체)
         var iconLabel = new Label(GetItemIcon(item));
@@ -736,7 +742,7 @@ public class UIManager : MonoBehaviour
         }
         
         // 클릭 이벤트 - 아이템 툴팁 표시
-        container.RegisterCallback<ClickEvent>(evt => OnInventoryItemClicked(item, evt));
+        container.RegisterCallback<PointerEvent>(evt => OnInventoryItemClicked(item, evt));
         
         // 오른쪽 클릭 - 합성
         container.RegisterCallback<MouseDownEvent>(evt =>
@@ -797,10 +803,10 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// 인벤토리 아이템 클릭 이벤트
     /// </summary>
-    private void OnInventoryItemClicked(ItemData item, ClickEvent evt)
+    private void OnInventoryItemClicked(ItemData item, PointerEvent evt)
     {
         Debug.Log($"인벤토리 아이템 클릭: {item.name}");
-        ShowItemTooltip(item, evt.mousePosition);
+        ShowItemTooltip(item, evt.position);
     }
     
     /// <summary>
@@ -968,9 +974,15 @@ public class UIManager : MonoBehaviour
         container.style.flexDirection = FlexDirection.Row;
         container.style.alignItems = Align.Center;
         container.style.justifyContent = Justify.SpaceBetween;
-        container.style.padding = 15;
+        container.style.paddingLeft = 15;
+        container.style.paddingRight = 15;
+        container.style.paddingTop = 15;
+        container.style.paddingBottom = 15;
         container.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.26f));
-        container.style.borderRadius = 12;
+        container.style.borderTopLeftRadius = 12;
+        container.style.borderTopRightRadius = 12;
+        container.style.borderBottomLeftRadius = 12;
+        container.style.borderBottomRightRadius = 12;
         
         // 이름
         var nameLabel = new Label(name);
@@ -1083,9 +1095,15 @@ public class UIManager : MonoBehaviour
     {
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
-        container.style.padding = 15;
+        container.style.paddingLeft = 15;
+        container.style.paddingRight = 15;
+        container.style.paddingTop = 15;
+        container.style.paddingBottom = 15;
         container.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.26f));
-        container.style.borderRadius = 12;
+        container.style.borderTopLeftRadius = 12;
+        container.style.borderTopRightRadius = 12;
+        container.style.borderBottomLeftRadius = 12;
+        container.style.borderBottomRightRadius = 12;
         
         // 미션 이름
         var nameLabel = new Label(name);
@@ -1103,14 +1121,20 @@ public class UIManager : MonoBehaviour
         var progressBarBg = new VisualElement();
         progressBarBg.style.height = 20;
         progressBarBg.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.3f));
-        progressBarBg.style.borderRadius = 10;
+        progressBarBg.style.borderTopLeftRadius = 10;
+        progressBarBg.style.borderTopRightRadius = 10;
+        progressBarBg.style.borderBottomLeftRadius = 10;
+        progressBarBg.style.borderBottomRightRadius = 10;
         progressBarBg.style.marginTop = 8;
         
         float percent = target > 0 ? (float)progress / target : 0;
         var progressBarFill = new VisualElement();
         progressBarFill.style.height = 20;
         progressBarFill.style.backgroundColor = new StyleColor(new Color(0.29f, 0.62f, 1f));
-        progressBarFill.style.borderRadius = 10;
+        progressBarFill.style.borderTopLeftRadius = 10;
+        progressBarFill.style.borderTopRightRadius = 10;
+        progressBarFill.style.borderBottomLeftRadius = 10;
+        progressBarFill.style.borderBottomRightRadius = 10;
         progressBarFill.style.width = Length.Percent(Mathf.Min(percent * 100, 100));
         progressBarBg.Add(progressBarFill);
         container.Add(progressBarBg);
