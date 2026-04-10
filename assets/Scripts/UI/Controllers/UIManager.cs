@@ -301,7 +301,8 @@ public class UIManager : MonoBehaviour
         if (clickedTab != null)
             clickedTab.AddToClassList("active");
         
-        // TODO: 선택한 탭에 맞는 업그레이드 항목 표시
+        // 선택한 탭에 맞는 업그레이드 항목 표시
+        RefreshUpgradeGrid();
     }
     
     private void ResetUpgradeTabButtons()
@@ -330,7 +331,8 @@ public class UIManager : MonoBehaviour
         if (clickedTab != null)
             clickedTab.AddToClassList("active");
         
-        // TODO: 선택한 탭에 맞는 미션 목록 표시
+        // 선택한 탭에 맞는 미션 목록 표시
+        RefreshMissionsGrid();
     }
     
     private void ResetMissionsTabButtons()
@@ -859,5 +861,267 @@ public class UIManager : MonoBehaviour
         var tooltip = _root.Q<VisualElement>("ItemTooltip");
         if (tooltip != null)
             tooltip.style.display = DisplayStyle.None;
+    }
+    
+    // ========== 업그레이드 그리드 ==========
+    
+    /// <summary>
+    /// 업그레이드 그리드 새로고침
+    /// </summary>
+    private void RefreshUpgradeGrid()
+    {
+        if (_upgradeGrid == null) return;
+        
+        // 기존 아이템 모두 제거
+        _upgradeGrid.Clear();
+        
+        if (GameState.Instance == null) return;
+        
+        string tabType = _currentUpgradeTab;
+        
+        // 탭별 업그레이드 항목 생성
+        switch (tabType)
+        {
+            case "gold":
+                CreateGoldUpgradeItems();
+                break;
+            case "stat":
+                CreateStatUpgradeItems();
+                break;
+            case "gem":
+                CreateGemUpgradeItems();
+                break;
+            case "rebirth":
+                CreateRebirthUpgradeItems();
+                break;
+        }
+        
+        Debug.Log($"업그레이드 그리드 업데이트: {_upgradeGrid.childCount}개 항목 ({tabType})");
+    }
+    
+    /// <summary>
+    /// 골드 업그레이드 항목 생성
+    /// </summary>
+    private void CreateGoldUpgradeItems()
+    {
+        if (_upgradeGrid == null) return;
+        
+        // 더미 데이터 - 실제 구현 시 GameState의 업그레이드 시스템과 연동
+        string[] goldUpgrades = new string[] { "공격력 증가", "방어력 증가", "체력 증가", "이동속도 증가" };
+        
+        foreach (var upgradeName in goldUpgrades)
+        {
+            var item = CreateUpgradeItem(upgradeName, "골드", 100, "골드로 스탯 증가");
+            _upgradeGrid.Add(item);
+        }
+    }
+    
+    /// <summary>
+    /// 스탯 업그레이드 항목 생성
+    /// </summary>
+    private void CreateStatUpgradeItems()
+    {
+        if (_upgradeGrid == null) return;
+        
+        string[] statUpgrades = new string[] { "STR 증가", "DEX 증가", "INT 증가", "LUK 증가" };
+        
+        foreach (var upgradeName in statUpgrades)
+        {
+            var item = CreateUpgradeItem(upgradeName, "스탯 포인트", 1, "스탯 포인트로 능력치 증가");
+            _upgradeGrid.Add(item);
+        }
+    }
+    
+    /// <summary>
+    /// 보석 업그레이드 항목 생성
+    /// </summary>
+    private void CreateGemUpgradeItems()
+    {
+        if (_upgradeGrid == null) return;
+        
+        string[] gemUpgrades = new string[] { "전설 등급 무기", "전설 등급 방어구", "희귀 등급 장신구" };
+        
+        foreach (var upgradeName in gemUpgrades)
+        {
+            var item = CreateUpgradeItem(upgradeName, "보석", 50, "보석으로 고급 아이템 구매");
+            _upgradeGrid.Add(item);
+        }
+    }
+    
+    /// <summary>
+    /// 환생 업그레이드 항목 생성
+    /// </summary>
+    private void CreateRebirthUpgradeItems()
+    {
+        if (_upgradeGrid == null) return;
+        
+        var item = CreateUpgradeItem("환생하기", "레벨 100", 1, "레벨 100 도달 시 환생 가능");
+        _upgradeGrid.Add(item);
+    }
+    
+    /// <summary>
+    /// 업그레이드 항목 UI 생성
+    /// </summary>
+    private VisualElement CreateUpgradeItem(string name, string costType, int cost, string description)
+    {
+        var container = new VisualElement();
+        container.style.flexDirection = FlexDirection.Row;
+        container.style.alignItems = Align.Center;
+        container.style.justifyContent = Justify.SpaceBetween;
+        container.style.padding = 15;
+        container.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.26f));
+        container.style.borderRadius = 12;
+        
+        // 이름
+        var nameLabel = new Label(name);
+        nameLabel.style.fontSize = 28;
+        nameLabel.style.flexGrow = 1;
+        container.Add(nameLabel);
+        
+        // 비용
+        var costLabel = new Label($"{costType}: {cost}");
+        costLabel.style.fontSize = 22;
+        costLabel.style.color = new StyleColor(Color.yellow);
+        costLabel.style.marginRight = 15;
+        container.Add(costLabel);
+        
+        // 구매 버튼
+        var buyBtn = new Button(() => OnUpgradePurchase(name, costType, cost));
+        buyBtn.text = "구매";
+        buyBtn.style.fontSize = 24;
+        buyBtn.style.paddingLeft = 20;
+        buyBtn.style.paddingRight = 20;
+        container.Add(buyBtn);
+        
+        return container;
+    }
+    
+    /// <summary>
+    /// 업그레이드 구매 이벤트
+    /// </summary>
+    private void OnUpgradePurchase(string name, string costType, int cost)
+    {
+        Debug.Log($"업그레이드 구매: {name} (비용: {costType} {cost})");
+        // 실제 구매 로직 구현
+    }
+    
+    // ========== 미션 그리드 ==========
+    
+    /// <summary>
+    /// 미션 그리드 새로고침
+    /// </summary>
+    private void RefreshMissionsGrid()
+    {
+        if (_missionsGrid == null) return;
+        
+        // 기존 아이템 모두 제거
+        _missionsGrid.Clear();
+        
+        if (GameState.Instance == null) return;
+        
+        string tabType = _currentMissionsTab;
+        
+        // 탭별 미션 생성
+        switch (tabType)
+        {
+            case "daily":
+                CreateDailyMissions();
+                break;
+            case "weekly":
+                CreateWeeklyMissions();
+                break;
+        }
+        
+        Debug.Log($"미션 그리드 업데이트: {_missionsGrid.childCount}개 미션 ({tabType})");
+    }
+    
+    /// <summary>
+    /// 일일 미션 생성
+    /// </summary>
+    private void CreateDailyMissions()
+    {
+        if (_missionsGrid == null) return;
+        
+        var missions = new[]
+        {
+            new { name = "몬스터 50마리 처치", progress = 30, target = 50, reward = "골드 1000" },
+            new { name = "스테이지 10 클리어", progress = 5, target = 10, reward = "보석 5" },
+            new { name = "아이템 5개 합성", progress = 2, target = 5, reward = "보석 3" },
+        };
+        
+        foreach (var mission in missions)
+        {
+            var item = CreateMissionItem(mission.name, mission.progress, mission.target, mission.reward);
+            _missionsGrid.Add(item);
+        }
+    }
+    
+    /// <summary>
+    /// 주간 미션 생성
+    /// </summary>
+    private void CreateWeeklyMissions()
+    {
+        if (_missionsGrid == null) return;
+        
+        var missions = new[]
+        {
+            new { name = "보스 5마리 처치", progress = 1, target = 5, reward = "전설 등급 아이템" },
+            new { name = "누적 골드 100만 획득", progress = 500000, target = 1000000, reward = "보석 50" },
+        };
+        
+        foreach (var mission in missions)
+        {
+            var item = CreateMissionItem(mission.name, mission.progress, mission.target, mission.reward);
+            _missionsGrid.Add(item);
+        }
+    }
+    
+    /// <summary>
+    /// 미션 항목 UI 생성
+    /// </summary>
+    private VisualElement CreateMissionItem(string name, int progress, int target, string reward)
+    {
+        var container = new VisualElement();
+        container.style.flexDirection = FlexDirection.Column;
+        container.style.padding = 15;
+        container.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.26f));
+        container.style.borderRadius = 12;
+        
+        // 미션 이름
+        var nameLabel = new Label(name);
+        nameLabel.style.fontSize = 26;
+        nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+        container.Add(nameLabel);
+        
+        // 진행도
+        var progressLabel = new Label($"{progress}/{target}");
+        progressLabel.style.fontSize = 20;
+        progressLabel.style.color = new StyleColor(Color.gray);
+        container.Add(progressLabel);
+        
+        // 진행도 바
+        var progressBarBg = new VisualElement();
+        progressBarBg.style.height = 20;
+        progressBarBg.style.backgroundColor = new StyleColor(new Color(0.2f, 0.2f, 0.3f));
+        progressBarBg.style.borderRadius = 10;
+        progressBarBg.style.marginTop = 8;
+        
+        float percent = target > 0 ? (float)progress / target : 0;
+        var progressBarFill = new VisualElement();
+        progressBarFill.style.height = 20;
+        progressBarFill.style.backgroundColor = new StyleColor(new Color(0.29f, 0.62f, 1f));
+        progressBarFill.style.borderRadius = 10;
+        progressBarFill.style.width = Length.Percent(Mathf.Min(percent * 100, 100));
+        progressBarBg.Add(progressBarFill);
+        container.Add(progressBarBg);
+        
+        // 보상
+        var rewardLabel = new Label($"보상: {reward}");
+        rewardLabel.style.fontSize = 22;
+        rewardLabel.style.color = new StyleColor(Color.yellow);
+        rewardLabel.style.marginTop = 8;
+        container.Add(rewardLabel);
+        
+        return container;
     }
 }
