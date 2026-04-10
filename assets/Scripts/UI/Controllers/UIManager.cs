@@ -679,6 +679,7 @@ public class UIManager : MonoBehaviour
         listView.itemsSource = _inventoryItemList;
         listView.makeItem = MakeInventoryItem;
         listView.bindItem = BindInventoryItem;
+        listView.itemHeight = 50; // 아이템 높이 설정
         
         Debug.Log($"인벤토리 리스트 업데이트: {_inventoryItemList.Count}개 아이템 ({filterType})");
     }
@@ -1017,6 +1018,7 @@ public class UIManager : MonoBehaviour
         listView.itemsSource = _upgradeItemList;
         listView.makeItem = MakeUpgradeItem;
         listView.bindItem = BindUpgradeItem;
+        listView.itemHeight = 60; // 업그레이드 아이템 높이
         
         Debug.Log($"업그레이드 리스트 업데이트: {_upgradeItemList.Count}개 항목 ({tabType})");
     }
@@ -1147,6 +1149,7 @@ public class UIManager : MonoBehaviour
         listView.itemsSource = _missionItemList;
         listView.makeItem = MakeMissionItem;
         listView.bindItem = BindMissionItem;
+        listView.itemHeight = 120; // 미션 아이템 높이 (진행도 바 포함)
         
         Debug.Log($"미션 리스트 업데이트: {_missionItemList.Count}개 미션 ({tabType})");
     }

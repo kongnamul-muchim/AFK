@@ -467,9 +467,9 @@
 /* 아이템 리스트 (Infinity Scroll) */
 .items-list {
     flex-direction: column;
+    min-height: 400px;
     max-height: 500px;
     margin-bottom: 30px;
-    -unity-content-offset: 10px;
 }
 
 /* 인벤토리 아이템 컨테이너 */
@@ -646,9 +646,8 @@
 
 .upgrade-list {
     flex-direction: column;
-    gap: 10px;
+    min-height: 400px;
     max-height: 750px;
-    -unity-content-offset: 10px;
 }
 
 /* 미션 모달 */
@@ -675,9 +674,8 @@
 
 .missions-list {
     flex-direction: column;
-    gap: 10px;
+    min-height: 400px;
     max-height: 750px;
-    -unity-content-offset: 10px;
 }
 
 /* 보석 상점 */
