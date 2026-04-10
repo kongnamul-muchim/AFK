@@ -609,18 +609,21 @@ public class UIManager : MonoBehaviour
     private void OnInventoryClicked()
     {
         Debug.Log("인벤토리!");
+        RefreshInventoryGrid(); // 인벤토리 아이템 그리드 업데이트
         ShowModal(_inventoryModal);
     }
     
     private void OnUpgradeClicked()
     {
         Debug.Log("업그레이드!");
+        RefreshUpgradeGrid(); // 업그레이드 그리드 업데이트
         ShowModal(_upgradeModal);
     }
     
     private void OnDailyMissionsClicked()
     {
         Debug.Log("미션!");
+        RefreshMissionsGrid(); // 미션 그리드 업데이트
         ShowModal(_dailyMissionsModal);
     }
     
