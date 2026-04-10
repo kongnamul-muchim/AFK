@@ -233,10 +233,10 @@ public class GemShopUIClass : MonoBehaviour
     /// </summary>
     private bool HasActiveBuff(string buffType)
     {
-        var missionSystem = ServiceLocator.Instance.Get<DailyMissionSystem>();
-        if (missionSystem != null)
+        // DailyMissionSystem은 싱글톤으로 직접 접근
+        if (DailyMissionSystem.Instance != null)
         {
-            return missionSystem.HasActiveBuff(buffType);
+            return DailyMissionSystem.Instance.HasActiveBuff(buffType);
         }
         return false;
     }
@@ -251,11 +251,10 @@ public class GemShopUIClass : MonoBehaviour
         _gameState.Player.gems -= item.cost;
         _gameState.Player = _gameState.Player; // 저장 트리거
         
-        // 버프 활성화
-        var missionSystem = ServiceLocator.Instance.Get<DailyMissionSystem>();
-        if (missionSystem != null)
+        // 버프 활성화 (DailyMissionSystem 싱글톤 직접 사용)
+        if (DailyMissionSystem.Instance != null)
         {
-            missionSystem.ActivateBuff(item.buffType, item.duration);
+            DailyMissionSystem.Instance.ActivateBuff(item.buffType, item.duration);
         }
         
         // 보석 변경 이벤트 발생
