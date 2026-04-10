@@ -705,60 +705,58 @@
 
 /* 통계 모달 */
 .statistics-modal-content {
-    min-width: 900px;
+    min-width: 1000px;
     max-height: 85%;
 }
 
 .statistics-content {
     flex-direction: column;
-    gap: 40px;
+    gap: 35px;
     max-height: 1500px;
     overflow: hidden;
 }
 
 .stats-section {
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
 }
 
 .stats-section-title {
-    font-size: 36px;
+    font-size: 32px;
     -unity-font-style: bold;
     color: var(--color-accent);
-    padding-bottom: 10px;
-    border-bottom-width: 2px;
-    border-bottom-color: var(--color-bg-tertiary);
+    padding: 8px 15px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: 8px;
     margin-bottom: 5px;
 }
 
 .stats-grid {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 15px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
 }
 
 .stat-card {
     flex-direction: column;
     background-color: var(--color-bg-tertiary);
     border-radius: 12px;
-    padding: 25px 20px;
-    min-width: 180px;
-    flex: 1 1 calc(33.333% - 15px);
-    max-width: calc(33.333% - 15px);
+    padding: 20px 12px;
     align-items: center;
     justify-content: center;
+    min-height: 120px;
 }
 
 .stat-card-label {
     color: var(--color-text-secondary);
-    font-size: 26px;
-    margin-bottom: 8px;
+    font-size: 22px;
+    margin-bottom: 6px;
     -unity-text-align: middle-center;
 }
 
 .stat-card-value {
     color: var(--color-text-primary);
-    font-size: 42px;
+    font-size: 36px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
 }
