@@ -139,8 +139,7 @@
             
             <!-- 일괄합성 버튼 -->
             <ui:VisualElement name="BatchSynthesizeBar" class="batch-synthesize-bar">
-                <ui:Button name="BatchSynthesizeBtn" text="✨ 일괄 합성" class="batch-synthesize-btn" />
-                <ui:Label name="BatchSynthesizeHint" text="탭의 모든 아이템 자동 합성" class="batch-synthesize-hint" />
+                <ui:Button name="BatchSynthesizeBtn" text="일괄 합성" class="batch-synthesize-btn" />
             </ui:VisualElement>
             
             <!-- 아이템 그리드 -->
