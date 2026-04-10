@@ -742,7 +742,7 @@ public class UIManager : MonoBehaviour
         }
         
         // 클릭 이벤트 - 아이템 툴팁 표시
-        container.RegisterCallback<PointerEvent>(evt => OnInventoryItemClicked(item, evt));
+        container.RegisterCallback<MouseDownEvent>(evt => OnInventoryItemClicked(item, evt));
         
         // 오른쪽 클릭 - 합성
         container.RegisterCallback<MouseDownEvent>(evt =>
@@ -803,10 +803,10 @@ public class UIManager : MonoBehaviour
     /// <summary>
     /// 인벤토리 아이템 클릭 이벤트
     /// </summary>
-    private void OnInventoryItemClicked(ItemData item, PointerEvent evt)
+    private void OnInventoryItemClicked(ItemData item, MouseDownEvent evt)
     {
         Debug.Log($"인벤토리 아이템 클릭: {item.name}");
-        ShowItemTooltip(item, evt.position);
+        ShowItemTooltip(item, evt.mousePosition);
     }
     
     /// <summary>
