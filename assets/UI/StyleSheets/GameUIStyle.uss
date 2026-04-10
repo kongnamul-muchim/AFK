@@ -706,8 +706,7 @@
 .statistics-content {
     flex-direction: column;
     gap: 30px;
-    max-height: 1500px;
-    overflow: hidden;
+    max-height: 100%;
 }
 
 .stats-section {
