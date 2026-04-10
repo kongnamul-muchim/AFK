@@ -474,6 +474,22 @@
     margin-bottom: 30px;
 }
 
+/* 인벤토리 아이템 컨테이너 */
+.inventory-item-container {
+    min-width: 80px;
+    min-height: 80px;
+    padding: 5px;
+    background-color: var(--color-bg-tertiary);
+    border-radius: 8px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.inventory-item-container:hover {
+    background-color: var(--color-accent-dark);
+}
+
 /* 골드 표시 */
 .gold-display {
     flex-direction: row;
@@ -707,27 +723,29 @@
     flex-direction: column;
     gap: 30px;
     max-height: 100%;
+    padding: 10px;
 }
 
 .stats-section {
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+    width: 100%;
 }
 
 .stats-section-title {
     font-size: 30px;
     -unity-font-style: bold;
     color: var(--color-accent);
-    padding: 6px 12px;
+    padding: 8px 16px;
     background-color: var(--color-bg-tertiary);
     border-radius: 8px;
-    margin-bottom: 3px;
+    -unity-text-align: middle-left;
 }
 
 .stats-grid {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
 }
 
@@ -738,10 +756,11 @@
     padding: 12px 8px;
     align-items: center;
     justify-content: center;
-    min-width: 140px;
-    flex: 1 1 calc(25% - 8px);
-    max-width: calc(25% - 8px);
+    min-width: 180px;
     min-height: 80px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 200px;
 }
 
 .stat-card-label {

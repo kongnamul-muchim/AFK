@@ -57,6 +57,20 @@ public class UIManager : MonoBehaviour
     private VisualElement _inventoryItems;
     private string _currentInventoryTab = "weapon";
     
+    // 업그레이드 탭
+    private Button _upgradeTabGold;
+    private Button _upgradeTabStat;
+    private Button _upgradeTabGem;
+    private Button _upgradeTabRebirth;
+    private VisualElement _upgradeGrid;
+    private string _currentUpgradeTab = "gold";
+    
+    // 미션 탭
+    private Button _missionsTabDaily;
+    private Button _missionsTabWeekly;
+    private VisualElement _missionsGrid;
+    private string _currentMissionsTab = "daily";
+    
     // 설정 슬라이더
     private Slider _sfxVolumeSlider;
     private Slider _bgmVolumeSlider;
@@ -170,6 +184,18 @@ public class UIManager : MonoBehaviour
         _tabAccessory = _root.Q<Button>("TabAccessory");
         _tabBoots = _root.Q<Button>("TabBoots");
         _inventoryItems = _root.Q<VisualElement>("InventoryItems");
+        
+        // 업그레이드 탭
+        _upgradeTabGold = _root.Q<Button>("UpgradeTabGold");
+        _upgradeTabStat = _root.Q<Button>("UpgradeTabStat");
+        _upgradeTabGem = _root.Q<Button>("UpgradeTabGem");
+        _upgradeTabRebirth = _root.Q<Button>("UpgradeTabRebirth");
+        _upgradeGrid = _root.Q<VisualElement>("UpgradeGrid");
+        
+        // 미션 탭
+        _missionsTabDaily = _root.Q<Button>("MissionsTabDaily");
+        _missionsTabWeekly = _root.Q<Button>("MissionsTabWeekly");
+        _missionsGrid = _root.Q<VisualElement>("MissionsGrid");
     }
     
     private void SetupEvents()
@@ -204,6 +230,12 @@ public class UIManager : MonoBehaviour
         // 인벤토리 탭
         SetupInventoryTabs();
         
+        // 업그레이드 탭
+        SetupUpgradeTabs();
+        
+        // 미션 탭
+        SetupMissionsTabs();
+        
         // 모달 닫기 버튼들
         SetupModalCloseButtons();
     }
@@ -229,20 +261,82 @@ public class UIManager : MonoBehaviour
         _currentInventoryTab = tabType;
         
         // 모든 탭 버튼 활성/비활성 처리
-        ResetTabButtons();
+        ResetInventoryTabButtons();
         if (clickedTab != null)
             clickedTab.AddToClassList("active");
         
-        // TODO: 선택한 탭에 맞는 아이템 그리드 업데이트
-        // 현재는 탭 전환만 구현
+        // 선택한 탭에 맞는 아이템 그리드 업데이트
+        RefreshInventoryGrid();
     }
     
-    private void ResetTabButtons()
+    private void ResetInventoryTabButtons()
     {
         if (_tabWeapon != null) _tabWeapon.RemoveFromClassList("active");
         if (_tabArmor != null) _tabArmor.RemoveFromClassList("active");
         if (_tabAccessory != null) _tabAccessory.RemoveFromClassList("active");
         if (_tabBoots != null) _tabBoots.RemoveFromClassList("active");
+    }
+    
+    private void SetupUpgradeTabs()
+    {
+        if (_upgradeTabGold != null)
+            _upgradeTabGold.clicked += () => OnUpgradeTabClicked("gold", _upgradeTabGold);
+        
+        if (_upgradeTabStat != null)
+            _upgradeTabStat.clicked += () => OnUpgradeTabClicked("stat", _upgradeTabStat);
+        
+        if (_upgradeTabGem != null)
+            _upgradeTabGem.clicked += () => OnUpgradeTabClicked("gem", _upgradeTabGem);
+        
+        if (_upgradeTabRebirth != null)
+            _upgradeTabRebirth.clicked += () => OnUpgradeTabClicked("rebirth", _upgradeTabRebirth);
+    }
+    
+    private void OnUpgradeTabClicked(string tabType, Button clickedTab)
+    {
+        Debug.Log($"업그레이드 탭 변경: {tabType}");
+        _currentUpgradeTab = tabType;
+        
+        ResetUpgradeTabButtons();
+        if (clickedTab != null)
+            clickedTab.AddToClassList("active");
+        
+        // TODO: 선택한 탭에 맞는 업그레이드 항목 표시
+    }
+    
+    private void ResetUpgradeTabButtons()
+    {
+        if (_upgradeTabGold != null) _upgradeTabGold.RemoveFromClassList("active");
+        if (_upgradeTabStat != null) _upgradeTabStat.RemoveFromClassList("active");
+        if (_upgradeTabGem != null) _upgradeTabGem.RemoveFromClassList("active");
+        if (_upgradeTabRebirth != null) _upgradeTabRebirth.RemoveFromClassList("active");
+    }
+    
+    private void SetupMissionsTabs()
+    {
+        if (_missionsTabDaily != null)
+            _missionsTabDaily.clicked += () => OnMissionsTabClicked("daily", _missionsTabDaily);
+        
+        if (_missionsTabWeekly != null)
+            _missionsTabWeekly.clicked += () => OnMissionsTabClicked("weekly", _missionsTabWeekly);
+    }
+    
+    private void OnMissionsTabClicked(string tabType, Button clickedTab)
+    {
+        Debug.Log($"미션 탭 변경: {tabType}");
+        _currentMissionsTab = tabType;
+        
+        ResetMissionsTabButtons();
+        if (clickedTab != null)
+            clickedTab.AddToClassList("active");
+        
+        // TODO: 선택한 탭에 맞는 미션 목록 표시
+    }
+    
+    private void ResetMissionsTabButtons()
+    {
+        if (_missionsTabDaily != null) _missionsTabDaily.RemoveFromClassList("active");
+        if (_missionsTabWeekly != null) _missionsTabWeekly.RemoveFromClassList("active");
     }
     
     private void SetupModalCloseButtons()
@@ -547,5 +641,223 @@ public class UIManager : MonoBehaviour
         if (statsAtkValue != null) statsAtkValue.text = "10";
         if (statsDefValue != null) statsDefValue.text = "5";
         if (statsHPValue != null) statsHPValue.text = "100";
+    }
+    
+    // ========== 인벤토리 아이템 그리드 ==========
+    
+    /// <summary>
+    /// 인벤토리 그리드 새로고침
+    /// </summary>
+    private void RefreshInventoryGrid()
+    {
+        if (_inventoryItems == null) return;
+        
+        // 기존 아이템 모두 제거
+        _inventoryItems.Clear();
+        
+        if (GameState.Instance == null) return;
+        
+        var state = GameState.Instance;
+        string filterType = _currentInventoryTab; // "weapon", "armor", "accessory", "boots"
+        
+        // 현재 탭에 맞는 아이템만 필터링
+        foreach (var item in state.inventory.items)
+        {
+            if (!MatchesInventoryTab(item.id, filterType))
+                continue;
+            
+            // 아이템 버튼 생성
+            var itemBtn = CreateInventoryItemButton(item);
+            _inventoryItems.Add(itemBtn);
+        }
+        
+        Debug.Log($"인벤토리 그리드 업데이트: {_inventoryItems.childCount}개 아이템 ({filterType})");
+    }
+    
+    /// <summary>
+    /// 아이템 ID가 현재 탭에 해당하는지 확인
+    /// </summary>
+    private bool MatchesInventoryTab(string itemId, string tabType)
+    {
+        switch (tabType)
+        {
+            case "weapon":
+                return itemId.Contains("sword") || itemId.Contains("weapon") || itemId.Contains("bow") || itemId.Contains("staff");
+            case "armor":
+                return itemId.Contains("armor") || itemId.Contains("helmet") || itemId.Contains("chest") || itemId.Contains("gloves");
+            case "accessory":
+                return itemId.Contains("ring") || itemId.Contains("necklace") || itemId.Contains("accessory");
+            case "boots":
+                return itemId.Contains("boots") || itemId.Contains("shoes");
+            default:
+                return false;
+        }
+    }
+    
+    /// <summary>
+    /// 인벤토리 아이템 버튼 생성
+    /// </summary>
+    private VisualElement CreateInventoryItemButton(ItemData item)
+    {
+        var container = new VisualElement();
+        container.AddToClassList("inventory-item-container");
+        container.style.flexDirection = FlexDirection.Column;
+        container.style.alignItems = Align.Center;
+        container.style.justifyContent = Justify.Center;
+        container.style.minWidth = 80;
+        container.style.minHeight = 80;
+        container.style.padding = 5;
+        container.style.backgroundColor = new StyleColor(new Color(0.14f, 0.14f, 0.26f)); // --color-bg-tertiary
+        container.style.borderRadius = 8;
+        
+        // 아이템 아이콘 (텍스트로 대체)
+        var iconLabel = new Label(GetItemIcon(item));
+        iconLabel.style.fontSize = 32;
+        iconLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+        container.Add(iconLabel);
+        
+        // 아이템 이름 (짧게)
+        var nameLabel = new Label(TruncateItemName(item.name));
+        nameLabel.style.fontSize = 14;
+        nameLabel.style.color = GetGradeColor(item.grade);
+        nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+        container.Add(nameLabel);
+        
+        // 수량 레이블 (2개 이상일 때만)
+        if (item.quantity > 1)
+        {
+            var qtyLabel = new Label($"x{item.quantity}");
+            qtyLabel.style.fontSize = 12;
+            qtyLabel.style.color = new StyleColor(Color.gray);
+            qtyLabel.style.unityTextAlign = TextAnchor.MiddleRight;
+            container.Add(qtyLabel);
+        }
+        
+        // 클릭 이벤트 - 아이템 툴팁 표시
+        container.RegisterCallback<ClickEvent>(evt => OnInventoryItemClicked(item, evt));
+        
+        // 오른쪽 클릭 - 합성
+        container.RegisterCallback<MouseDownEvent>(evt =>
+        {
+            if (evt.button == 1) // 오른쪽 클릭
+            {
+                OnInventoryItemRightClick(item);
+                evt.StopPropagation();
+            }
+        });
+        
+        return container;
+    }
+    
+    /// <summary>
+    /// 아이템 아이콘 문자열 가져오기
+    /// </summary>
+    private string GetItemIcon(ItemData item)
+    {
+        if (item.id.Contains("sword") || item.id.Contains("weapon")) return "⚔️";
+        if (item.id.Contains("armor") || item.id.Contains("helmet") || item.id.Contains("chest")) return "🛡️";
+        if (item.id.Contains("ring") || item.id.Contains("necklace") || item.id.Contains("accessory")) return "💍";
+        if (item.id.Contains("boots") || item.id.Contains("shoes")) return "👢";
+        if (item.id.Contains("bow")) return "🏹";
+        if (item.id.Contains("staff")) return "🪄";
+        return "📦";
+    }
+    
+    /// <summary>
+    /// 아이템 이름 짧게 자르기
+    /// </summary>
+    private string TruncateItemName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "";
+        // "일반 검_1_1234" -> "일반 검"
+        int underscoreIndex = name.IndexOf('_');
+        if (underscoreIndex > 0)
+            return name.Substring(0, underscoreIndex);
+        return name.Length > 6 ? name.Substring(0, 6) + "..." : name;
+    }
+    
+    /// <summary>
+    /// 등급에 따른 색상 가져오기
+    /// </summary>
+    private Color GetGradeColor(int grade)
+    {
+        switch (grade)
+        {
+            case 0: return new Color(0.8f, 0.8f, 0.8f); // 일반 - 회색
+            case 1: return new Color(0.2f, 0.8f, 0.2f); // 고급 - 초록
+            case 2: return new Color(0.2f, 0.6f, 1f);   // 희귀 - 파랑
+            case 3: return new Color(1f, 0.6f, 0.2f);   // 영웅 - 주황
+            case 4: return new Color(1f, 0.4f, 0.8f);   // 전설 - 분홍
+            default: return Color.white;
+        }
+    }
+    
+    /// <summary>
+    /// 인벤토리 아이템 클릭 이벤트
+    /// </summary>
+    private void OnInventoryItemClicked(ItemData item, ClickEvent evt)
+    {
+        Debug.Log($"인벤토리 아이템 클릭: {item.name}");
+        ShowItemTooltip(item, evt.mousePosition);
+    }
+    
+    /// <summary>
+    /// 인벤토리 아이템 오른쪽 클릭 (합성)
+    /// </summary>
+    private void OnInventoryItemRightClick(ItemData item)
+    {
+        Debug.Log($"인벤토리 아이템 우클릭 (합성): {item.name}");
+        
+        if (InventorySystem.Instance != null)
+        {
+            bool success = InventorySystem.Instance.Synthesize(item.id, item.grade);
+            if (success)
+            {
+                RefreshInventoryGrid(); // 그리드 새로고침
+                GameLogger.Info($"{item.name} 합성 성공!");
+            }
+            else
+            {
+                GameLogger.Warn("합성 조건을 만족하지 못합니다 (5개 필요).");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 아이템 툴팁 표시
+    /// </summary>
+    private void ShowItemTooltip(ItemData item, Vector2 position)
+    {
+        var tooltip = _root.Q<VisualElement>("ItemTooltip");
+        if (tooltip == null) return;
+        
+        var tooltipName = _root.Q<Label>("TooltipName");
+        var tooltipGrade = _root.Q<Label>("TooltipGrade");
+        
+        if (tooltipName != null) tooltipName.text = item.name;
+        if (tooltipGrade != null)
+        {
+            string[] gradeNames = { "일반", "고급", "희귀", "영웅", "전설" };
+            tooltipGrade.text = item.grade < gradeNames.Length ? gradeNames[item.grade] : "알 수 없음";
+            tooltipGrade.style.color = GetGradeColor(item.grade);
+        }
+        
+        // 툴팁 위치 설정
+        tooltip.style.left = position.x;
+        tooltip.style.top = position.y;
+        tooltip.style.display = DisplayStyle.Flex;
+        
+        // 2초 후 자동 숨김
+        Invoke(nameof(HideItemTooltip), 2f);
+    }
+    
+    /// <summary>
+    /// 아이템 툴팁 숨기기
+    /// </summary>
+    private void HideItemTooltip()
+    {
+        var tooltip = _root.Q<VisualElement>("ItemTooltip");
+        if (tooltip != null)
+            tooltip.style.display = DisplayStyle.None;
     }
 }

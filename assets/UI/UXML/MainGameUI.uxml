@@ -285,7 +285,7 @@
                 <ui:Label name="StatisticsTitle" text="스탯 정보" class="modal-title" />
                 <ui:Button name="CloseStatisticsBtn" text="×" class="modal-close" />
             </ui:VisualElement>
-            <ui:ScrollView name="StatisticsBody" class="statistics-content" horizontal-scroller-visibility="hidden" vertical-scroller-visibility="auto">
+            <ui:ScrollView name="StatisticsBody" class="statistics-content" horizontal-scrolling="false" vertical-scrolling="true">
                 <!-- 플레이어 스탯 -->
                 <ui:VisualElement name="PlayerStatsSection" class="stats-section">
                     <ui:Label name="PlayerStatsTitle" text="플레이어 스탯" class="stats-section-title" />
