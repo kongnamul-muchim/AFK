@@ -56,6 +56,7 @@ public class CombatSystem : MonoBehaviour
     private IGameState _gameState;
     private IEventBus _eventBus;
     private IGameLogger _logger;
+    private DailyMissionSystem _dailyMissionSystem;
     
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
@@ -68,6 +69,10 @@ public class CombatSystem : MonoBehaviour
             _eventBus = ServiceLocator.Instance.Get<IEventBus>();
         if (_logger == null)
             _logger = ServiceLocator.Instance.Get<IGameLogger>();
+        
+        // DailyMissionSystem 참조 설정 (버프 시스템용)
+        if (_dailyMissionSystem == null)
+            _dailyMissionSystem = DailyMissionSystem.Instance;
     }
 
     // ========== 전투 설정 ==========
@@ -415,12 +420,32 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     private void PlayerAttack()
     {
+        // 버프 확인 (공격력 2배)
+        float attackBuff = GetBuffMultiplier("attackDouble");
+        
+        // 보석 업그레이드: 자동 전투 강화 (자동 반복 시 2%/레벨, 최대 100%) - 해금 필요
+        // TODO: StageData.autoRepeat와 PlayerData.gemUpgrades 구현 후 활성화
+        float autoCombatBonus = 1f;
+        /*
+        if (_gameState.Stage.autoRepeat)
+        {
+            var gemUpgrades = _gameState.Player.gemUpgrades;
+            if (gemUpgrades != null && gemUpgrades.ContainsKey("autoCombatDamage"))
+            {
+                int autoCombatLevel = gemUpgrades["autoCombatDamage"];
+                autoCombatBonus = 1f + Mathf.Min(1f, autoCombatLevel * 0.02f);
+            }
+        }
+        */
+        
         // 데미지 계산
         float damage = CalculateDamage(
             _gameState.GetTotalAttack(),
             _gameState.CombatPhase.monsterState.defense,
             _gameState.Player.critChance,
-            _gameState.GetCritDamageMultiplier()
+            _gameState.GetCritDamageMultiplier(),
+            attackBuff,
+            autoCombatBonus
         );
         
         // 몬스터 HP 감소
@@ -443,6 +468,20 @@ public class CombatSystem : MonoBehaviour
         // 공격 반동 데미지: 플레이어 체력 소모
         // 공식: (stage * 4) - playerDefense, 최소 1
         ConsumePlayerHP();
+    }
+
+    /// <summary>
+    /// 버프 배율 가져오기
+    /// </summary>
+    /// <param name="buffType">버프 타입 (attackDouble, hpDouble, goldDouble, expDouble)</param>
+    /// <returns>배율 (활성화 시 2.0, 아니면 1.0)</returns>
+    private float GetBuffMultiplier(string buffType)
+    {
+        if (_dailyMissionSystem != null)
+        {
+            return _dailyMissionSystem.GetBuffMultiplier(buffType);
+        }
+        return 1.0f;
     }
 
     /// <summary>
@@ -513,8 +552,11 @@ public class CombatSystem : MonoBehaviour
     /// <param name="defense">방어력</param>
     /// <param name="critChance">치명확률 (0-1)</param>
     /// <param name="critDamage">치명피해 배율</param>
+    /// <param name="buffMultiplier">버프 배율 (기본 1)</param>
+    /// <param name="autoCombatBonus">자동 전투 보너스 (기본 1)</param>
     /// <returns>최종 데미지</returns>
-    public float CalculateDamage(float attack, float defense, float critChance, float critDamage)
+    public float CalculateDamage(float attack, float defense, float critChance, float critDamage, 
+        float buffMultiplier = 1f, float autoCombatBonus = 1f)
     {
         // 기본 데미지 = 공격력 - 방어력 (최소 1)
         float baseDamage = Mathf.Max(1f, attack - defense);
@@ -530,6 +572,9 @@ public class CombatSystem : MonoBehaviour
             damage *= critDamage;
             _logger.Debug("치명타!");
         }
+        
+        // 버프 및 자동 전투 보너스 적용
+        damage *= buffMultiplier * autoCombatBonus;
         
         return Mathf.Round(damage * 10f) / 10f;
     }

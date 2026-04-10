@@ -233,7 +233,11 @@ public class GemShopUIClass : MonoBehaviour
     /// </summary>
     private bool HasActiveBuff(string buffType)
     {
-        // TODO: 실제 버프 시스템 연동 시 확인
+        var missionSystem = ServiceLocator.Instance.Get<DailyMissionSystem>();
+        if (missionSystem != null)
+        {
+            return missionSystem.HasActiveBuff(buffType);
+        }
         return false;
     }
     
@@ -245,9 +249,18 @@ public class GemShopUIClass : MonoBehaviour
         if (_gameState.Player.gems < item.cost) return;
         
         _gameState.Player.gems -= item.cost;
+        _gameState.Player = _gameState.Player; // 저장 트리거
         
-        // 버프 활성화 (간단히)
-        Debug.Log($"버프 구매: {item.name} ({item.duration}분)");
+        // 버프 활성화
+        var missionSystem = ServiceLocator.Instance.Get<DailyMissionSystem>();
+        if (missionSystem != null)
+        {
+            missionSystem.ActivateBuff(item.buffType, item.duration);
+        }
+        
+        // 보석 변경 이벤트 발생
+        var eventBus = ServiceLocator.Instance.Get<IEventBus>();
+        eventBus?.Emit(GameEvents.GEM_CHANGED);
         
         UpdateDisplay();
         RefreshShopGrid();

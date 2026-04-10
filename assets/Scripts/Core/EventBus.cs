@@ -29,9 +29,14 @@ public class EventBus : MonoBehaviour, IEventBus
     }
 
     /// <summary>
-    /// 이벤트명과 콜백 리스트를 저장하는 딕셔너리
+    /// 이벤트명과 콜백 리스트를 저장하는 딕셔너리 (문자열 기반 - 레거시)
     /// </summary>
     private Dictionary<string, List<Action>> _eventListeners = new Dictionary<string, List<Action>>();
+    
+    /// <summary>
+    /// 제네릭 이벤트 핸들러 저장소 (타입 안전성 제공)
+    /// </summary>
+    private Dictionary<Type, Delegate> _genericEventHandlers = new Dictionary<Type, Delegate>();
 
     // ========== MonoBehaviour 라이프사이클 ==========
 
@@ -169,6 +174,128 @@ public class EventBus : MonoBehaviour, IEventBus
     public void ClearAll()
     {
         _eventListeners.Clear();
+        _genericEventHandlers.Clear();
+    }
+
+    // ========== 제네릭 이벤트 시스템 (타입 안전성) ==========
+
+    /// <summary>
+    /// 제네릭 이벤트 등록 (타입 안전성 제공)
+    /// </summary>
+    /// <typeparam name="T">이벤트 데이터 타입</typeparam>
+    /// <param name="callback">실행할 콜백</param>
+    public void On<T>(Action<T> callback)
+    {
+        if (callback == null)
+        {
+            GameLogger.Error("null 콜백 등록 시도");
+            return;
+        }
+
+        Type eventType = typeof(T);
+        
+        if (_genericEventHandlers.TryGetValue(eventType, out var existing))
+        {
+            _genericEventHandlers[eventType] = Delegate.Combine(existing, callback);
+        }
+        else
+        {
+            _genericEventHandlers[eventType] = callback;
+        }
+        
+        GameLogger.DebugLog($"제네릭 이벤트 등록: {eventType.Name}");
+    }
+
+    /// <summary>
+    /// 제네릭 이벤트 해제
+    /// </summary>
+    /// <typeparam name="T">이벤트 데이터 타입</typeparam>
+    /// <param name="callback">해제할 콜백</param>
+    public void Off<T>(Action<T> callback)
+    {
+        Type eventType = typeof(T);
+        
+        if (_genericEventHandlers.TryGetValue(eventType, out var existing))
+        {
+            _genericEventHandlers[eventType] = Delegate.Remove(existing, callback);
+            
+            // 모든 핸들러가 제거되면 딕셔너리에서 삭제
+            if (_genericEventHandlers[eventType] == null)
+            {
+                _genericEventHandlers.Remove(eventType);
+            }
+            
+            GameLogger.DebugLog($"제네릭 이벤트 해제: {eventType.Name}");
+        }
+    }
+
+    /// <summary>
+    /// 제네릭 이벤트 발생
+    /// </summary>
+    /// <typeparam name="T">이벤트 데이터 타입</typeparam>
+    /// <param name="eventData">이벤트 데이터</param>
+    public void Emit<T>(T eventData)
+    {
+        Type eventType = typeof(T);
+        
+        if (_genericEventHandlers.TryGetValue(eventType, out var handlers))
+        {
+            if (handlers is Action<T> typedHandler)
+            {
+                try
+                {
+                    typedHandler.Invoke(eventData);
+                }
+                catch (Exception e)
+                {
+                    GameLogger.Error($"제네릭 이벤트 발생 중 오류 ({eventType.Name}): {e.Message}");
+                }
+            }
+            
+            GameLogger.DebugLog($"제네릭 이벤트 발생: {eventType.Name}");
+        }
+    }
+
+    /// <summary>
+    /// 제네릭 1회용 이벤트 등록
+    /// </summary>
+    /// <typeparam name="T">이벤트 데이터 타입</typeparam>
+    /// <param name="callback">실행할 콜백</param>
+    public void Once<T>(Action<T> callback)
+    {
+        Action<T> wrapper = null;
+        wrapper = (data) =>
+        {
+            try
+            {
+                callback?.Invoke(data);
+            }
+            finally
+            {
+                Off<T>(wrapper);
+            }
+        };
+        On<T>(wrapper);
+    }
+
+    /// <summary>
+    /// 제네릭 이벤트 리스너 수 확인
+    /// </summary>
+    /// <typeparam name="T">이벤트 데이터 타입</typeparam>
+    /// <returns>리스너 수</returns>
+    public int GetGenericListenerCount<T>()
+    {
+        Type eventType = typeof(T);
+        
+        if (_genericEventHandlers.TryGetValue(eventType, out var handlers))
+        {
+            if (handlers is Action<T> typedHandler)
+            {
+                return typedHandler.GetInvocationList().Length;
+            }
+        }
+        
+        return 0;
     }
 
     // ========== IEventBus 인터페이스 구현 ==========
@@ -320,4 +447,10 @@ public static class GameEvents
     
     /// <summary>게임이 로드되었을 때</summary>
     public const string GAME_LOADED = "GAME_LOADED";
+    
+    /// <summary>버프가 활성화되었을 때</summary>
+    public const string BUFF_ACTIVATED = "BUFF_ACTIVATED";
+    
+    /// <summary>버프가 만료되었을 때</summary>
+    public const string BUFF_EXPIRED = "BUFF_EXPIRED";
 }
