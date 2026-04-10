@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 게임 초기화를 담당하는 클래스
@@ -49,7 +51,7 @@ public class Bootstrap : MonoBehaviour
         serviceLocator.RegisterSingleton<ISaveManager, SaveManager>(saveManager);
         
         // Logger 등록
-        serviceLocator.RegisterSingleton<ILogger, GameLoggerAdapter>(new GameLoggerAdapter());
+        serviceLocator.RegisterSingleton<IGameLogger, GameLoggerAdapter>(new GameLoggerAdapter());
         
         GameLogger.DebugLog("ServiceLocator에 서비스 등록 완료");
 
@@ -71,6 +73,7 @@ public class Bootstrap : MonoBehaviour
             {
                 // 로드 실패 시 새 게임 시작
                 gameState.Initialize();
+                GiveStarterItems(gameState);
                 GameLogger.Warn("게임 로드 실패, 새 게임 시작");
             }
         }
@@ -78,6 +81,7 @@ public class Bootstrap : MonoBehaviour
         {
             // 저장 파일 없음 - 새 게임 시작
             gameState.Initialize();
+            GiveStarterItems(gameState);
             GameLogger.Info("새 게임 시작");
         }
 
@@ -86,6 +90,9 @@ public class Bootstrap : MonoBehaviour
 
         // 4. 초기 이벤트 발생
         eventBus.Emit(GameEvents.GAME_LOADED);
+
+        // 5. 첫 스테이지 진입 (전투 시작)
+        StageSystem.Instance.EnterStage(1);
 
         GameLogger.Info("게임 부트스트랩 완료");
     }
@@ -158,6 +165,86 @@ public class Bootstrap : MonoBehaviour
         {
             GameLogger.Info("게임 재개");
             EventBus.Instance.Emit(GameEvents.GAME_RESUMED);
+        }
+    }
+
+    /// <summary>
+    /// 새 게임 시작 시 초기 아이템 지급 (모든 아이템 슬롯 잠금 해제)
+    /// </summary>
+    private void GiveStarterItems(GameState state)
+    {
+        // CSV 데이터에서 모든 아이템을 읽어와서 count=0 으로 추가
+        var itemsData = DataLoader.Load("items");
+        if (itemsData.Count == 0)
+        {
+            GameLogger.Warn("items.csv 데이터를 불러올 수 없습니다. 기본 아이템만 추가합니다.");
+            // 기본 아이템만 추가
+            state.inventory.items.Add(new ItemData { id = "sword_iron_001", name = "Rusty Sword", grade = 0, count = 1, rarity = 0, type = "weapon", attackBonus = 2, defenseBonus = 0, healthBonus = 0 });
+            state.inventory.items.Add(new ItemData { id = "armor_leather_001", name = "Leather Armor", grade = 0, count = 1, rarity = 0, type = "armor", attackBonus = 0, defenseBonus = 2, healthBonus = 0 });
+            return;
+        }
+
+        foreach (var row in itemsData)
+        {
+            var item = new ItemData
+            {
+                id = row["id"].ToString(),
+                name = row["name"].ToString(),
+                grade = Convert.ToInt32(row["grade"]),
+                count = 0,  // 잠금 상태
+                rarity = GetRarityValue(row["rarity"].ToString()),
+                type = row["type"].ToString(),
+                attackBonus = 0,
+                defenseBonus = 0,
+                healthBonus = 0
+            };
+
+            // stats JSON 파싱 (간단히)
+            if (row.TryGetValue("stats", out var statsObj) && statsObj != null)
+            {
+                var statsStr = statsObj.ToString();
+                if (statsStr.Contains("attackBonus"))
+                {
+                    var start = statsStr.IndexOf(":") + 1;
+                    var end = statsStr.IndexOf("}", start);
+                    if (int.TryParse(statsStr.Substring(start, end - start).Trim(), out var atk))
+                        item.attackBonus = atk;
+                }
+                if (statsStr.Contains("defenseBonus"))
+                {
+                    var start = statsStr.IndexOf(":") + 1;
+                    var end = statsStr.IndexOf("}", start);
+                    if (int.TryParse(statsStr.Substring(start, end - start).Trim(), out var def))
+                        item.defenseBonus = def;
+                }
+                if (statsStr.Contains("healthBonus"))
+                {
+                    var start = statsStr.IndexOf(":") + 1;
+                    var end = statsStr.IndexOf("}", start);
+                    if (int.TryParse(statsStr.Substring(start, end - start).Trim(), out var hp))
+                        item.healthBonus = hp;
+                }
+            }
+
+            state.inventory.items.Add(item);
+        }
+
+        GameLogger.Info($"모든 아이템 슬롯 추가 완료: {itemsData.Count}개");
+    }
+
+    /// <summary>
+    /// 희귀도 문자열을 정수값으로 변환
+    /// </summary>
+    private int GetRarityValue(string rarity)
+    {
+        switch (rarity.ToLower())
+        {
+            case "common": return 0;
+            case "rare": return 1;
+            case "epic": return 2;
+            case "legendary": return 3;
+            case "mythic": return 4;
+            default: return 0;
         }
     }
 }
