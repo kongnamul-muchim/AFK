@@ -646,6 +646,12 @@ public class CombatSystem : MonoBehaviour
         // 아이템 드롭
         DropLoot();
         
+        // 보석 드롭 (0.1% 확률로 1개) - 자동 반복 모드에서는 드랍되지 않음
+        if (!_autoRepeatMode)
+        {
+            RollGemDrop();
+        }
+        
         // 통계 업데이트
         var stats = _gameState.Stats;
         stats.totalKills++;
@@ -781,6 +787,26 @@ public class CombatSystem : MonoBehaviour
         _eventBus.Emit(GameEvents.ITEM_ACQUIRED);
         
         _logger.Info($"아이템 드롭: {item.name} ({_dropTable.GetGradeName(item.grade)}등급)");
+    }
+
+    /// <summary>
+    /// 보석 드롭 확률 롤 (0.1% 확률로 1개)
+    /// Web 버전과 동일한 로직
+    /// </summary>
+    private void RollGemDrop()
+    {
+        const float dropChance = 0.001f; // 0.1%
+        
+        if (Random.value < dropChance)
+        {
+            var player = _gameState.Player;
+            player.gems += 1;
+            _gameState.Player = player;
+            
+            _eventBus.Emit(GameEvents.GEM_CHANGED);
+            
+            _logger.Info("보석 드롭! 💎 +1");
+        }
     }
 
     // ========== 유틸리티 ==========
