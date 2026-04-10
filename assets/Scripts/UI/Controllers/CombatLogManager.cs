@@ -44,10 +44,25 @@ public class CombatLogManager : MonoBehaviour
     /// </summary>
     public void Initialize(VisualElement root)
     {
-        _logScrollView = root.Q<ScrollView>("CombatLog");
+        // CombatLog VisualElement 찾기
+        var combatLogContainer = root.Q<VisualElement>("CombatLog");
+        if (combatLogContainer == null)
+        {
+            Debug.LogWarning("[CombatLogManager] CombatLog VisualElement를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // ScrollView가 자식에 있는지 확인
+        _logScrollView = combatLogContainer.Q<ScrollView>();
         if (_logScrollView == null)
         {
-            Debug.LogWarning("[CombatLogManager] CombatLog ScrollView를 찾을 수 없습니다.");
+            // 없으면 CombatLog을 ScrollView로 변경
+            Debug.Log("[CombatLogManager] CombatLog을 ScrollView로 변경합니다.");
+            combatLogContainer.Clear();
+            _logScrollView = new ScrollView();
+            _logScrollView.name = "CombatLogScrollView";
+            _logScrollView.style.flexGrow = 1;
+            combatLogContainer.Add(_logScrollView);
         }
     }
     
