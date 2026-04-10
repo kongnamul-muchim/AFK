@@ -154,9 +154,11 @@
 - [x] 버프 시스템 구현
 - [x] 오프라인 보상 계산 (StatCalculator 구현)
 
-### 3. UI 지연 로딩 시스템
-- [ ] 모달별 동적 로딩
-- [ ] 캐싱 시스템
+### 3. UI 지연 로딩 시스템 ✅ 완료
+- [x] UXMLLoader: Resources/UXML/modals/ 폴더의 UXML 파일을 동적으로 로드하고 캐싱
+- [x] ModalManager에 ShowModalLazy() 메서드 추가 (지연 로딩)
+- [x] UnloadModal(), UnloadAllModals() 메서드 추가 (메모리 관리)
+- [x] 캐시 상태 확인: IsLoaded(), GetCached(), LogCacheStatus()
 
 ## 비고
 - AFK-Unity 폴더는 백업용으로 유지
