@@ -143,13 +143,7 @@
             </ui:VisualElement>
             
             <!-- 아이템 리스트 (Infinity Scroll) -->
-            <ui:ListView name="InventoryItems" class="items-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false">
-                <ui:VisualElement class="inventory-item-template">
-                    <ui:Label name="ItemIcon" class="item-icon" />
-                    <ui:Label name="ItemName" class="item-name" />
-                    <ui:Label name="ItemQuantity" class="item-quantity" />
-                </ui:VisualElement>
-            </ui:ListView>
+            <ui:ListView name="InventoryItems" class="items-list" virtualization-mode="dynamic" show-alternating-row-backgrounds="false" show-bound-collection-size="false" />
             
             <ui:VisualElement name="GoldDisplay" class="gold-display">
                 <ui:Label name="GoldDisplayLabel" text="💰 골드:" class="gold-display-label" />
