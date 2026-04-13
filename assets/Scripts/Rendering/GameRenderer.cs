@@ -98,11 +98,38 @@ public class GameRenderer : MonoBehaviour
         // 의존성 주입 (Bootstrap 이후에 호출됨)
         InjectDependencies();
         
+        // Inspector 참조 확인 (경고 로그)
+        ValidateInspectorReferences();
+        
         // 이벤트 구독
         _eventBus.On(GameEvents.COMBAT_PHASE_CHANGED, OnCombatPhaseChanged);
         _eventBus.On(GameEvents.COMBAT_ENCOUNTER, OnCombatEncounter);
         _eventBus.On(GameEvents.COMBAT_VICTORY, OnCombatVictory);
         _eventBus.On(GameEvents.COMBAT_DEFEAT, OnCombatDefeat);
+    }
+    
+    /// <summary>
+    /// Inspector에서 할당된 참조들을 확인하고 경고
+    /// </summary>
+    private void ValidateInspectorReferences()
+    {
+        if (_playerSpriteRenderer == null)
+        {
+            Debug.LogWarning("[GameRenderer] _playerSpriteRenderer가 할당되지 않았습니다. Inspector에서 확인하세요.");
+            // 자동으로 자식 오브젝트에서 찾기
+            _playerSpriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
+        if (_monsterSpriteRenderer == null)
+        {
+            Debug.LogWarning("[GameRenderer] _monsterSpriteRenderer가 할당되지 않았습니다. Inspector에서 확인하세요.");
+            _monsterSpriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
+        if (_playerAnimator == null)
+            Debug.LogWarning("[GameRenderer] _playerAnimator가 할당되지 않았습니다. Inspector에서 확인하세요.");
+        if (_monsterAnimator == null)
+            Debug.LogWarning("[GameRenderer] _monsterAnimator가 할당되지 않았습니다. Inspector에서 확인하세요.");
+        if (_backgroundRenderer == null)
+            Debug.LogWarning("[GameRenderer] _backgroundRenderer가 할당되지 않았습니다. Inspector에서 확인하세요.");
     }
     
     private void OnDisable()

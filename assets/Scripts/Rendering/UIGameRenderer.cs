@@ -50,7 +50,13 @@ public class UIGameRenderer : MonoBehaviour
     
     private void OnEnable()
     {
-        // 의존성 주입
+        // 의존성 주입 (ServiceLocator 초기화 확인)
+        if (ServiceLocator.Instance == null)
+        {
+            Debug.LogWarning("[UIGameRenderer] ServiceLocator가 아직 초기화되지 않았습니다. Bootstrap을 기다립니다.");
+            return;
+        }
+        
         if (_gameState == null)
             _gameState = ServiceLocator.Instance.Get<IGameState>();
         if (_eventBus == null)
@@ -142,9 +148,39 @@ public class UIGameRenderer : MonoBehaviour
         _gameView.Add(_monsterElement);
         Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
         
+        // 초기 텍스처 로드 (즉시 시도)
+        Debug.Log("[UIGameRenderer] 초기 텍스처 로드 시도...");
+        LoadAndSetPlayerSprite();
+        LoadAndSetMonsterSprite();
+        
         // 초기 배경 설정
         SetBackground(BG_NORMAL_PATH);
         Debug.Log("[UIGameRenderer] 초기 배경 설정 완료");
+    }
+    
+    private void LoadAndSetPlayerSprite()
+    {
+        if (_playerElement == null) return;
+        
+        Texture2D texture = LoadTexture(PLAYER_SPRITE_PATH);
+        if (texture != null)
+        {
+            _playerElement.style.backgroundImage = texture;
+            _playerElement.style.display = DisplayStyle.Flex;
+            Debug.Log($"[UIGameRenderer] 초기 플레이어 스프라이트 설정 완료");
+        }
+    }
+    
+    private void LoadAndSetMonsterSprite()
+    {
+        if (_monsterElement == null) return;
+        
+        Texture2D texture = LoadTexture(MONSTER_SPRITE_PATH);
+        if (texture != null)
+        {
+            _monsterElement.style.backgroundImage = texture;
+            Debug.Log($"[UIGameRenderer] 초기 몬스터 스프라이트 설정 완료");
+        }
     }
     
     private void OnPhaseChanged()
@@ -256,11 +292,27 @@ public class UIGameRenderer : MonoBehaviour
     private Texture2D LoadTexture(string path)
     {
         // Resources 폴더에서 로드 (확장자 제외)
+        // path 예: "images/characters/player_spritesheet_0"
+        Debug.Log($"[UIGameRenderer] 텍스처 로드 시도: {path}");
+        
         Texture2D texture = Resources.Load<Texture2D>(path);
         if (texture == null)
         {
             Debug.LogWarning($"[UIGameRenderer] 텍스처를 찾을 수 없음: {path}");
-            Debug.LogWarning($"[UIGameRenderer] Resources/images 폴더에 파일이 있는지 확인하세요.");
+            Debug.LogWarning($"[UIGameRenderer] Assets/Resources/{path}.png 파일 존재 여부 확인");
+            
+            // 대체 경로 시도
+            string altPath = path.Replace("images/", "");
+            Texture2D altTexture = Resources.Load<Texture2D>(altPath);
+            if (altTexture != null)
+            {
+                Debug.Log($"[UIGameRenderer] 대체 경로로 로드 성공: {altPath}");
+                return altTexture;
+            }
+        }
+        else
+        {
+            Debug.Log($"[UIGameRenderer] 텍스처 로드 성공: {texture.width}x{texture.height}");
         }
         return texture;
     }

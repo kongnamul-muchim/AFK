@@ -450,6 +450,10 @@ public class CombatSystem : MonoBehaviour
         
         _logger.Debug($"플레이어 공격 - 데미지: {damage:F1}, 몬스터 HP: {monster.currentHP:F1}/{monster.maxHP:F1}");
         
+        // 공격 애니메이션 트리거 (GameRenderer)
+        GameRenderer.Instance?.TriggerPlayerAttack();
+        GameRenderer.Instance?.TriggerMonsterHit();
+        
         // 몬스터 사망 확인
         if (monster.currentHP <= 0)
         {
@@ -530,6 +534,10 @@ public class CombatSystem : MonoBehaviour
         
         _logger.Debug($"몬스터 공격 - 데미지: {damage:F1}, 플레이어 HP: {player.currentHP:F1}/{_gameState.GetTotalHealth():F1}");
         
+        // 몬스터 공격 애니메이션 트리거
+        GameRenderer.Instance?.TriggerMonsterAttack();
+        GameRenderer.Instance?.TriggerPlayerHit();
+        
         // 플레이어 사망 확인
         if (player.currentHP <= 0)
         {
@@ -609,13 +617,17 @@ public class CombatSystem : MonoBehaviour
             _monsterFactory = new MonsterFactory();
         
         MonsterData monster = _monsterFactory.CreateMonster(stage);
+        
+        // 몬스터 HP를 최대 HP로 명시적 초기화 (죽은 상태로 등장하는 버그 방지)
+        monster.currentHP = monster.maxHP;
+        
         var combatPhase = _gameState.CombatPhase;
         combatPhase.monsterState = monster;
         
         // 몬스터 공격 속도 설정
         _monsterAttackSpeed = _monsterFactory.GetMonsterAttackSpeed(monster);
         
-        _logger.Info($"몬스터 등장 - {monster.name} (스테이지 {stage}, {(monster.grade >= 3 ? "보스" : "일반")})");
+        _logger.Info($"몬스터 등장 - {monster.name} (스테이지 {stage}, HP: {monster.currentHP}/{monster.maxHP}, {(monster.grade >= 3 ? "보스" : "일반")})");
     }
 
     // ========== 승리/패배 처리 ==========

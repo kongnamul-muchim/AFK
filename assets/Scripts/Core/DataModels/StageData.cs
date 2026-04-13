@@ -31,6 +31,17 @@ public struct CombatPhaseData
     {
         phase = 0;
         timer = 0;
+        // 몬스터 상태 초기화 (새 전투 시작 시 죽은 상태로 등장하는 버그 방지)
+        monsterState = new MonsterData
+        {
+            name = "",
+            stage = 0,
+            currentHP = 0,
+            maxHP = 0,
+            attack = 0,
+            defense = 0,
+            grade = 0
+        };
     }
 }
 
