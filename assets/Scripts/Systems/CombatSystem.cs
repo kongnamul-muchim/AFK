@@ -279,11 +279,22 @@ public class CombatSystem : MonoBehaviour
             return;
         }
         
+        // ✅ 전투 데이터 초기화 (이전 전투의 잔여 데이터 제거)
+        var combatPhase = _gameState.CombatPhase;
+        combatPhase.phase = 0;
+        combatPhase.timer = 0;
+        combatPhase.monsterState = new MonsterData(); // HP=0인 몬스터 초기화
+        _gameState.CombatPhase = combatPhase;
+        
         // 플레이어 HP 회복 (스테이지 시작 시)
         _gameState.Player.currentHP = _gameState.GetTotalHealth();
         
         // 플레이어 공격 속도 설정
         _playerAttackSpeed = 1f + (_gameState.Player.speed * 0.01f);
+        
+        // 전투 타이머 초기화
+        _combatTimer = 0f;
+        _lastAttackTime = 0f;
         
         ChangePhase(CombatPhase.MOVING);
         
