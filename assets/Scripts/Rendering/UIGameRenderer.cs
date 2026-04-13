@@ -294,6 +294,7 @@ public class UIGameRenderer : MonoBehaviour
         // Resources 폴더에서 로드 (확장자 제외)
         // path 예: "images/characters/player_spritesheet_0"
         Debug.Log($"[UIGameRenderer] 텍스처 로드 시도: {path}");
+        Debug.Log($"[UIGameRenderer] Resources.Load 경로 확인: Assets/Resources/{path}.png");
         
         Texture2D texture = Resources.Load<Texture2D>(path);
         if (texture == null)
@@ -303,11 +304,16 @@ public class UIGameRenderer : MonoBehaviour
             
             // 대체 경로 시도
             string altPath = path.Replace("images/", "");
+            Debug.Log($"[UIGameRenderer] 대체 경로 시도: {altPath}");
             Texture2D altTexture = Resources.Load<Texture2D>(altPath);
             if (altTexture != null)
             {
                 Debug.Log($"[UIGameRenderer] 대체 경로로 로드 성공: {altPath}");
                 return altTexture;
+            }
+            else
+            {
+                Debug.LogError($"[UIGameRenderer] 대체 경로로도 실패: {altPath}");
             }
         }
         else

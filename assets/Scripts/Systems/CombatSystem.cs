@@ -273,6 +273,8 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     public void StartCombat()
     {
+        _logger.Debug($"[DEBUG] StartCombat 호출됨 - 현재 페이즈: {_currentPhase}");
+        
         if (_currentPhase != CombatPhase.IDLE && _currentPhase != CombatPhase.DEFEATED)
         {
             _logger.Warn($"전투 시작 불가 - 현재 페이즈: {_currentPhase}");
@@ -281,10 +283,14 @@ public class CombatSystem : MonoBehaviour
         
         // ✅ 전투 데이터 초기화 (이전 전투의 잔여 데이터 제거)
         var combatPhase = _gameState.CombatPhase;
+        _logger.Debug($"[DEBUG] StartCombat - 초기화 전 monsterState.currentHP: {combatPhase.monsterState.currentHP}");
+        
         combatPhase.phase = 0;
         combatPhase.timer = 0;
         combatPhase.monsterState = new MonsterData(); // HP=0인 몬스터 초기화
         _gameState.CombatPhase = combatPhase;
+        
+        _logger.Debug($"[DEBUG] StartCombat - 초기화 후 monsterState.currentHP: {_gameState.CombatPhase.monsterState.currentHP}");
         
         // 플레이어 HP 회복 (스테이지 시작 시)
         _gameState.Player.currentHP = _gameState.GetTotalHealth();
@@ -597,15 +603,23 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     private void CheckCombatResult()
     {
+        float monsterHP = _gameState.CombatPhase.monsterState.currentHP;
+        float playerHP = _gameState.Player.currentHP;
+        
+        _logger.Debug($"[DEBUG] CheckCombatResult - monsterHP:{monsterHP}, playerHP:{playerHP}");
+        
         // 몬스터 사망
-        if (_gameState.CombatPhase.monsterState.currentHP <= 0)
+        if (monsterHP <= 0)
         {
+            _logger.Debug($"[DEBUG] 몬스터 사망 감지 - VICTORY로 전환");
             ChangePhase(CombatPhase.VICTORY);
+            return;
         }
         
         // 플레이어 사망
-        if (_gameState.Player.currentHP <= 0)
+        if (playerHP <= 0)
         {
+            _logger.Debug($"[DEBUG] 플레이어 사망 감지 - DEFEATED로 전환");
             ChangePhase(CombatPhase.DEFEATED);
         }
     }
@@ -623,17 +637,27 @@ public class CombatSystem : MonoBehaviour
     {
         int stage = _gameState.Stage.currentStage;
         
+        _logger.Debug($"[DEBUG] SpawnMonster 시작 - 스테이지 {stage}");
+        _logger.Debug($"[DEBUG] 현재 combatPhase.monsterState.currentHP: {_gameState.CombatPhase.monsterState.currentHP}");
+        
         // MonsterFactory를 사용하여 몬스터 생성
         if (_monsterFactory == null)
             _monsterFactory = new MonsterFactory();
         
         MonsterData monster = _monsterFactory.CreateMonster(stage);
         
+        _logger.Debug($"[DEBUG] MonsterFactory 생성 - name:{monster.name}, maxHP:{monster.maxHP}, currentHP:{monster.currentHP}");
+        
         // 몬스터 HP를 최대 HP로 명시적 초기화 (죽은 상태로 등장하는 버그 방지)
         monster.currentHP = monster.maxHP;
         
+        _logger.Debug($"[DEBUG] HP 초기화 후 - currentHP:{monster.currentHP}");
+        
         var combatPhase = _gameState.CombatPhase;
         combatPhase.monsterState = monster;
+        _gameState.CombatPhase = combatPhase;
+        
+        _logger.Debug($"[DEBUG] GameState에 할당 후 확인 - currentHP:{_gameState.CombatPhase.monsterState.currentHP}");
         
         // 몬스터 공격 속도 설정
         _monsterAttackSpeed = _monsterFactory.GetMonsterAttackSpeed(monster);
