@@ -17,7 +17,7 @@ namespace AFK.Core.Systems
         protected IEventBus _eventBus;
         
         /// <summary>로거 인터페이스</summary>
-        protected ILogger _logger;
+        protected IGameLogger _logger;
         
         /// <summary>의존성 주입 완료 여부</summary>
         private bool _dependenciesInjected = false;
@@ -38,7 +38,7 @@ namespace AFK.Core.Systems
             
             _gameState = serviceLocator.Get<IGameState>();
             _eventBus = serviceLocator.Get<IEventBus>();
-            _logger = serviceLocator.Get<ILogger>();
+            _logger = serviceLocator.Get<IGameLogger>();
             
             _dependenciesInjected = true;
         }

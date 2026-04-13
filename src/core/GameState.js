@@ -12,12 +12,6 @@ class GameState {
             level: 1,
             exp: 0,
             maxExp: 100,
-            stats: {
-                str: 5,  // 힘 - 공격력
-                agi: 5,  // 민첩 - 크리티컬
-                int: 5,  // 지력 - 마나
-                vit: 10  // 체력 - HP
-            },
             statPoints: 0,
             currentHp: 100,
             maxHp: 100,
@@ -39,7 +33,7 @@ class GameState {
                 decisiveDamage: 2,
                 goldBonus: 0,
                 expBonus: 0,
-                hpRegenAccumulator: 0  // HP 회복 소수점 누적용
+                hpRegenTimer: 0  // HP 회복 1초 타이머
             },
             goldUpgrades: {
                 attack: 0,
@@ -115,6 +109,8 @@ class GameState {
         this.dailyMissions = {
             missions: [],  // { id, type, target, progress, completed, claimed }
             lastReset: Date.now(),
+            weeklyMissions: [],  // 주간 미션
+            weeklyLastReset: Date.now(),  // 주간 미션 마지막 리셋
             buffs: {
                 attackDouble: 0,  // 공격력 2배 (종료 시간)
                 hpDouble: 0,      // 체력 2배 (종료 시간)
@@ -147,20 +143,22 @@ class GameState {
             totalGold: 0,
             totalLevelups: 0,
             bossKills: 0,
-            totalClears: 0
+            totalClears: 0,
+            clearedBossStages: new Set()  // 이미 클리어한 보스 스테이지 (환생해도 유지)
         };
         this.lastSaveTime = Date.now();
         this.lastLoginTime = Date.now();
         this.inventoryResetDone = false; // ID 체계 리팩토링 v2 하드리셋 플래그
         
         // 보석 업그레이드 (무한 성장 요소)
+        // unlocked: 해금 여부 (보석 지불로 해금), level: 해금 후 업그레이드 레벨
         this.gemUpgrades = {
-            offlineBonus: 0,        // 오프라인 보상 증가 (2%/레벨, 무한)
-            critDamage: 0,          // 치명타 피해 증가 (2%/레벨, 무한)
-            autoCombatDamage: 0,    // 자동 전투 강화 (2%/레벨, 최대 100% / 50레벨)
-            rebirthBonus: 0,        // 환생 보너스 (1개/레벨, 최대 10)
-            dropRate: 0,            // 드롭 확률 업 (등급별 차등, 최대 20레벨)
-            baseStats: 0            // 기본 스탯 % 증가 (1%/레벨, 무한)
+            offlineBonus: { unlocked: false, level: 0 },        // 오프라인 보상 증가 (2%/레벨, 무한)
+            critDamage: { unlocked: false, level: 0 },          // 치명타 피해 증가 (2%/레벨, 무한)
+            autoCombatDamage: { unlocked: false, level: 0 },    // 자동 전투 강화 (2%/레벨, 최대 100% / 50레벨)
+            rebirthBonus: { unlocked: false, level: 0 },        // 환생 보너스 (1개/레벨, 최대 10)
+            dropRate: { unlocked: false, level: 0 },            // 드롭 확률 업 (등급별 차등, 최대 20레벨)
+            baseStats: { unlocked: false, level: 0 }            // 기본 스탯 % 증가 (1%/레벨, 무한)
         };
     }
 
@@ -307,11 +305,6 @@ class GameState {
         if (this.player.exp < 0) errors.push('Invalid exp');
         if (this.player.currentHp < 0) errors.push('Invalid HP');
         
-        // 스탯 검증
-        const stats = this.player.stats;
-        if (stats.str < 0 || stats.agi < 0 || stats.int < 0 || stats.vit < 0) {
-            errors.push('Invalid stats');
-        }
         if (this.player.statPoints < 0) errors.push('Invalid stat points');
 
         // 스테이지 검증
@@ -365,31 +358,6 @@ class GameState {
     }
 
     /**
-     * 스탯 증가
-     * @param {string} statType - 'str', 'agi', 'int', 'vit'
-     * @returns {boolean} 성공 여부
-     */
-    increaseStat(statType) {
-        if (this.player.statPoints <= 0) return false;
-        if (!this.player.stats.hasOwnProperty(statType)) return false;
-
-        this.player.stats[statType]++;
-        this.player.statPoints--;
-        
-        // 파생 스탯 재계산
-        this.recalculateDerivedStats();
-        
-        gameEventBus.emit(GAME_EVENTS.PLAYER_STAT_CHANGED, {
-            statType,
-            value: this.player.stats[statType],
-            statPoints: this.player.statPoints
-        });
-        
-        this.notifyChange(`player.stats.${statType}`);
-        return true;
-    }
-
-    /**
      * 파생 스탯 재계산
      */
     recalculateDerivedStats() {
@@ -427,9 +395,9 @@ class GameState {
         const defenseValue = calcUpgradeValue(goldUp.defense) + calcUpgradeValue(statUp.defense);
         const hpValue = calcUpgradeValue(goldUp.hp) * 10 + calcUpgradeValue(statUp.hp) * 10;
         
-        const baseAttack = 10 + this.player.stats.str * 2 + attackValue * 2;
-        const baseDefense = 5 + this.player.stats.vit * 0.5 + defenseValue * 1;
-        const baseMaxHp = 100 + this.player.stats.vit * 10 + hpValue;
+        const baseAttack = 10 + attackValue * 2;
+        const baseDefense = 5 + defenseValue * 1;
+        const baseMaxHp = 100 + hpValue;
         
         // HP 버프 확인 (체력 2배)
         const hpBuff = this.hasActiveHpBuff() ? 2.0 : 1.0;
@@ -442,7 +410,7 @@ class GameState {
         
         // 크리티컬 (기존 + 양쪽 업그레이드 합산, 효율 배율 적용)
         const critChanceValue = calcUpgradeValue(goldUp.critChance) + calcUpgradeValue(statUp.critChance);
-        this.player.derivedStats.critChance = 0.05 + this.player.stats.agi * 0.005 + critChanceValue * 0.002;
+        this.player.derivedStats.critChance = 0.05 + critChanceValue * 0.002;
         
         const critDamageValue = calcUpgradeValue(goldUp.critDamage) + calcUpgradeValue(statUp.critDamage);
         this.player.derivedStats.critDamage = 1.5 + critDamageValue * 0.01;
@@ -468,17 +436,20 @@ class GameState {
         const expBonusValue = calcUpgradeValue(goldUp.expBonus);
         this.player.derivedStats.expBonus = expBonusValue * 1;
         
-        // 보석 업그레이드 효과 적용
+        // 보석 업그레이드 효과 적용 (해금된 것만)
         const gemUp = this.gemUpgrades;
         
-        // 치명타 피해 증가 (2%/레벨)
-        if (gemUp.critDamage > 0) {
-            this.player.derivedStats.critDamage = (this.player.derivedStats.critDamage || 1.5) + gemUp.critDamage * 0.02;
+        // 오프라인 보상 증가 (2%/레벨) - 해금 필요
+        // (오프라인 보상 계산 시 참조됨)
+        
+        // 치명타 피해 증가 (2%/레벨) - 해금 필요
+        if (gemUp.critDamage.unlocked && gemUp.critDamage.level > 0) {
+            this.player.derivedStats.critDamage = (this.player.derivedStats.critDamage || 1.5) + gemUp.critDamage.level * 0.02;
         }
         
-        // 기본 스탯 % 증가 (1%/레벨)
-        if (gemUp.baseStats > 0) {
-            const statBonus = 1 + gemUp.baseStats * 0.01;
+        // 기본 스탯 % 증가 (1%/레벨) - 해금 필요
+        if (gemUp.baseStats.unlocked && gemUp.baseStats.level > 0) {
+            const statBonus = 1 + gemUp.baseStats.level * 0.01;
             this.player.derivedStats.attack = Math.floor(this.player.derivedStats.attack * statBonus);
             this.player.derivedStats.defense = Math.floor(this.player.derivedStats.defense * statBonus);
             this.player.derivedStats.maxHp = Math.floor(this.player.derivedStats.maxHp * statBonus);
@@ -547,21 +518,64 @@ class GameState {
      * 스테이지 진행
      */
     advanceStage() {
+        const previousStage = this.stage.current;
+        const wasBossStage = previousStage % 10 === 0;
+        
         this.stage.killsInStage = 0;
         this.stage.current++;
         this.stage.max = Math.max(this.stage.max, this.stage.current);
         this.stats.maxStage = Math.max(this.stats.maxStage, this.stage.current);
+        this.stats.totalClears = (this.stats.totalClears || 0) + 1;
         
         gameEventBus.emit(GAME_EVENTS.STAGE_CHANGED, { 
             stage: this.stage.current,
             isBoss: this.stage.current % 10 === 0
         });
         
+        // 보스 스테이지 클리어 보상 (보석) - 처음 클리어할 때만
+        if (wasBossStage) {
+            // 이미 클리어한 보스인지 확인
+            if (!this.stats.clearedBossStages.has(previousStage)) {
+                // 처음 클리어하는 보스
+                this.stats.clearedBossStages.add(previousStage);
+                
+                const bossLevel = Math.floor(previousStage / 10); // 1=10층, 2=20층, ...
+                const gemReward = this.calculateBossGemReward(bossLevel);
+                
+                if (gemReward > 0) {
+                    this.inventory.gems += gemReward;
+                    
+                    gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
+                        message: `보스 스테이지 ${previousStage}층 **첫 클리어**! 💎${gemReward} 보석을 획득했습니다!`
+                    });
+                    
+                    gameLogger.info(`Boss stage ${previousStage} first clear! +${gemReward} gems`);
+                }
+            } else {
+                // 이미 클리어한 보스 (재도전/자동 반복)
+                gameLogger.debug(`Boss stage ${previousStage} already cleared, no gem reward`);
+            }
+        }
+        
         if (this.stage.current % 10 === 0) {
             gameEventBus.emit(GAME_EVENTS.STAGE_BOSS_ENTER);
         }
         
         this.notifyChange('stage.current');
+    }
+
+    /**
+     * 보스 스테이지 첫 클리어 시 보석 보상 계산 (높은 보상)
+     * @param {number} bossLevel - 보스 레벨 (1=10층, 2=20층, ...)
+     * @returns {number}
+     */
+    calculateBossGemReward(bossLevel) {
+        // 10층 단위 보스 첫 클리어 시 보석 보상 (높은 보상)
+        // 10층: 5개, 20층: 10개, 30층: 15개, ... 100층: 50개
+        // 100층 이후: 50개 고정
+        const baseReward = Math.min(bossLevel * 5, 50);
+        
+        return baseReward;
     }
 
     /**
@@ -608,9 +622,11 @@ class GameState {
         // 레벨당 1 카운트 + 보너스 (높은 레벨일수록 더 많이)
         let basePoints = Math.floor(bonusLevel * (1 + bonusLevel * 0.1));
         
-        // 보석 업그레이드: 환생 보너스 (1개/레벨, 최대 10)
-        const rebirthBonusLevel = this.gemUpgrades.rebirthBonus || 0;
-        basePoints += Math.min(10, rebirthBonusLevel);
+        // 보석 업그레이드: 환생 보너스 (1개/레벨, 최대 10) - 해금 필요
+        if (this.gemUpgrades.rebirthBonus.unlocked) {
+            const rebirthBonusLevel = Math.min(10, this.gemUpgrades.rebirthBonus.level);
+            basePoints += rebirthBonusLevel;
+        }
         
         return basePoints;
     }
@@ -633,12 +649,6 @@ class GameState {
         this.player.exp = 0;
         this.player.maxExp = 100;
         this.player.statPoints = 0;
-        this.player.stats = {
-            str: 5,
-            agi: 5,
-            int: 5,
-            vit: 10
-        };
 
         // 스테이지 초기화
         this.stage.current = 1;
@@ -662,6 +672,9 @@ class GameState {
             critChance: 0,
             critDamage: 0
         };
+
+        // 주의: gemUpgrades(보석 업그레이드)와 inventory.gems(보석)는 환생해도 유지됨
+        // 보석 업그레이드는 해금 상태와 레벨이 모두 유지되며, 보석 화폐도 유지됨
 
         // 파생 스탯 재계산
         this.recalculateDerivedStats();
@@ -722,7 +735,10 @@ class GameState {
             tutorial: { ...this.tutorial },
             dailyMissions: { ...this.dailyMissions },
             rebirth: { ...this.rebirth },
-            stats: { ...this.stats },
+            stats: {
+                ...this.stats,
+                clearedBossStages: Array.from(this.stats.clearedBossStages)  // Set → Array
+            },
             lastSaveTime: this.lastSaveTime,
             lastLoginTime: this.lastLoginTime,
             inventoryResetDone: this.inventoryResetDone,
@@ -736,7 +752,16 @@ class GameState {
      */
     fromJSON(data) {
         if (data.version) this.version = data.version;
-        if (data.player) Object.assign(this.player, data.player);
+        if (data.player) {
+            Object.assign(this.player, data.player);
+            // 이전 버전 hpRegenAccumulator → hpRegenTimer 마이그레이션
+            if (this.player.derivedStats && 'hpRegenAccumulator' in this.player.derivedStats) {
+                delete this.player.derivedStats.hpRegenAccumulator;
+            }
+            if (this.player.derivedStats && !('hpRegenTimer' in this.player.derivedStats)) {
+                this.player.derivedStats.hpRegenTimer = 0;
+            }
+        }
         if (data.stage) Object.assign(this.stage, data.stage);
         if (data.combatPhase) Object.assign(this.combatPhase, data.combatPhase);
         if (data.inventory) {
@@ -766,10 +791,40 @@ class GameState {
         if (data.tutorial) Object.assign(this.tutorial, data.tutorial);
         if (data.dailyMissions) Object.assign(this.dailyMissions, data.dailyMissions);
         if (data.rebirth) Object.assign(this.rebirth, data.rebirth);
-        if (data.stats) Object.assign(this.stats, data.stats);
+        if (data.stats) {
+            Object.assign(this.stats, data.stats);
+            // clearedBossStages는 Set으로 복원
+            if (data.stats.clearedBossStages) {
+                this.stats.clearedBossStages = new Set(data.stats.clearedBossStages);
+            }
+        }
         if (data.lastSaveTime) this.lastSaveTime = data.lastSaveTime;
         if (data.inventoryResetDone !== undefined) this.inventoryResetDone = data.inventoryResetDone;
-        if (data.gemUpgrades) Object.assign(this.gemUpgrades, data.gemUpgrades);
+        
+        // 보석 업그레이드 로드 (구버전 호환: 숫자 → { unlocked, level })
+        if (data.gemUpgrades) {
+            const gemKeys = ['offlineBonus', 'critDamage', 'autoCombatDamage', 'rebirthBonus', 'dropRate', 'baseStats'];
+            gemKeys.forEach(key => {
+                if (data.gemUpgrades[key] !== undefined) {
+                    const value = data.gemUpgrades[key];
+                    if (typeof value === 'number') {
+                        // 구버전: 숫자만 저장됨 (레벨)
+                        // 레벨이 1 이상이면 해금된 것으로 간주
+                        if (value > 0) {
+                            this.gemUpgrades[key] = { unlocked: true, level: value };
+                        } else {
+                            this.gemUpgrades[key] = { unlocked: false, level: 0 };
+                        }
+                    } else if (typeof value === 'object' && value !== null) {
+                        // 신버전: { unlocked, level } 객체
+                        this.gemUpgrades[key] = {
+                            unlocked: value.unlocked || false,
+                            level: value.level || 0
+                        };
+                    }
+                }
+            });
+        }
         
         this.recalculateDerivedStats();
     }

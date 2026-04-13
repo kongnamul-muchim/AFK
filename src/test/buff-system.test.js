@@ -43,7 +43,7 @@ class GameState {
                 attack: 10, defense: 5, critChance: 0.05, critDamage: 1.5,
                 maxHp: 100, moveSpeed: 100, hpRegen: 0, attackSpeed: 100,
                 decisiveChance: 0, decisiveDamage: 2, goldBonus: 0, expBonus: 0,
-                hpRegenAccumulator: 0
+                hpRegenTimer: 0
             },
             goldUpgrades: {
                 attack: 0, defense: 0, hp: 0, hpRegen: 0, attackSpeed: 0,

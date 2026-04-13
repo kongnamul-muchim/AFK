@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.IO;
 using System.Collections;
+using System.Threading.Tasks;
 
 /// <summary>
 /// 게임 저장/로드를 관리하는 싱글톤 클래스
@@ -63,7 +64,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
     // ========== 저장/로드 메서드 ==========
 
     /// <summary>
-    /// 게임 상태를 JSON 파일로 저장
+    /// 게임 상태를 JSON 파일로 저장 (동기)
     /// </summary>
     /// <param name="state">저장할 GameState</param>
     public void Save(GameState state)
@@ -76,7 +77,9 @@ public class SaveManager : MonoBehaviour, ISaveManager
 
         try
         {
-            string json = JsonUtility.ToJson(state, true);
+            // SaveData로 변환하여 직렬화
+            SaveData saveData = SaveData.CreateFromGameState(state);
+            string json = JsonUtility.ToJson(saveData, true);
             string savePath = GetSavePath();
             
             // 디렉토리 확인
@@ -100,7 +103,46 @@ public class SaveManager : MonoBehaviour, ISaveManager
     }
 
     /// <summary>
-    /// JSON 파일에서 GameState 로드
+    /// 게임 상태를 JSON 파일로 저장 (비동기)
+    /// </summary>
+    /// <param name="state">저장할 GameState</param>
+    public async Task SaveAsync(GameState state)
+    {
+        if (state == null)
+        {
+            GameLogger.Error("저장할 GameState가 null입니다.");
+            return;
+        }
+
+        try
+        {
+            // SaveData로 변환하여 직렬화
+            SaveData saveData = SaveData.CreateFromGameState(state);
+            string json = JsonUtility.ToJson(saveData, true);
+            string savePath = GetSavePath();
+            
+            // 디렉토리 확인
+            string directory = Path.GetDirectoryName(savePath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            
+            await File.WriteAllTextAsync(savePath, json);
+            GameLogger.Info($"게임 저장 완료 (비동기): {savePath}");
+            
+            // 저장 이벤트 발생
+            EventBus.Instance.Emit(GameEvents.GAME_SAVED);
+        }
+        catch (System.Exception e)
+        {
+            GameLogger.Error($"저장 실패: {e.Message}");
+            GameLogger.Exception(e);
+        }
+    }
+
+    /// <summary>
+    /// JSON 파일에서 GameState 로드 (동기)
     /// </summary>
     /// <returns>로드된 GameState, 없으면 null</returns>
     public GameState Load()
@@ -118,15 +160,70 @@ public class SaveManager : MonoBehaviour, ISaveManager
                     return null;
                 }
                 
-                GameState state = JsonUtility.FromJson<GameState>(json);
-                
-                if (state != null)
+                // SaveData로 역직렬화 후 GameState에 적용
+                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+                if (saveData == null)
                 {
-                    GameLogger.Info("게임 로드 완료");
-                    
-                    // 로드 이벤트 발생
-                    EventBus.Instance.Emit(GameEvents.GAME_LOADED);
+                    GameLogger.Warn("저장 파일이 잘못되었습니다.");
+                    return null;
                 }
+                
+                // 기존 GameState 인스턴스에 데이터 적용
+                var state = GameState.Instance;
+                saveData.ApplyToGameState(state);
+                
+                GameLogger.Info("게임 로드 완료");
+                
+                // 로드 이벤트 발생
+                EventBus.Instance.Emit(GameEvents.GAME_LOADED);
+                
+                return state;
+            }
+        }
+        catch (System.Exception e)
+        {
+            GameLogger.Error($"로드 실패: {e.Message}");
+            GameLogger.Exception(e);
+        }
+        
+        return null;
+    }
+
+    /// <summary>
+    /// JSON 파일에서 GameState 로드 (비동기)
+    /// </summary>
+    /// <returns>로드된 GameState, 없으면 null</returns>
+    public async Task<GameState> LoadAsync()
+    {
+        try
+        {
+            string savePath = GetSavePath();
+            if (File.Exists(savePath))
+            {
+                string json = await File.ReadAllTextAsync(savePath);
+                
+                if (string.IsNullOrEmpty(json))
+                {
+                    GameLogger.Warn("저장 파일이 비어있습니다.");
+                    return null;
+                }
+                
+                // SaveData로 역직렬화 후 GameState에 적용
+                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+                if (saveData == null)
+                {
+                    GameLogger.Warn("저장 파일이 잘못되었습니다.");
+                    return null;
+                }
+                
+                // 기존 GameState 인스턴스에 데이터 적용
+                var state = GameState.Instance;
+                saveData.ApplyToGameState(state);
+                
+                GameLogger.Info("게임 로드 완료 (비동기)");
+                
+                // 로드 이벤트 발생
+                EventBus.Instance.Emit(GameEvents.GAME_LOADED);
                 
                 return state;
             }

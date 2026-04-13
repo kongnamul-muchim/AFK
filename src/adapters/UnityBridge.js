@@ -64,24 +64,7 @@ class UnityBridge {
     }
 
     /**
-     * 스탯 포인트 사용 핸들러
-     * @param {string} statType - 'str', 'agi', 'int', 'vit'
-     */
-    handleStatPointUsed(statType) {
-        if (this.game.gameState) {
-            const success = this.game.gameState.increaseStat(statType);
-            this.sendToUnity('OnStatPointResult', JSON.stringify({
-                statType,
-                success,
-                newValue: this.game.gameState.player.stats[statType],
-                remainingPoints: this.game.gameState.player.statPoints
-            }));
-        }
-    }
-
-    /**
      * 아이템 합성 핸들러
-     * @param {number} itemId 
      */
     handleItemSynthesized(itemId) {
         if (this.game.inventorySystem) {
@@ -260,7 +243,6 @@ class UnityBridge {
                 maxExp: this.game.gameState.player.maxExp,
                 currentHp: this.game.gameState.player.currentHp,
                 maxHp: this.game.gameState.player.maxHp,
-                stats: this.game.gameState.player.stats,
                 statPoints: this.game.gameState.player.statPoints
             },
             stage: {

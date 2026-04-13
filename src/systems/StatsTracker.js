@@ -31,6 +31,7 @@ class StatsTracker {
                 this.gameState.stats.maxStage, 
                 data.stage
             );
+            // totalClears는 GameState.advanceStage()에서 증가시킴
         });
         
         gameEventBus.on(GAME_EVENTS.INVENTORY_GOLD_CHANGED, (data) => {

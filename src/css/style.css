@@ -1,0 +1,1770 @@
+/* 모바일 우선 스타일 - Idle RPG */
+:root {
+    --color-bg-primary: #0f0f1a;
+    --color-bg-secondary: #1a1a2e;
+    --color-bg-tertiary: #252542;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #b0b0c0;
+    --color-accent: #4a9eff;
+    --color-accent-dark: #2d7dd2;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+    --color-hp: #ef4444;
+    --color-exp: #8b5cf6;
+    --color-gold: #fbbf24;
+    
+    --rarity-common: #9ca3af;
+    --rarity-rare: #3b82f6;
+    --rarity-epic: #a855f7;
+    --rarity-legendary: #f59e0b;
+    --rarity-mythic: #ef4444;
+    
+    --touch-target-min: 48px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+html {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+    height: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    background: var(--color-bg-primary);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    height: 100%;
+    height: 100dvh;
+}
+
+/* 로딩 화면 */
+.loading-screen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    text-align: center;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+}
+
+.loading-logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--color-accent);
+    margin-bottom: 1.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.loading-bar {
+    height: 8px;
+    background: var(--color-bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-dark));
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.loading-percent {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.loading-tip {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin-bottom: 0.5rem;
+}
+
+.loading-version {
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.loading-retry {
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* 게임 컨테이너 - 모바일 전체 화면 */
+.game-container {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-primary);
+}
+
+/* HUD 상단 - 터치 친화적 */
+.hud-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-bg-tertiary);
+    min-height: var(--touch-target-min);
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.player-level {
+    font-weight: bold;
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* 아이템 드롭 이펙트 */
+.item-drop-effects {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.item-drop-effect {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    animation: itemDropSlideUp 1.5s ease-out forwards;
+    white-space: nowrap;
+}
+
+.item-drop-effect .item-icon {
+    font-size: 1.1rem;
+}
+
+.item-drop-effect .item-name {
+    color: var(--color-text-primary);
+}
+
+.item-drop-effect.common { border: 1px solid var(--rarity-common); }
+.item-drop-effect.rare { border: 1px solid var(--rarity-rare); }
+.item-drop-effect.epic { border: 1px solid var(--rarity-epic); }
+.item-drop-effect.legendary { border: 1px solid var(--rarity-legendary); }
+.item-drop-effect.mythic { border: 1px solid var(--rarity-mythic); }
+
+@keyframes itemDropSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+    15% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-60px) scale(0.9);
+    }
+}
+
+.hp-bar-container {
+    flex: 0 0 150px;
+    height: 14px;
+    background: var(--color-bg-tertiary);
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.hp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-hp), #dc2626);
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+.hp-text {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    display: none;
+}
+
+.stage-info {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stage-text {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--color-text-primary);
+}
+
+.auto-repeat-btn {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-accent);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0.5;
+}
+
+.auto-repeat-btn.active {
+    opacity: 1;
+    background: var(--color-accent);
+    animation: pulse 1.5s infinite;
+}
+
+.auto-repeat-btn:hover {
+    transform: scale(1.1);
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 158, 255, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(74, 158, 255, 0); }
+}
+
+.gold-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem;
+}
+
+.gold-icon {
+    font-size: 1rem;
+}
+
+.gold-text {
+    font-weight: bold;
+    color: var(--color-gold);
+    font-size: 0.9rem;
+}
+
+/* 오른쪽 정보 영역 (골드 + 설정) */
+.right-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* 설정 버튼 - 네모 패널 */
+.settings-btn {
+    width: 36px;
+    height: 36px;
+    background: var(--color-bg-tertiary);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.settings-btn:active {
+    background: var(--color-accent-dark);
+    transform: scale(0.9);
+}
+
+/* 버프 표시 영역 */
+.buff-display {
+    position: absolute;
+    top: 60px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.buff-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(15, 15, 30, 0.85);
+    border-radius: 6px;
+    border: 1px solid rgba(138, 43, 226, 0.4);
+    font-size: 0.75rem;
+    animation: buffPulse 2s infinite;
+    backdrop-filter: blur(4px);
+}
+
+@keyframes buffPulse {
+    0%, 100% { border-color: rgba(138, 43, 226, 0.4); }
+    50% { border-color: rgba(138, 43, 226, 0.8); box-shadow: 0 0 8px rgba(138, 43, 226, 0.3); }
+}
+
+.buff-item-icon {
+    font-size: 1rem;
+}
+
+.buff-item-timer {
+    color: #da70d6;
+    font-weight: 600;
+    font-size: 0.7rem;
+    min-width: 35px;
+}
+
+.buff-item-name {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.65rem;
+}
+
+/* 게임 뷰 - Canvas 영역 */
+.game-view {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #1a1a3e 0%, var(--color-bg-primary) 100%);
+    overflow: hidden;
+    min-height: 200px;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.combat-log {
+    display: none !important;
+}
+
+.combat-log-entry {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    animation: fadeOut 3s forwards;
+    animation-delay: 2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+    border-left: 3px solid #4a9eff;
+}
+
+/* 토스트 메시지 */
+@keyframes toastFade {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+}
+
+/* HUD 하단 */
+.hud-bottom {
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-bg-tertiary);
+}
+
+.exp-bar-container {
+    height: 10px;
+    background: var(--color-bg-tertiary);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.exp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-exp), #7c3aed);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.bottom-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+.stat-points {
+    color: var(--color-accent);
+    font-weight: bold;
+}
+
+/* 메뉴 버튼 - 4 개 그리드 */
+.menu-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: var(--color-bg-secondary);
+}
+
+.menu-btn {
+    padding: 0.75rem 0.25rem;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    min-height: var(--touch-target-min);
+}
+
+.menu-btn:active {
+    background: var(--color-accent-dark);
+}
+
+/* 모달 - 모바일 최적화 */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--color-bg-secondary);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-bg-tertiary);
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-secondary);
+    z-index: 1;
+}
+
+.modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.modal-close {
+    font-size: 1.5rem;
+    color: var(--color-text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+.modal-content > *:not(.modal-header) {
+    padding: 1rem;
+}
+
+/* 인벤토리 그리드 - 5 개 정렬 (패널에 맞춤, 무한스크롤) */
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    max-height: 450px;
+    overflow-y: auto;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+.item-slot {
+    aspect-ratio: 1;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 2px solid transparent;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.item-slot.common { border-color: var(--rarity-common); }
+.item-slot.rare { border-color: var(--rarity-rare); }
+.item-slot.epic { border-color: var(--rarity-epic); }
+.item-slot.legendary { border-color: var(--rarity-legendary); }
+.item-slot.mythic { border-color: var(--rarity-mythic); }
+
+.item-count {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+}
+
+.item-name {
+    font-size: 0.6rem;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 90%;
+}
+
+/* 골드 표시 제거 (기존 HUD용) */
+.gold-display {
+    display: none;
+}
+
+/* 업그레이드 모달에서는 기본 표시 (JS에서 탭별로 제어) */
+.upgrade-header .gold-display {
+    display: flex;
+}
+
+/* 스탯/환생 탭에서는 숨김 - JS의 인라인 스타일이 우선 적용됨 */
+.upgrade-header .stat-points-display:not([style*="display: none"]) ~ .gold-display {
+    display: none;
+}
+
+/* 설정 행 */
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.setting-row label {
+    flex: 1;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.setting-row input[type="range"] {
+    flex: 2;
+    margin: 0 0.75rem;
+    height: 4px;
+}
+
+.setting-row input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+}
+
+.setting-row span {
+    min-width: 40px;
+    text-align: right;
+    color: var(--color-text-primary);
+    font-size: 0.85rem;
+}
+
+.data-btn {
+    flex: 1;
+    padding: 0.75rem;
+    margin: 0.25rem;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.data-btn.danger {
+    background: var(--color-danger);
+}
+
+/* 상태창 */
+.stats-info {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.stats-info p {
+    margin-bottom: 0.5rem;
+}
+
+/* 오프라인 보상 */
+.offline-content {
+    text-align: center;
+    padding: 1rem;
+}
+
+.offline-time {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    color: var(--color-text-secondary);
+}
+
+.offline-rewards {
+    background: var(--color-bg-tertiary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.offline-rewards p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+#offline-exp {
+    color: var(--color-exp);
+    font-weight: bold;
+}
+
+#offline-gold {
+    color: var(--color-gold);
+    font-weight: bold;
+}
+
+.confirm-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* 튜토리얼 오버레이 */
+.tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 1rem;
+}
+
+.tutorial-guide {
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+    border-radius: 12px;
+    max-width: 340px;
+    text-align: center;
+    border: 2px solid var(--color-accent);
+}
+
+.tutorial-message {
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+
+.tutorial-next {
+    padding: 0.75rem 2rem;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 통계 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.stat-card {
+    background: var(--color-bg-tertiary);
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-card-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-card-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--color-accent);
+}
+
+/* 반응형 - 태블릿 이상 */
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+    
+    .hud-top {
+        padding: 0.75rem 1rem;
+    }
+    
+    .hp-text {
+        display: inline;
+    }
+    
+    .menu-buttons {
+        padding: 0.75rem 1rem;
+    }
+    
+    .menu-btn {
+        min-height: auto;
+    }
+    
+    .modal {
+        align-items: center;
+    }
+    
+    .modal-content {
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+    }
+    
+    .items-grid {
+        grid-template-columns: repeat(8, 1fr);
+    }
+}
+
+/* 데미지 플로팅 텍스트 */
+.damage-text {
+    position: absolute;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px black;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    z-index: 100;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(1.2);
+    }
+}
+
+/* 레벨업 이펙트 */
+.levelup-glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1500;
+    animation: glowFade 2s ease-out forwards;
+}
+
+@keyframes glowFade {
+    0% {
+        box-shadow: inset 0 0 0 0 var(--color-success);
+        opacity: 1;
+    }
+    50% {
+        box-shadow: inset 0 0 50px 20px var(--color-success);
+        opacity: 0.8;
+    }
+    100% {
+        box-shadow: inset 0 0 0 0 var(--color-success);
+        opacity: 0;
+    }
+}
+
+/* 인벤토리 모달 확장 - flex 레이아웃 */
+.inventory-modal-content {
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 장착 아이템 패널 - 고정 */
+.equipment-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.equipment-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.slot-label {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+.slot-item {
+    width: 48px;
+    height: 48px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-bg-tertiary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.slot-item.has-item {
+    border-color: var(--color-accent);
+    cursor: pointer;
+}
+
+/* 스탯 가중치 패널 */
+.stats-bonus-panel {
+    grid-column: span 4;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    margin-top: 0.5rem;
+}
+
+.bonus-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.75rem;
+}
+
+.bonus-stat span:first-child {
+    color: var(--color-text-secondary);
+}
+
+.bonus-stat span:last-child {
+    color: var(--color-success);
+    font-weight: bold;
+}
+
+/* 인벤토리 탭 - 고정 */
+.inventory-tabs {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    flex-shrink: 0;
+}
+
+.inventory-tabs .tab-btn {
+    flex: 1;
+    padding: 0.5rem;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.inventory-tabs .tab-btn.active {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* 일괄합성 바 */
+.batch-synthesize-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    flex-shrink: 0;
+}
+
+.batch-synthesize-btn {
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.batch-synthesize-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.batch-synthesize-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.batch-synthesize-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+/* 아이템 툴팁 */
+.item-tooltip {
+    position: fixed;
+    background: rgba(15, 15, 26, 0.95);
+    border: 2px solid var(--color-accent);
+    border-radius: 8px;
+    padding: 1rem;
+    min-width: 200px;
+    z-index: 10000;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip-name {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.tooltip-grade {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.tooltip-stats {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.tooltip-stats div {
+    padding: 0.2rem 0;
+}
+
+.tooltip-actions {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    border-top: 1px solid var(--color-bg-tertiary);
+    padding-top: 0.5rem;
+}
+
+.tooltip-actions .action {
+    padding: 0.15rem 0;
+}
+
+/* 도감 아이템 (미획득) */
+.item-slot.locked {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    background: var(--color-bg-secondary);
+}
+
+.item-slot.locked::after {
+    content: '🔒';
+    position: absolute;
+    font-size: 1.2rem;
+}
+
+.item-slot.has-item {
+    cursor: pointer;
+}
+
+.item-slot.has-item::after {
+    content: 'x' attr(data-count);
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+}
+
+/* 희귀도 행 (5 개) */
+.rarity-row {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+}
+
+.rarity-row .item-slot {
+    flex: 1;
+    min-width: 0;
+}
+
+.rarity-row .item-name {
+    font-size: 0.6rem;
+    max-width: 100%;
+}
+
+/* 인벤토리 아이템 그리드 - 스크롤 영역 */
+.inventory-items-wrapper {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 0.5rem;
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    max-height: 400px;
+}
+
+.rarity-row {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.rarity-row .item-slot {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* 발견된 아이템 (count 0) - 활성화처럼 보이게, 장착 가능 */
+.item-slot.discovered {
+    opacity: 0.85;
+    filter: none;
+    border-style: solid;
+    cursor: pointer;
+}
+
+.item-slot.discovered::after {
+    content: 'x0';
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+}
+
+/* 업그레이드 모달 */
+.upgrade-modal-content {
+    max-width: 500px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.upgrade-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.75rem;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.gold-display {
+    color: #ffd700;
+}
+
+.stat-points-display {
+    color: #00bfff;
+}
+
+.upgrade-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+    justify-content: center;
+}
+
+.upgrade-tabs .tab-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.upgrade-tabs .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.upgrade-tabs .tab-btn.active {
+    background: var(--color-bg-tertiary);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+    justify-content: center;
+}
+
+.upgrade-tabs .tab-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.upgrade-tabs .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.upgrade-tabs .tab-btn.active {
+    background: var(--color-bg-tertiary);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.upgrade-subtabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+    justify-content: center;
+}
+
+.subtab-btn {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+.subtab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.subtab-btn.active {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.upgrade-tabs .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.upgrade-tabs .tab-btn.active {
+    background: var(--color-bg-tertiary);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.upgrade-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* 업그레이드 아이템 */
+.upgrade-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 1rem;
+    background: rgba(30, 30, 50, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(100, 100, 150, 0.3);
+    transition: all 0.2s;
+}
+
+.upgrade-item:hover {
+    border-color: var(--color-accent);
+    background: rgba(40, 40, 70, 0.9);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
+}
+
+.upgrade-item.locked {
+    opacity: 0.5;
+    border-color: rgba(100, 100, 100, 0.3);
+}
+
+.upgrade-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(100, 100, 150, 0.2);
+}
+
+.upgrade-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.upgrade-level {
+    font-size: 0.85rem;
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.upgrade-level.locked {
+    color: #888;
+    font-weight: 400;
+}
+
+.upgrade-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.upgrade-current {
+    font-size: 0.9rem;
+    color: #8be9a0;
+    font-weight: 500;
+}
+
+.upgrade-next {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.upgrade-button {
+    display: inline-block;
+    padding: 0.35rem 1rem;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 6px;
+    color: #ffd700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 80px;
+}
+
+.upgrade-button:hover {
+    background: rgba(255, 215, 0, 0.3);
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.upgrade-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #666;
+}
+
+.upgrade-button:disabled:hover {
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #666;
+    box-shadow: none;
+}
+
+.upgrade-button.locked {
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #666;
+}
+
+.upgrade-button.locked:hover {
+    background: rgba(100, 100, 100, 0.1);
+    color: #666;
+    box-shadow: none;
+}
+
+.upgrade-button.max-level {
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #888;
+    cursor: default;
+}
+
+/* 일일 미션 스타일 */
+.daily-missions-content {
+    max-width: 500px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.missions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(138, 43, 226, 0.1);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.gems-display {
+    color: #da70d6;
+    font-weight: bold;
+}
+
+.reset-timer {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+}
+
+/* 미션 탭 */
+.missions-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.missions-tabs .tab-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    background: rgba(40, 40, 70, 0.6);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+    border-radius: 6px;
+    color: #b0b0c0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.missions-tabs .tab-btn:hover {
+    background: rgba(60, 60, 100, 0.8);
+    border-color: rgba(138, 43, 226, 0.5);
+}
+
+.missions-tabs .tab-btn.active {
+    background: rgba(138, 43, 226, 0.3);
+    border-color: rgba(138, 43, 226, 0.6);
+    color: #fff;
+}
+
+.missions-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mission-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 1rem;
+    background: rgba(30, 30, 50, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    transition: all 0.2s;
+}
+
+.mission-item:hover {
+    border-color: rgba(138, 43, 226, 0.5);
+}
+
+.mission-item.completed {
+    border-color: rgba(0, 255, 0, 0.5);
+}
+
+.mission-item.claimed {
+    opacity: 0.5;
+}
+
+.mission-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.mission-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #da70d6;
+}
+
+.mission-progress-text {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.mission-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.mission-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(100, 100, 100, 0.3);
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
+
+.mission-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #da70d6, #9400d3);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.mission-reward {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.mission-reward-text {
+    color: var(--color-text-secondary);
+}
+
+.claim-btn {
+    padding: 0.35rem 1rem;
+    background: rgba(138, 43, 226, 0.3);
+    border: 1px solid rgba(138, 43, 226, 0.5);
+    border-radius: 6px;
+    color: #da70d6;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.claim-btn:hover {
+    background: rgba(138, 43, 226, 0.5);
+    border-color: #da70d6;
+}
+
+.claim-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.claim-btn.claimed {
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #666;
+}
+
+/* 보석 상점 스타일 */
+.gem-shop-content {
+    max-width: 500px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.shop-header {
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem;
+    background: rgba(218, 112, 214, 0.1);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.gem-shop-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.gem-shop-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(30, 30, 50, 0.8);
+    border-radius: 8px;
+    border: 1px solid rgba(218, 112, 214, 0.2);
+    gap: 0.75rem;
+    transition: all 0.2s;
+}
+
+.gem-shop-item:hover {
+    border-color: rgba(218, 112, 214, 0.5);
+}
+
+.shop-item-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    text-align: center;
+}
+
+.shop-item-info {
+    flex: 1;
+}
+
+.shop-item-name {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #da70d6;
+    margin-bottom: 0.15rem;
+}
+
+.shop-item-desc {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+}
+
+.shop-item-status.active {
+    color: #00ff00;
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
+}
+
+.gem-buy-btn {
+    padding: 0.35rem 1rem;
+    background: rgba(218, 112, 214, 0.2);
+    border: 1px solid rgba(218, 112, 214, 0.4);
+    border-radius: 6px;
+    color: #da70d6;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.gem-buy-btn:hover {
+    background: rgba(218, 112, 214, 0.4);
+    border-color: #da70d6;
+}
+
+.gem-buy-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #666;
+}
+
+.gem-buy-btn:disabled:hover {
+    background: rgba(100, 100, 100, 0.1);
+    border-color: rgba(100, 100, 100, 0.3);
+    color: #666;
+}
+
+.stat-points-display {
+    color: var(--color-accent);
+}
+
+/* 오프라인 보상 모달 스타일 */
+.offline-equipment {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.offline-equipment h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--color-text-secondary);
+}
+
+.offline-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.offline-item.common { background: rgba(156, 163, 175, 0.15); border: 1px solid rgba(156, 163, 175, 0.3); }
+.offline-item.rare { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); }
+.offline-item.epic { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
+.offline-item.legendary { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
+.offline-item.mythic { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+.offline-item .item-icon { font-size: 16px; }
+.offline-item .item-name { flex: 1; font-size: 12px; }
+.offline-item .item-rarity { font-size: 11px; opacity: 0.7; }
+
+.offline-item-more {
+    text-align: center;
+    padding: 8px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+}
+
+/* Statistics Modal */
+.statistics-modal-content {
+    max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.stats-section {
+    margin-bottom: 20px;
+}
+
+.stats-section h3 {
+    font-size: 16px;
+    color: var(--color-accent);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
+
+.stat-card {
+    background: var(--color-bg-tertiary);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid rgba(74, 158, 255, 0.1);
+}
+
+.stat-card-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+}
+
+.stat-card-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--color-accent);
+}
+}

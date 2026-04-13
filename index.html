@@ -217,16 +217,20 @@
         </div>
     </div>
 
-    <!-- 일일 미션 모달 -->
+    <!-- 일일/주간 미션 모달 -->
     <div id="daily-missions-modal" class="modal" style="display: none;">
         <div class="modal-content daily-missions-content">
             <div class="modal-header">
-                <h2>일일 미션</h2>
+                <h2>미션</h2>
                 <button class="modal-close" id="btn-close-daily-missions">&times;</button>
             </div>
             <div class="missions-header">
                 <span class="gems-display">💎 <span id="missions-gems">0</span></span>
                 <span class="reset-timer" id="missions-reset-timer">다음 갱신까지: --:--:--</span>
+            </div>
+            <div class="missions-tabs">
+                <button class="tab-btn active" data-mission-tab="daily">일일 미션</button>
+                <button class="tab-btn" data-mission-tab="weekly">주간 미션</button>
             </div>
             <div class="missions-grid" id="missions-grid"></div>
         </div>
@@ -245,10 +249,6 @@
             <div class="gem-shop-grid" id="gem-shop-grid"></div>
         </div>
     </div>
-                        <span id="stat-int">5</span>
-                        <button class="stat-plus" data-stat="int">+</button>
-                    </div>
-                    <div class="stat-row">
 
     <!-- 오프라인 보상 모달 -->
     <div id="offline-reward-modal" class="modal" style="display: none;">

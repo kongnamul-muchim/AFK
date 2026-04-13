@@ -23,7 +23,7 @@ assets/images/
 
 ---
 
-## 1️⃣ 플레이어 스프라이트 시트
+## 1. 플레이어 스프라이트 시트
 
 **파일명:** `player_spritesheet.png`  
 **크기:** 128x64 픽셀 (32x32 × 8 프레임)  
@@ -53,7 +53,7 @@ Game asset for mobile idle RPG
 
 ---
 
-## 2️⃣ 몬스터 스프라이트 시트 (슬라임)
+## 2. 몬스터 스프라이트 시트 (슬라임)
 
 **파일명:** `slime_spritesheet.png`  
 **크기:** 128x64 픽셀 (32x32 × 8 프레임)  
@@ -83,7 +83,7 @@ Game asset for mobile idle RPG
 
 ---
 
-## 3️⃣ 일반 층 배경 (복도)
+## 3. 일반 층 배경 (복도)
 
 **파일명:** `background_normal.png`  
 **크기:** 400x300 픽셀 (또는 200x150 으로 작게 만들어 반복 사용)  
@@ -113,7 +113,7 @@ No characters, no foreground objects, just empty corridor for game background.
 
 ---
 
-## 4️⃣ 보스 층 배경 (복도, 고급지게)
+## 4. 보스 층 배경 (복도, 고급지게)
 
 **파일명:** `background_boss.png`  
 **크기:** 400x300 픽셀  
@@ -143,7 +143,7 @@ No characters, no foreground objects, just empty boss corridor.
 
 ---
 
-## 5️⃣ 레벨업 이펙트 (선택)
+## 5. 레벨업 이펙트 (선택)
 
 **파일명:** `levelup_effect.png`  
 **크기:** 64x64 픽셀 (또는 256x64, 4 프레임)  

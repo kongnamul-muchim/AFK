@@ -10,11 +10,16 @@ public class InventoryData
     public List<ItemData> items = new List<ItemData>();
     public List<EquipmentData> equipment = new List<EquipmentData>();
     public List<string> discoveredItems = new List<string>();
+    public int gold = 0;
+    public int gems = 0;
 
     public void Reset()
     {
         items.Clear();
         equipment.Clear();
+        discoveredItems.Clear();
+        gold = 0;
+        gems = 0;
     }
 }
 
@@ -27,7 +32,12 @@ public struct ItemData
     public string id;
     public string name;
     public int grade;
-    public int quantity;
+    public int count;      // 보유 수량 (0 이면 잠금)
+    public int rarity;     // 0:common, 1:rare, 2:epic, 3:legendary, 4:mythic
+    public string type;    // weapon, armor, boots, accessory
+    public int attackBonus;
+    public int defenseBonus;
+    public int healthBonus;
 }
 
 /// <summary>

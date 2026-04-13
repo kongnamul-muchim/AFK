@@ -1,7 +1,8 @@
 /// <summary>
-/// GameLogger를 ILogger 인터페이스로 적응시키는 어댑터
+/// GameLogger를 IGameLogger 인터페이스로 적응시키는 어댑터
+/// UnityEngine.ILogger와 충돌 방지를 위해 IGameLogger 사용
 /// </summary>
-public class GameLoggerAdapter : ILogger
+public class GameLoggerAdapter : IGameLogger
 {
     public void Info(string message)
     {

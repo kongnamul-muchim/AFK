@@ -32,7 +32,7 @@ public class OfflineRewardSystem : MonoBehaviour
     
     private IGameState _gameState;
     private IEventBus _eventBus;
-    private ILogger _logger;
+    private IGameLogger _logger;
     
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
@@ -44,7 +44,7 @@ public class OfflineRewardSystem : MonoBehaviour
         if (_eventBus == null)
             _eventBus = ServiceLocator.Instance.Get<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<ILogger>();
+            _logger = ServiceLocator.Instance.Get<IGameLogger>();
     }
 
     /// <summary>마지막 저장 시간</summary>
@@ -181,7 +181,7 @@ public class OfflineRewardSystem : MonoBehaviour
                 id = $"offline_item_{i}",
                 name = $"오프라인 아이템 ({GetGradeName(grade)})",
                 grade = grade,
-                quantity = 1
+                count = 1
             });
         }
         

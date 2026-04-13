@@ -22,16 +22,24 @@ class UpgradeUI {
         };
         
         // 스탯 정의 (리스트 순서)
+        // calcUpgradeValue: GameState의 calcUpgradeValue와 동일한 누적 계산 함수
+        const calcUpgradeValue = (lvl) => {
+            if (lvl < 10) return lvl * 1.0;
+            if (lvl < 20) return 10 * 1.0 + (lvl - 10) * 1.5;
+            if (lvl < 30) return 10 * 1.0 + 10 * 1.5 + (lvl - 20) * 2.0;
+            if (lvl < 40) return 10 * 1.0 + 10 * 1.5 + 10 * 2.0 + (lvl - 30) * 2.5;
+            return 10 * 1.0 + 10 * 1.5 + 10 * 2.0 + 10 * 2.5 + (lvl - 40) * 3.0;
+        };
+
         this.statDefinitions = {
             attack: {
                 name: '공격력',
                 maxLevel: null,
                 goldCostBase: 100,
                 statCost: 1,
-                baseValue: 2,  // 기본 1레벨당 증가량
+                baseValue: 2,  // calcUpgradeValue 결과에 곱해지는 계수
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * 2 * mult);
+                    const value = calcUpgradeValue(level) * 2;
                     return `+${value}`;
                 },
                 tabs: ['gold', 'stat']
@@ -43,8 +51,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
+                    const value = calcUpgradeValue(level) * 1;
                     return `+${value}`;
                 },
                 tabs: ['gold', 'stat']
@@ -56,8 +63,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 10,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * 10 * mult);
+                    const value = calcUpgradeValue(level) * 10;
                     return `+${value}`;
                 },
                 tabs: ['gold', 'stat']
@@ -69,8 +75,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
+                    const value = calcUpgradeValue(level) * 1;
                     return `+${value}/sec`;
                 },
                 tabs: ['gold', 'stat']
@@ -82,9 +87,8 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
-                    return `+${value}% (${(100 + value) / 100}x)`;
+                    const value = calcUpgradeValue(level) * 1;
+                    return `+${value}% (×${(100 + value) / 100})`;
                 },
                 tabs: ['gold', 'stat']
             },
@@ -95,8 +99,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 0.2,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = ((level + 1) * 0.2 * mult);
+                    const value = calcUpgradeValue(level) * 0.2;
                     return `+${value.toFixed(1)}%`;
                 },
                 tabs: ['gold', 'stat']
@@ -108,8 +111,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
+                    const value = calcUpgradeValue(level) * 1;
                     return `+${value}%`;
                 },
                 tabs: ['gold', 'stat']
@@ -121,8 +123,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 0.2,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = ((level + 1) * 0.2 * mult);
+                    const value = calcUpgradeValue(level) * 0.2;
                     return `+${value.toFixed(1)}%`;
                 },
                 tabs: ['gold'],
@@ -136,9 +137,8 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
-                    return `+${value}x`;
+                    const value = calcUpgradeValue(level) * 1;
+                    return `+${value}%`;
                 },
                 tabs: ['gold'],
                 unlockCondition: () => this.gameState.player.goldUpgrades.critChance >= 500,
@@ -151,8 +151,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
+                    const value = calcUpgradeValue(level) * 1;
                     return `+${value}%`;
                 },
                 tabs: ['gold']
@@ -164,8 +163,7 @@ class UpgradeUI {
                 statCost: 1,
                 baseValue: 1,
                 getValue: (level) => {
-                    const mult = this.getEfficiencyMultiplier(level);
-                    const value = Math.floor((level + 1) * mult);
+                    const value = calcUpgradeValue(level) * 1;
                     return `+${value}%`;
                 },
                 tabs: ['gold']
@@ -360,7 +358,8 @@ class UpgradeUI {
         const gemUpgrades = this.gameState.gemUpgrades;
         
         Object.entries(this.gemUpgradeDefinitions).forEach(([key, def]) => {
-            const item = this.createGemUpgradeItem(key, def, gemUpgrades[key] || 0);
+            const upgradeData = gemUpgrades[key] || { unlocked: false, level: 0 };
+            const item = this.createGemUpgradeItem(key, def, upgradeData);
             grid.appendChild(item);
         });
     }
@@ -368,75 +367,144 @@ class UpgradeUI {
     /**
      * 보석 업그레이드 아이템 생성
      */
-    createGemUpgradeItem(key, def, currentLevel) {
+    createGemUpgradeItem(key, def, upgradeData) {
         const container = document.createElement('div');
         container.className = 'upgrade-item';
         
+        const { unlocked, level } = upgradeData;
         const maxLevel = def.maxLevel;
-        const isMaxLevel = maxLevel !== null && currentLevel >= maxLevel;
-        const cost = Math.floor(def.gemCostBase * Math.pow(1.15, currentLevel));
-        const gems = this.gameState.inventory.gems || 0;
-        const canAfford = gems >= cost && !isMaxLevel;
+        const isMaxLevel = maxLevel !== null && level >= maxLevel;
         
-        const levelDisplay = maxLevel !== null 
-            ? `Lv.${currentLevel}/${maxLevel}` 
-            : `Lv.${currentLevel}`;
-        
-        // 현재 값과 다음 레벨 값 계산
-        const currentValue = def.getValue(currentLevel);
-        const nextLevel = isMaxLevel ? currentLevel : currentLevel + 1;
-        const nextValue = isMaxLevel ? '' : def.getValue(nextLevel);
-        
-        container.innerHTML = `
-            <div class="upgrade-info">
-                <span class="upgrade-name">${def.name}</span>
-                <span class="upgrade-level ${isMaxLevel ? 'max' : ''}">${levelDisplay}</span>
-            </div>
-            <div class="upgrade-stats">
-                <span class="upgrade-current">${currentValue}</span>
-                <span class="upgrade-next">${isMaxLevel ? '' : '→ ' + nextValue}</span>
-            </div>
-            <button class="upgrade-button ${!canAfford && !isMaxLevel ? 'disabled' : ''} ${isMaxLevel ? 'max-level' : ''}"
-                    ${!canAfford && !isMaxLevel ? 'disabled' : ''}>
-                ${isMaxLevel ? '최대 레벨' : `💎 ${this.formatNumber(cost)}`}
-            </button>
-        `;
-        
-        const buyBtn = container.querySelector('.upgrade-button');
-        if (!isMaxLevel && canAfford) {
-            buyBtn.addEventListener('click', () => {
-                this.purchaseGemUpgrade(key, def, currentLevel);
-            });
+        if (!unlocked) {
+            // 해금 전: 해금 버튼 표시
+            const unlockCost = def.gemCostBase; // 해금 비용은 기본 비용
+            const gems = this.gameState.inventory.gems || 0;
+            const canAfford = gems >= unlockCost;
+            
+            container.innerHTML = `
+                <div class="upgrade-info">
+                    <span class="upgrade-name">${def.name}</span>
+                    <span class="upgrade-level locked">🔒 해금 필요</span>
+                </div>
+                <div class="upgrade-stats">
+                    <span class="upgrade-current" style="color: #888;">${def.description}</span>
+                    <span class="upgrade-next"></span>
+                </div>
+                <button class="upgrade-button unlock-btn ${!canAfford ? 'disabled' : ''}"
+                        ${!canAfford ? 'disabled' : ''}>
+                    💎 ${this.formatNumber(unlockCost)} (해금)
+                </button>
+            `;
+            
+            const unlockBtn = container.querySelector('.unlock-btn');
+            if (canAfford) {
+                unlockBtn.addEventListener('click', () => {
+                    this.unlockGemUpgrade(key, def);
+                });
+            }
+        } else {
+            // 해금 후: 레벨 업그레이드 표시
+            const upgradeCost = Math.floor(def.gemCostBase * Math.pow(1.15, level));
+            const gems = this.gameState.inventory.gems || 0;
+            const canAfford = gems >= upgradeCost && !isMaxLevel;
+            
+            const levelDisplay = maxLevel !== null 
+                ? `Lv.${level}/${maxLevel}` 
+                : `Lv.${level}`;
+            
+            // 현재 값과 다음 레벨 값 계산
+            const currentValue = def.getValue(level);
+            const nextLevel = isMaxLevel ? level : level + 1;
+            const nextValue = isMaxLevel ? '' : def.getValue(nextLevel);
+            
+            container.innerHTML = `
+                <div class="upgrade-info">
+                    <span class="upgrade-name">${def.name}</span>
+                    <span class="upgrade-level ${isMaxLevel ? 'max' : ''}">${levelDisplay}</span>
+                </div>
+                <div class="upgrade-stats">
+                    <span class="upgrade-current">${currentValue}</span>
+                    <span class="upgrade-next">${isMaxLevel ? '' : '→ ' + nextValue}</span>
+                </div>
+                <button class="upgrade-button ${!canAfford && !isMaxLevel ? 'disabled' : ''} ${isMaxLevel ? 'max-level' : ''}"
+                        ${!canAfford && !isMaxLevel ? 'disabled' : ''}>
+                    ${isMaxLevel ? '최대 레벨' : `💎 ${this.formatNumber(upgradeCost)}`}
+                </button>
+            `;
+            
+            const upgradeBtn = container.querySelector('.upgrade-button');
+            if (!isMaxLevel && canAfford) {
+                upgradeBtn.addEventListener('click', () => {
+                    this.upgradeGemUpgrade(key, def, level);
+                });
+            }
         }
         
         return container;
     }
 
     /**
-     * 보석 업그레이드 구매
+     * 보석 업그레이드 해금 (첫 구매)
      */
-    purchaseGemUpgrade(key, def, currentLevel) {
-        const cost = Math.floor(def.gemCostBase * Math.pow(1.15, currentLevel));
+    unlockGemUpgrade(key, def) {
+        const unlockCost = def.gemCostBase;
         const gems = this.gameState.inventory.gems || 0;
         
-        if (gems < cost) return;
+        if (gems < unlockCost) return;
+        
+        // 이미 해금되었으면 무시
+        if (this.gameState.gemUpgrades[key].unlocked) return;
         
         // 보석 차감
-        this.gameState.inventory.gems -= cost;
+        this.gameState.inventory.gems -= unlockCost;
         
-        // 업그레이드 레벨 증가
-        this.gameState.gemUpgrades[key] = (this.gameState.gemUpgrades[key] || 0) + 1;
+        // 해금 처리 (레벨 1로 시작)
+        this.gameState.gemUpgrades[key] = { unlocked: true, level: 1 };
         
-        gameLogger.info(`Gem upgrade purchased: ${key} → Lv.${this.gameState.gemUpgrades[key]}`);
+        gameLogger.info(`Gem upgrade unlocked: ${key} → Lv.1`);
         
         // UI 업데이트
         this.updateDisplay();
         this.renderUpgradeGrid();
         
-        // 파생 스탯 재계산 (기본 스탯 증가 등의 효과 적용)
+        // 파생 스탯 재계산 (효과 즉시 적용)
         this.gameState.recalculateDerivedStats();
         
-        gameEventBus.emit(GAME_EVENTS.GEM_UPGRADE_PURCHASED, { key, level: this.gameState.gemUpgrades[key] });
+        gameEventBus.emit(GAME_EVENTS.GEM_UPGRADE_PURCHASED, { key, level: 1, unlocked: true });
+    }
+
+    /**
+     * 보석 업그레이드 레벨업 (해금 후 추가 업그레이드)
+     */
+    upgradeGemUpgrade(key, def, currentLevel) {
+        const upgradeCost = Math.floor(def.gemCostBase * Math.pow(1.15, currentLevel));
+        const gems = this.gameState.inventory.gems || 0;
+        
+        if (gems < upgradeCost) return;
+        
+        // 해금되지 않았으면 무시
+        if (!this.gameState.gemUpgrades[key].unlocked) return;
+        
+        // 최대 레벨 확인
+        const maxLevel = def.maxLevel;
+        if (maxLevel !== null && currentLevel >= maxLevel) return;
+        
+        // 보석 차감
+        this.gameState.inventory.gems -= upgradeCost;
+        
+        // 레벨 증가
+        this.gameState.gemUpgrades[key].level = currentLevel + 1;
+        
+        gameLogger.info(`Gem upgrade upgraded: ${key} → Lv.${currentLevel + 1}`);
+        
+        // UI 업데이트
+        this.updateDisplay();
+        this.renderUpgradeGrid();
+        
+        // 파생 스탯 재계산
+        this.gameState.recalculateDerivedStats();
+        
+        gameEventBus.emit(GAME_EVENTS.GEM_UPGRADE_PURCHASED, { key, level: currentLevel + 1, unlocked: false });
     }
 
     /**
@@ -829,6 +897,20 @@ class UpgradeUI {
                 gemsEl.style.display = 'none';
             }
         }
+    }
+
+    /**
+     * 숫자 포맷팅
+     * @param {number} num 
+     * @returns {string}
+     */
+    formatNumber(num) {
+        if (num === null || num === undefined || isNaN(num)) {
+            return '0';
+        }
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toString();
     }
 }
 

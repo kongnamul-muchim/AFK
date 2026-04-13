@@ -1,0 +1,391 @@
+fileFormatVersion: 2
+guid: ae4c2fc5ae9e541469bceadfb5eb3987
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3972691880002762918
+    second: slime_spritesheet_0
+  - first:
+      213: 185273964626852292
+    second: slime_spritesheet_1
+  - first:
+      213: -2494720475795009309
+    second: slime_spritesheet_2
+  - first:
+      213: 4004852365708811859
+    second: slime_spritesheet_3
+  - first:
+      213: -2540513707462572328
+    second: slime_spritesheet_4
+  - first:
+      213: -4274099877474758581
+    second: slime_spritesheet_5
+  - first:
+      213: 1910898978208789147
+    second: slime_spritesheet_6
+  - first:
+      213: 4143079626918877683
+    second: slime_spritesheet_7
+  - first:
+      213: -4113847630476860729
+    second: slime_spritesheet_8
+  - first:
+      213: 30343468084892780
+    second: slime_spritesheet_9
+  - first:
+      213: -88975248114899469
+    second: slime_spritesheet_10
+  - first:
+      213: 6594812665686601892
+    second: slime_spritesheet_11
+  - first:
+      213: 2482175033045573690
+    second: slime_spritesheet_12
+  - first:
+      213: 8362078115520233020
+    second: slime_spritesheet_13
+  - first:
+      213: 3882258480079301089
+    second: slime_spritesheet_14
+  - first:
+      213: 8070294389882960005
+    second: slime_spritesheet_15
+  - first:
+      213: -2068211280229322706
+    second: slime_spritesheet_16
+  - first:
+      213: 8334024866636099368
+    second: slime_spritesheet_17
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 1
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: slime_spritesheet_0
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 463
+        width: 249
+        height: 192
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a574b5a88c92ed8c0800000000000000
+      internalID: -3972691880002762918
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_2
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 471
+        width: 227
+        height: 141
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e05852e1f8f06dd0800000000000000
+      internalID: -2494720475795009309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_4
+      rect:
+        serializedVersion: 2
+        x: 741
+        y: 463
+        width: 267
+        height: 192
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d6cea74e384ebcd0800000000000000
+      internalID: -2540513707462572328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_5
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 474
+        width: 306
+        height: 181
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b40939c7ec85fa4c0800000000000000
+      internalID: -4274099877474758581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_7
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 47
+        width: 280
+        height: 229
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f958ae38fc2f7930800000000000000
+      internalID: 4143079626918877683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_10
+      rect:
+        serializedVersion: 2
+        x: 414
+        y: 51
+        width: 221
+        height: 168
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f52f46bb75e3cef0800000000000000
+      internalID: -88975248114899469
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_11
+      rect:
+        serializedVersion: 2
+        x: 715
+        y: 24
+        width: 302
+        height: 175
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a03f7abd2b758b50800000000000000
+      internalID: 6594812665686601892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: slime_spritesheet_15
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 16
+        width: 260
+        height: 89
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5883dc54df17fff60800000000000000
+      internalID: 8070294389882960005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: b4ba061ef4a2642439733bd756476d4d
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      slime_spritesheet_0: -3972691880002762918
+      slime_spritesheet_1: 185273964626852292
+      slime_spritesheet_10: -88975248114899469
+      slime_spritesheet_11: 6594812665686601892
+      slime_spritesheet_12: 2482175033045573690
+      slime_spritesheet_13: 8362078115520233020
+      slime_spritesheet_14: 3882258480079301089
+      slime_spritesheet_15: 8070294389882960005
+      slime_spritesheet_16: -2068211280229322706
+      slime_spritesheet_17: 8334024866636099368
+      slime_spritesheet_2: -2494720475795009309
+      slime_spritesheet_3: 4004852365708811859
+      slime_spritesheet_4: -2540513707462572328
+      slime_spritesheet_5: -4274099877474758581
+      slime_spritesheet_6: 1910898978208789147
+      slime_spritesheet_7: 4143079626918877683
+      slime_spritesheet_8: -4113847630476860729
+      slime_spritesheet_9: 30343468084892780
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

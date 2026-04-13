@@ -49,9 +49,6 @@ class UIManager {
         this.vibration = document.getElementById('vibration');
         this.notifications = document.getElementById('notifications');
         this.fileImport = document.getElementById('file-import');
-        
-        // Stats elements
-        this.statPlusButtons = document.querySelectorAll('.stat-plus');
     }
 
     /**
@@ -61,7 +58,6 @@ class UIManager {
         this.setupMenuButtons();
         this.setupModalCloseButtons();
         this.setupSettingsHandlers();
-        this.setupStatAllocation();
         this.setupDataManagement();
         this.setupItemDropEffects();
         this.updateHUD();
@@ -216,28 +212,6 @@ class UIManager {
     }
 
     /**
-     * 스탯 분배 설정
-     */
-    setupStatAllocation() {
-        this.statPlusButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const statType = btn.dataset.stat;
-                const success = this.gameState.increaseStat(statType);
-                
-                if (success) {
-                    // 성공 시 피드백
-                    this.showToast(`${statType.toUpperCase()} +1!`);
-                    this.updateStatsPanel();
-                    this.updateHUD();
-                } else {
-                    // 스탯포인트 부족
-                    this.showToast('스타츠 포인트가 부족합니다!');
-                }
-            });
-        });
-    }
-
-    /**
      * 상태창 업데이트 (게임 루프에서 호출)
      */
     updateGameView() {
@@ -315,7 +289,7 @@ class UIManager {
         // 데이터 초기화 - 모든 게임 상태 완전 삭제
         document.getElementById('btn-reset-data')?.addEventListener('click', () => {
             // 1단계 경고
-            if (!confirm('⚠️ 경고\n\n정말로 모든 데이터를 초기화하시겠습니까?\n\n초기화되면 다음과 같은 데이터가 모두 삭제됩니다:\n• 레벨, 스탯, 골드\n• 아이템, 업그레이드\n• 진행도, 업적\n• 설정, 세이브 데이터\n\n이 작업은 되돌릴 수 없습니다.')) {
+            if (!confirm('⚠️ 경고\n\n정말로 모든 데이터를 초기화하시겠습니까?\n\n초기화되면 다음과 같은 데이터가 모두 삭제됩니다:\n• 레벨, 스탯, 골드\n• 아이템, 업그레이드\n• 진행도\n• 설정, 세이브 데이터\n\n이 작업은 되돌릴 수 없습니다.')) {
                 return;
             }
             
@@ -427,16 +401,9 @@ class UIManager {
         }
         
         if (this.hudStatPoints) {
-            this.hudStatPoints.textContent = `SP: ${player.statPoints}`;
+            this.hudStatPoints.textContent = player.statPoints;
             this.hudStatPoints.style.color = player.statPoints > 0 ? '#4a9eff' : '#b0b0c0';
         }
-        
-        // 스탯 분배 버튼 활성화/비활성화
-        this.statPlusButtons.forEach(btn => {
-            if (btn) {
-                btn.disabled = player.statPoints <= 0;
-            }
-        });
     }
 
     /**
@@ -457,22 +424,6 @@ class UIManager {
         const pointsEl = document.getElementById('stats-points');
         if (pointsEl) {
             pointsEl.textContent = player.statPoints;
-        }
-        const strEl = document.getElementById('stat-str');
-        if (strEl) {
-            strEl.textContent = player.stats.str;
-        }
-        const agiEl = document.getElementById('stat-agi');
-        if (agiEl) {
-            agiEl.textContent = player.stats.agi;
-        }
-        const intEl = document.getElementById('stat-int');
-        if (intEl) {
-            intEl.textContent = player.stats.int;
-        }
-        const vitEl = document.getElementById('stat-vit');
-        if (vitEl) {
-            vitEl.textContent = player.stats.vit;
         }
     }
 

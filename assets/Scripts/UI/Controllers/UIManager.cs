@@ -189,6 +189,10 @@ public class UIManager : MonoBehaviour
         // ItemDropEffectManager 초기화
         ItemDropEffectManager.Instance?.Initialize(_root, _eventBus);
         
+        // UIGameRenderer 초기화
+        var gameView = _root.Q<VisualElement>("GameView");
+        UIGameRenderer.Instance?.Initialize(gameView);
+        
         Debug.Log("InitializeSubUIComponents 완료");
     }
     

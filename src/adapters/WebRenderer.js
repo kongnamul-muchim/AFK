@@ -48,6 +48,12 @@ class GameRenderer {
         this.playerTargetX = 0;
         this.monsterX = 0;
         this.monsterTargetX = 0;
+        this.bgOffsetX = 0;
+        
+        this.lastPhase = null;
+        
+        // 데미지 텍스트 이펙트
+        this.damageTexts = [];
         
         // 이미지 로더 참조
         this.gameImageLoader = gameImageLoader;
@@ -72,10 +78,46 @@ class GameRenderer {
         this.monsterX = this.width * 0.7;
         this.monsterTargetX = this.width * 0.65;
         
+        // 배경 최대 스크롤량 (플레이어 이동 거리의 50%)
+        this.maxBgScroll = (this.playerTargetX - this.width * 0.2) * 0.5;
+        
+        // 배경 너비 (무한 스크롤용) - resize()에서 실제 값으로 업데이트됨
+        this.bgWidth = this.width;
+        
         // 리사이즈 이벤트
         window.addEventListener('resize', () => this.resize());
         
+        // 데미지 텍스트 이벤트 리스너
+        gameEventBus.on(GAME_EVENTS.COMBAT_DAMAGE, (data) => {
+            if (data.target === 'monster') {
+                this.showDamageText(data.damage, data.isCrit);
+            }
+        });
+        
         gameLogger.debug('GameRenderer initialized');
+    }
+
+    /**
+     * 데미지 텍스트 표시 (몬스터 위에 랜덤 위치)
+     */
+    showDamageText(damage, isCrit) {
+        // 몬스터의 화면상 위치 계산
+        const monsterScreenX = this.monsterX;
+        const monsterScreenY = this.height - 80; // 몬스터 발 위치
+        
+        // 랜덤 오프셋 (-50 ~ +50)
+        const randomOffset = (Math.random() - 0.5) * 100;
+        
+        // 데미지 텍스트 생성
+        this.damageTexts.push({
+            x: monsterScreenX + randomOffset,
+            y: monsterScreenY - 40, // 몬스터 머리 위
+            text: damage.toString(),
+            isCrit: isCrit,
+            createdAt: performance.now(),
+            duration: 1000, // 1초 동안 표시
+            startY: monsterScreenY - 40
+        });
     }
 
     /**
@@ -93,6 +135,8 @@ class GameRenderer {
         this.canvas.style.width = `${rect.width}px`;
         this.canvas.style.height = `${rect.height}px`;
         
+        // Transform 초기화 후 DPR 스케일 적용
+        this.ctx.resetTransform();
         this.ctx.scale(dpr, dpr);
         this.width = rect.width;
         this.height = rect.height;
@@ -100,6 +144,12 @@ class GameRenderer {
         // 위치 재계산
         this.playerTargetX = this.width * 0.35;
         this.monsterTargetX = this.width * 0.65;
+        
+        // 배경 최대 스크롤량 재계산
+        this.maxBgScroll = (this.playerTargetX - this.width * 0.2) * 0.5;
+        
+        // 배경 너비 업데이트 (캔버스 기준, 실제 이미지는 renderBackground에서 재계산)
+        this.bgWidth = this.width;
     }
 
     /**
@@ -107,7 +157,7 @@ class GameRenderer {
      * @param {number} dt - 델타 타임 (ms)
      */
     render(dt) {
-        if (!this.ctx) return;
+        if (!this.ctx || this.width === 0) return;
         
         // 애니메이션 상태 업데이트 (GameState에서 읽기)
         this.updateAnimStates();
@@ -133,6 +183,53 @@ class GameRenderer {
         
         // 몬스터 렌더링
         this.renderMonster();
+        
+        // 데미지 텍스트 렌더링
+        this.renderDamageTexts(dt);
+    }
+
+    /**
+     * 데미지 텍스트 렌더링
+     */
+    renderDamageTexts(dt) {
+        const now = performance.now();
+        
+        // 만료된 텍스트 제거
+        this.damageTexts = this.damageTexts.filter(text => {
+            return now - text.createdAt < text.duration;
+        });
+        
+        // 텍스트 렌더링
+        this.damageTexts.forEach(text => {
+            const elapsed = now - text.createdAt;
+            const progress = elapsed / text.duration;
+            
+            // 위로 이동 (부드러운 감속)
+            const riseDistance = 60 * (1 - Math.pow(1 - progress, 2));
+            const currentY = text.startY - riseDistance;
+            
+            // 투명도 (점점 희미해짐)
+            const alpha = 1 - progress;
+            
+            // 폰트 설정
+            const fontSize = text.isCrit ? 28 : 20;
+            const fontWeight = text.isCrit ? 'bold' : 'normal';
+            this.ctx.font = `${fontWeight} ${fontSize}px Arial`;
+            this.ctx.textAlign = 'center';
+            
+            // 색상 (크리티컬이면 빨강, 아니면 흰색)
+            const color = text.isCrit ? '#ff4444' : '#ffffff';
+            
+            // 그림자
+            this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            this.ctx.fillText(text.text, text.x + 2, currentY + 2);
+            
+            // 본체
+            this.ctx.globalAlpha = alpha;
+            this.ctx.fillStyle = color;
+            this.ctx.fillText(text.text, text.x, currentY);
+            this.ctx.globalAlpha = 1.0;
+        });
     }
 
     /**
@@ -198,7 +295,10 @@ class GameRenderer {
         }
         
         // 기타 상태 (idle 등)
-        const index = (Math.floor(this.playerFrameIndex / 8) % frameSet.length);
+        // MOVING/VICTORY 페이즈에서는 2배 빠르게 (4프레임마다 변경)
+        const phase = this.gameState.combatPhase.phase;
+        const frameSkip = (phase === 'MOVING' || phase === 'VICTORY') ? 4 : 8;
+        const index = (Math.floor(this.playerFrameIndex / frameSkip) % frameSet.length);
         return `player_${frameSet[index]}`;
     }
 
@@ -233,26 +333,19 @@ class GameRenderer {
         const phase = this.gameState.combatPhase.phase;
         const moveProgress = this.gameState.combatPhase.moveProgress;
         const monsterAppearProgress = 0.5; // 몬스터 등장 시작 지점 (이동 50%)
-        const killsInStage = this.gameState.stage.killsInStage;
-        const maxBgScroll = (this.playerTargetX - this.width * 0.2) * 0.5; // 최대 배경 스크롤량
+        
+        // 배경 스크롤 - MOVING과 VICTORY에서만 왼쪽으로 이동 (COMBAT에서는 정지)
+        // 고정 속도: 5 픽셀/초 (이동속도와 무관)
+        if (phase !== 'COMBAT') {
+            const bgScrollSpeed = 50 / 60; // 픽셀/프레임 (60fps 기준)
+            this.bgOffsetX -= bgScrollSpeed * (dt / 16);
+        }
+        
+        this.lastPhase = phase;
         
         if (phase === 'MOVING') {
-            // 플레이어 이동 - 왼쪽에서 오른쪽으로
-            const easeProgress = this.easeInOutCubic(moveProgress);
-            this.playerX = this.width * 0.2 + (this.playerTargetX - this.width * 0.2) * easeProgress;
-            
-            // 배경 스크롤 효과
-            // killsInStage == 0: 첫 이동 (배경 왼쪽으로)
-            // killsInStage > 0: 두 번째 이후 이동 (배경 오른쪽으로, 원래 위치까지)
-            const bgScrollAmount = maxBgScroll * easeProgress;
-            if (killsInStage === 0) {
-                // 첫 이동: 배경이 왼쪽으로 (음수, -maxBgScroll 까지)
-                this.bgOffsetX = -bgScrollAmount;
-            } else {
-                // 두 번째 이후: 배경이 오른쪽으로 (양수, 0까지 복귀)
-                // VICTORY에서 -maxBgScroll까지 갔다가 0으로 돌아옴
-                this.bgOffsetX = -maxBgScroll + bgScrollAmount;
-            }
+            // 플레이어는 제자리, 애니메이션만 재생
+            this.playerX = this.playerTargetX;
             
             // 몬스터 이동 - 오른쪽에서 등장 (50% 지점부터)
             if (moveProgress >= monsterAppearProgress) {
@@ -264,19 +357,14 @@ class GameRenderer {
                 this.monsterX = this.width + 50;
             }
         } else if (phase === 'VICTORY') {
-            // 승리 후 이동 복귀 - 뒤로 이동
-            const victoryProgress = Math.min(1, this.gameState.combatPhase.victoryTimer / 1000);
-            const easeProgress = this.easeInOutCubic(victoryProgress);
-            this.playerX = this.playerTargetX + (this.width * 0.2 - this.playerTargetX) * easeProgress;
-            // 배경도 같이 복귀 (왼쪽으로, -maxBgScroll 까지)
-            this.bgOffsetX = -maxBgScroll * easeProgress;
+            // 승리 후 플레이어는 제자리, 걷는 모션만 유지
+            this.playerX = this.playerTargetX;
             // 몬스터는 제자리 (죽은 상태)
             this.monsterX = this.monsterTargetX;
         } else {
-            // 전투 중 - 제자리
+            // 전투 중 - 플레이어와 몬스터는 제자리
             this.playerX = this.playerTargetX;
             this.monsterX = this.monsterTargetX;
-            this.bgOffsetX = 0;
         }
     }
 
@@ -289,6 +377,9 @@ class GameRenderer {
 
     /**
      * 배경 렌더링
+     * 2개의 배경 이미지를 교차 배치하여 무한 스크롤 효과
+     * - 이동 시: 배경2가 왼쪽에서 오른쪽으로 스크롤되며 화면을 덮음
+     * - 덮는 동안 배경1을 배경2 오른쪽으로 재배치하여 반복
      */
     renderBackground() {
         const stage = this.gameState.stage.current;
@@ -299,12 +390,25 @@ class GameRenderer {
         const bgImage = gameImageLoader.get(bgKey);
         
         if (bgImage) {
-            // 이미지 렌더링 (캔버스에 맞게 스케일 + 스크롤 오프셋)
-            const scale = Math.max(this.width / bgImage.width, this.height / bgImage.height);
-            const baseX = (this.width - bgImage.width * scale) / 2;
-            const y = (this.height - bgImage.height * scale) / 2;
-            const x = baseX + this.bgOffsetX;
-            this.ctx.drawImage(bgImage, x, y, bgImage.width * scale, bgImage.height * scale);
+            // 이미지 렌더링 (캔버스 너비에 맞춤, 높이는 비율 유지)
+            const scale = this.width / bgImage.width;
+            const bgWidth = bgImage.width * scale;
+            const bgHeight = bgImage.height * scale;
+            const y = (this.height - bgHeight) / 2;
+            
+            // bgOffsetX는 0에서 -maxBgScroll까지 변화 (왼쪽으로 이동)
+            // 무한 스크롤: normalizedScroll은 0~bgWidth 범위에서 순환
+            const scrollOffset = this.bgOffsetX;
+            const normalizedScroll = ((-scrollOffset % bgWidth) + bgWidth) % bgWidth;
+            
+            // 배경1: 오른쪽에서 왼쪽으로 스크롤 (0 → -bgWidth)
+            const x1 = -normalizedScroll;
+            // 배경2: 배경1의 오른쪽에서 따라옴 (bgWidth → 0)
+            const x2 = bgWidth - normalizedScroll;
+            
+            // 두 배경 이미지 렌더링 (교차하며 무한 스크롤)
+            this.ctx.drawImage(bgImage, x1, y, bgWidth, bgHeight);
+            this.ctx.drawImage(bgImage, x2, y, bgWidth, bgHeight);
         } else {
             // 그라데이션 폴백
             const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);

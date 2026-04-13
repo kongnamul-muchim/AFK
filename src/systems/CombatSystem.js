@@ -194,37 +194,33 @@ class CombatSystem {
 
     /**
      * HP 재생 업데이트 (모든 페이즈에서 호출)
-     * 소수점 회복량을 누적했다가 1 이상이 되면 실제 회복 처리
+     * 정확히 1초마다 한 번씩 hpRegen 값만큼 회복
      */
     updateHpRegen(dt) {
-        // 플레이어 hpRegen만 사용 (스테이지 보너스 제거 - 플레이어가 직접 업그레이드)
         const hpRegen = this.gameState.player.derivedStats.hpRegen || 0;
         
         if (hpRegen > 0) {
             const maxHp = this.gameState.player.derivedStats.maxHp;
-            // 이번 프레임의 회복량 (소수점 포함)
-            const regenAmount = hpRegen * (dt / 1000); // dt는 ms이므로 초 변환
             
-            // 누적기에 이번 회복량 추가
-            let accumulator = this.gameState.player.derivedStats.hpRegenAccumulator || 0;
-            accumulator += regenAmount;
+            // 1초 타이머에 dt 누적 (dt는 ms)
+            let timer = this.gameState.player.derivedStats.hpRegenTimer || 0;
+            timer += dt;
             
-            // 누적된 값이 1 이상이 되면 실제 HP 회복
-            const healAmount = Math.floor(accumulator);
-            if (healAmount > 0 && this.gameState.player.currentHp < maxHp) {
-                this.gameState.player.currentHp = Math.min(maxHp, this.gameState.player.currentHp + healAmount);
-                // 누적기에서 사용한 만큼 차감
-                accumulator -= healAmount;
-                this.gameState.player.derivedStats.hpRegenAccumulator = accumulator;
-                
-                gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
-                    currentHp: this.gameState.player.currentHp,
-                    maxHp: maxHp
-                });
-            } else {
-                // 회복하지 않았더라도 누적기는 유지
-                this.gameState.player.derivedStats.hpRegenAccumulator = accumulator;
+            // 정확히 1초(1000ms)마다 회복
+            if (timer >= 1000) {
+                if (this.gameState.player.currentHp < maxHp) {
+                    this.gameState.player.currentHp = Math.min(maxHp, this.gameState.player.currentHp + hpRegen);
+                    
+                    gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
+                        currentHp: this.gameState.player.currentHp,
+                        maxHp: maxHp
+                    });
+                }
+                // 타이머 리셋 (남은 시간은 다음 주기로 이월)
+                timer -= 1000;
             }
+            
+            this.gameState.player.derivedStats.hpRegenTimer = timer;
         }
     }
 
@@ -475,11 +471,13 @@ class CombatSystem {
         // 버프 확인 (공격력 2배)
         const attackBuff = this.getBuffMultiplier('attackDouble');
         
-        // 보석 업그레이드: 자동 전투 강화 (자동 반복 시 2%/레벨, 최대 100%)
+        // 보석 업그레이드: 자동 전투 강화 (자동 반복 시 2%/레벨, 최대 100%) - 해금 필요
         let autoCombatBonus = 1;
         if (this.gameState.stage.autoRepeat) {
-            const autoCombatLevel = this.gameState.gemUpgrades.autoCombatDamage || 0;
-            autoCombatBonus = 1 + Math.min(1.0, autoCombatLevel * 0.02);
+            if (this.gameState.gemUpgrades.autoCombatDamage.unlocked) {
+                const autoCombatLevel = this.gameState.gemUpgrades.autoCombatDamage.level;
+                autoCombatBonus = 1 + Math.min(1.0, autoCombatLevel * 0.02);
+            }
         }
         
         // 크리티컬 판정
@@ -628,6 +626,12 @@ class CombatSystem {
         // 아이템 드롭
         this.rollItemDrop();
         
+        // 보석 드롭 (0.1% 확률, 온라인 플레이 시에만)
+        // 자동 반복 모드(오프라인)에서는 드랍되지 않음
+        if (!this.gameState.stage.autoRepeat) {
+            this.rollGemDrop();
+        }
+        
         // 이전 스테이지 저장 (스테이지 변경 감지용)
         const prevStage = this.gameState.stage.current;
         
@@ -659,24 +663,29 @@ class CombatSystem {
         if (goldBuff > 1 || expBuff > 1) {
             gameLogger.info(`Monster killed: exp=${expReward} (x${expBuff}), gold=${goldReward} (x${goldBuff})`);
         }
-        
-        // 보스 처치
-        if (monster.isBoss) {
-            gameEventBus.emit(GAME_EVENTS.STAGE_BOSS_DEFEATED);
-        }
-        
-        // 승리 페이즈로 전환
+
+        // 승리 페이즈로 전환 (몬스터 사망 상태 설정)
         this.gameState.startVictory();
-        
-        gameEventBus.emit(GAME_EVENTS.COMBAT_VICTORY, {
-            monsterId: monster.id,
-            exp: expReward,
-            gold: goldReward
-        });
-        
-        gameEventBus.emit(GAME_EVENTS.COMBAT_PHASE_CHANGED, { phase: 'VICTORY' });
-        
+        this.currentMonster = null;
+
         gameLogger.debug('Monster killed, entering victory phase');
+    }
+
+    /**
+     * 보석 드롭 확률 롤 (0.1% 확률로 1개)
+     */
+    rollGemDrop() {
+        const dropChance = 0.001; // 0.1%
+        
+        if (Math.random() < dropChance) {
+            this.gameState.inventory.gems += 1;
+            
+            gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
+                message: `🎉 몬스터가 보석을 드랍했습니다! 💎1 획득!`
+            });
+            
+            gameLogger.info('Gem drop! +1 gem');
+        }
     }
 
     /**

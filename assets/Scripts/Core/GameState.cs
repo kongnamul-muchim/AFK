@@ -147,125 +147,66 @@ public class GameState : MonoBehaviour, IGameState
     // ========== 유틸리티 메서드 ==========
 
     /// <summary>
-    /// 현재 플레이어의 총 공격력 계산 (기본 + 장비 + 버프)
+    /// 현재 플레이어의 총 공격력 계산 (StatCalculator로 위임)
     /// </summary>
     public float GetTotalAttack()
     {
-        float total = player.attack;
-        
-        // 장비 공격력 추가
-        foreach (var equip in inventory.equipment)
-        {
-            total += equip.attackBonus;
-        }
-        
-        // 보석 업그레이드 보너스
-        total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
-        
-        // 환생 보너스
-        total *= (1 + rebirth.rebirthCount * 0.1f);
-        
-        return total;
+        return StatCalculator.CalculateTotalAttack(player, inventory, gemUpgrades, rebirth);
     }
 
     /// <summary>
-    /// 현재 플레이어의 총 방어력 계산
+    /// 현재 플레이어의 총 방어력 계산 (StatCalculator로 위임)
     /// </summary>
     public float GetTotalDefense()
     {
-        float total = player.defense;
-        
-        foreach (var equip in inventory.equipment)
-        {
-            total += equip.defenseBonus;
-        }
-        
-        total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
-        total *= (1 + rebirth.rebirthCount * 0.1f);
-        
-        return total;
+        return StatCalculator.CalculateTotalDefense(player, inventory, gemUpgrades, rebirth);
     }
 
     /// <summary>
-    /// 현재 플레이어의 총 체력 계산
+    /// 현재 플레이어의 총 체력 계산 (StatCalculator로 위임)
     /// </summary>
     public float GetTotalHealth()
     {
-        float total = player.health;
-        
-        foreach (var equip in inventory.equipment)
-        {
-            total += equip.healthBonus;
-        }
-        
-        total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
-        total *= (1 + rebirth.rebirthCount * 0.1f);
-        
-        return total;
+        return StatCalculator.CalculateTotalHealth(player, inventory, gemUpgrades, rebirth);
     }
 
     /// <summary>
-    /// 레벨업에 필요한 경험치 계산
+    /// 레벨업에 필요한 경험치 계산 (StatCalculator로 위임)
     /// </summary>
     public long GetExpToNextLevel()
     {
-        return (long)(GameConfig.ExpToLevelUp * Mathf.Pow(GameConfig.ExpMultiplier, player.level - 1));
+        return StatCalculator.CalculateExpToNextLevel(player.level);
     }
 
     /// <summary>
-    /// 오프라인 보상 배율 계산 (보석 업그레이드 적용)
+    /// 오프라인 보상 배율 계산 (StatCalculator로 위임)
     /// </summary>
     public float GetOfflineRewardMultiplier()
     {
-        return GameConfig.OfflineRewardMultiplier * (1 + gemUpgrades.offlineRewardLevel * GameConfig.OfflineRewardBonusPerLevel);
+        return StatCalculator.CalculateOfflineRewardMultiplier(gemUpgrades);
     }
 
     /// <summary>
-    /// 자동 전투 데미지 배율 계산
+    /// 자동 전투 데미지 배율 계산 (StatCalculator로 위임)
     /// </summary>
     public float GetAutoBattleDamageMultiplier()
     {
-        float bonus = Mathf.Min(gemUpgrades.autoBattleLevel * GameConfig.AutoBattleBonusPerLevel, 1f);
-        return 1 + bonus;
+        return StatCalculator.CalculateAutoBattleDamageMultiplier(gemUpgrades);
     }
 
     /// <summary>
-    /// 치명타 피해 배율 계산
+    /// 치명타 피해 배율 계산 (StatCalculator로 위임)
     /// </summary>
     public float GetCritDamageMultiplier()
     {
-        return 1.5f + (gemUpgrades.critDamageLevel * GameConfig.CritDamageBonusPerLevel);
+        return StatCalculator.CalculateCritDamageMultiplier(gemUpgrades);
     }
 
     /// <summary>
-    /// 드롭 확률 테이블 가져오기 (보석 업그레이드 적용)
+    /// 드롭 확률 테이블 가져오기 (StatCalculator로 위임)
     /// </summary>
     public float[] GetDropRates()
     {
-        float[] baseRates = new float[GameConfig.DropRates.Length];
-        System.Array.Copy(GameConfig.DropRates, baseRates, GameConfig.DropRates.Length);
-        
-        if (gemUpgrades.dropRateLevel > 0)
-        {
-            // 고레어 아이템 확률 증가, 저레어 아이템 확률 감소
-            float bonusPerLevel = 0.01f; // 레벨당 1% 재분배
-            
-            // 일반 아이템 확률 감소
-            baseRates[0] = Mathf.Max(0.3f, baseRates[0] - (gemUpgrades.dropRateLevel * bonusPerLevel * 4));
-            
-            // 고급 아이템 확률 증가
-            baseRates[1] = baseRates[1] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-            
-            // 희귀 아이템 확률 증가
-            baseRates[2] = baseRates[2] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-            
-            // 영웅 아이템 확률 증가
-            baseRates[3] = baseRates[3] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-            
-            // 전설 아이템 확률 증가
-            baseRates[4] = baseRates[4] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-        }
-        
-        return baseRates;
+        return StatCalculator.CalculateDropRates(gemUpgrades);
     }
 }

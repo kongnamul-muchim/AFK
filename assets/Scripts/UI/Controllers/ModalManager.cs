@@ -165,4 +165,66 @@ public class ModalManager : MonoBehaviour
         if (tutorialMessage != null)
             tutorialMessage.text = message;
     }
+    
+    // ========== 지연 로딩 시스템 (UXMLLoader 연동) ==========
+    
+    /// <summary>
+    /// 모달을 지연 로딩하여 표시합니다.
+    /// 처음에는 UXML 파일을 로드하고, 이후에는 캐시된 것을 사용합니다.
+    /// </summary>
+    /// <param name="modalName">모달 이름 (UXML 파일명 without .uxml)</param>
+    public void ShowModalLazy(string modalName)
+    {
+        // 캐시 확인
+        if (UXMLLoader.IsLoaded(modalName))
+        {
+            var cachedModal = UXMLLoader.GetCached(modalName);
+            if (cachedModal != null)
+            {
+                ShowModal(cachedModal, modalName);
+                Debug.Log($"[ModalManager] 캐시된 모달 표시: {modalName}");
+                return;
+            }
+        }
+        
+        // 새 로딩
+        var newModal = UXMLLoader.LoadModal(modalName, _root);
+        if (newModal != null)
+        {
+            // 초기에는 숨김 상태로 추가
+            newModal.style.display = DisplayStyle.None;
+            ShowModal(newModal, modalName);
+            Debug.Log($"[ModalManager] 새 모달 로드 및 표시: {modalName}");
+        }
+        else
+        {
+            Debug.LogError($"[ModalManager] 모달 로드 실패: {modalName}");
+        }
+    }
+    
+    /// <summary>
+    /// 특정 모달을 캐시에서 언로드합니다.
+    /// 메모리 절약을 위해 사용하지 않는 모달을 정리할 때 사용합니다.
+    /// </summary>
+    public void UnloadModal(string modalName)
+    {
+        UXMLLoader.UnloadModal(modalName);
+    }
+    
+    /// <summary>
+    /// 모든 모달을 언로드합니다.
+    /// </summary>
+    public void UnloadAllModals()
+    {
+        HideAllModals();
+        UXMLLoader.UnloadAll();
+    }
+    
+    /// <summary>
+    /// 캐시 상태 로그 출력
+    /// </summary>
+    public void LogCacheStatus()
+    {
+        UXMLLoader.LogCacheStatus();
+    }
 }

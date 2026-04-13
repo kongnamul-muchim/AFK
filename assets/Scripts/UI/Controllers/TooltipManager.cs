@@ -72,11 +72,14 @@ public class TooltipManager : MonoBehaviour
     /// </summary>
     public void HideItemTooltipDelayed(float delay)
     {
-        CancelInvoke();
+        CancelAllInvokes();
         Invoke(nameof(HideItemTooltip), delay);
     }
     
-    private void CancelInvoke()
+    /// <summary>
+    /// 예약된 Invoke 취소
+    /// </summary>
+    private void CancelAllInvokes()
     {
         CancelInvoke(nameof(HideItemTooltip));
     }

@@ -182,9 +182,11 @@ class Game {
                     // 장비 드롭은 그대로 유지
                     let rewardScale = 0.1;
                     
-                    // 보석 업그레이드: 오프라인 보상 증가 (2%/레벨)
-                    const offlineBonus = this.gameState.gemUpgrades.offlineBonus || 0;
-                    rewardScale *= (1 + offlineBonus * 0.02);
+                    // 보석 업그레이드: 오프라인 보상 증가 (2%/레벨) - 해금 필요
+                    if (this.gameState.gemUpgrades.offlineBonus.unlocked) {
+                        const offlineBonus = this.gameState.gemUpgrades.offlineBonus.level;
+                        rewardScale *= (1 + offlineBonus * 0.02);
+                    }
                     
                     const scaledKills = Math.max(1, Math.floor(kills * rewardScale));
                     const scaledGold = Math.max(1, Math.floor(totalGold * rewardScale));
@@ -193,8 +195,8 @@ class Game {
                     const equipmentDrops = [];
                     const items = gameDataLoader.get('items');
                     if (items) {
-                        // 보석 업그레이드: 드롭 확률 업 (등급별 차등 적용)
-                        const dropRateLevel = this.gameState.gemUpgrades.dropRate || 0;
+                        // 보석 업그레이드: 드롭 확률 업 (등급별 차등 적용) - 해금 필요
+                        const dropRateLevel = this.gameState.gemUpgrades.dropRate.unlocked ? this.gameState.gemUpgrades.dropRate.level : 0;
                         const dropRates = {
                             mythic: 0.005 + (dropRateLevel * 0.001),      // 전설: 0.5% → 2.5%
                             legendary: 0.025 + (dropRateLevel * 0.004),    // 영웅: 2.5% → 10.5%

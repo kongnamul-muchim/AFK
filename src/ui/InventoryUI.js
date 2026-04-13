@@ -704,12 +704,6 @@ class InventoryUI {
         if (stats.moveSpeed) lines.push(`<div>이동속도 +${stats.moveSpeed}</div>`);
         if (stats.hpBonus) lines.push(`<div>체력 +${stats.hpBonus}%</div>`);
         
-        // 기본 스탯 (str/agi/int/vit)도 지원
-        if (stats.str) lines.push(`<div>힘 +${stats.str}</div>`);
-        if (stats.agi) lines.push(`<div>민첩 +${stats.agi}</div>`);
-        if (stats.int) lines.push(`<div>지력 +${stats.int}</div>`);
-        if (stats.vit) lines.push(`<div>체력 +${stats.vit}</div>`);
-        
         return lines.join('') || '<div>옵션 없음</div>';
     }
 

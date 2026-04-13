@@ -200,6 +200,7 @@
   - `ExpToLevelUp`, `GoldDropRate`, `ItemDropRate`
   - `OfflineRewardMultiplier`, `AutoBattleDamageBonus`
   - 등 (모든 게임 밸런스 상수)
+  - **SOLID 리팩토링 추가**: 데미지 변동폭, 등급 배열, 골드 변동폭 등 15개 이상
 
 ### GameConfigSO ScriptableObject (선택)
 - [ ] `GameConfigSO.cs` ScriptableObject 클래스 생성
@@ -216,6 +217,7 @@
 ### Bootstrap.cs
 - [x] `Bootstrap.cs`로 게임 초기화 자동화
 - [x] 싱글톤 인스턴스 초기화 순서 보장
+- [x] ServiceLocator에 서비스 등록 (IGameState, IEventBus, ISaveManager, ILogger)
 - [x] 저장/로드 자동 처리
 - [x] 자동 저장 시작
 
@@ -248,7 +250,14 @@
 - [x] Day 3: `feat: implement EventBus with C# delegates`
 - [x] Day 4: `feat: implement SaveManager with auto-save`
 - [x] Day 5: `feat: implement GameLogger and GameConfig`
-- [ ] Phase 1 완료: `feat: complete Phase 1 - core systems`
+- [x] Phase 1 완료: `feat: complete Phase 1 - core systems`
+
+### SOLID 리팩토링 (Phase 1 완료 후 추가 수행)
+- [x] 인터페이스 정의 (IGameState, IEventBus, ILogger, ISaveManager)
+- [x] ServiceLocator 구현 및 서비스 등록
+- [x] 데이터 모델 분리 (PlayerData, StageData, InventoryData 등 6개 파일)
+- [x] GameLoggerAdapter로 ILogger 인터페이스 적응
+- [x] Git 커밋: `feat: complete SOLID refactoring - UI separation and hardcoded values cleanup`
 
 ### 다음 Phase 준비
 - [x] Phase 2 (게임 시스템 이식)을 위한 스크립트 템플릿 준비
@@ -264,6 +273,8 @@
 - **SaveManager**: 웹 세이브 이관을 위해 `ImportWebSave()` 메서드 미리 준비
 - **GameConfig**: ScriptableObject로 만들면 Inspector에서 밸런스 조정 가능 (추천)
 - **테스트**: 각 Day마다 단위 테스트 작성 (Unity Test Framework)
+- **SOLID 리팩토링 완료**: 인터페이스, ServiceLocator, 데이터 모델 분리, DI 적용 완료
+- **UIManager 분리**: InventoryUI, UpgradeUI, MissionsUI, ModalManager, TooltipManager 분리 완료
 
 ---
 

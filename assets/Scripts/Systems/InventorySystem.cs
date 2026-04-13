@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -44,7 +45,7 @@ public class InventorySystem : MonoBehaviour
     
     private IGameState _gameState;
     private IEventBus _eventBus;
-    private ILogger _logger;
+    private IGameLogger _logger;
     
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
@@ -56,7 +57,7 @@ public class InventorySystem : MonoBehaviour
         if (_eventBus == null)
             _eventBus = ServiceLocator.Instance.Get<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<ILogger>();
+            _logger = ServiceLocator.Instance.Get<IGameLogger>();
     }
 
     private void Awake()
@@ -101,9 +102,9 @@ public class InventorySystem : MonoBehaviour
             if (index >= 0)
             {
                 ItemData existing = inventory.items[index];
-                existing.quantity += item.quantity;
+                existing.count += item.count;
                 inventory.items[index] = existing;
-                _logger.Debug($"아이템 수량 증가: {item.name} x{item.quantity}");
+                _logger.Debug($"아이템 수량 증가: {item.name} x{item.count}");
             }
             _gameState.Inventory = inventory;
         }
@@ -153,9 +154,9 @@ public class InventorySystem : MonoBehaviour
         
         ItemData item = inventory.items[index];
         
-        if (item.quantity > quantity)
+        if (item.count > quantity)
         {
-            item.quantity -= quantity;
+            item.count -= quantity;
             ItemData updated = item;
             inventory.items[index] = updated;
         }
@@ -192,7 +193,7 @@ public class InventorySystem : MonoBehaviour
     {
         ItemData? item = FindItem(itemId, grade);
         
-        return item != null && item.Value.quantity >= requiredQuantity;
+        return item != null && item.Value.count >= requiredQuantity;
     }
 
     /// <summary>
@@ -201,7 +202,7 @@ public class InventorySystem : MonoBehaviour
     public void CompactInventory()
     {
         var inventory = _gameState.Inventory;
-        inventory.items.RemoveAll(x => x.quantity <= 0);
+        inventory.items.RemoveAll(x => x.count <= 0);
         _gameState.Inventory = inventory;
     }
 
@@ -284,7 +285,7 @@ public class InventorySystem : MonoBehaviour
             id = equipment.id,
             name = equipment.name,
             grade = equipment.grade,
-            quantity = 1
+            count = 1
         };
         
         inventory.items.Add(item);
@@ -408,7 +409,7 @@ public class InventorySystem : MonoBehaviour
             id = nextItemId,
             name = nextItemName,
             grade = grade + 1,
-            quantity = 1
+            count = 1
         };
         
         // 인벤토리에 추가
@@ -467,7 +468,7 @@ public class InventorySystem : MonoBehaviour
             int totalQuantity = 0;
             foreach (var item in kvp.Value)
             {
-                totalQuantity += item.quantity;
+                totalQuantity += item.count;
             }
             
             if (totalQuantity >= GameConfig.SynthesisRequiredCount)
@@ -506,12 +507,27 @@ public class InventorySystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 다음 등급 아이템 ID 생성
+    /// 다음 등급 아이템 ID 생성 (결정론적 해시 기반)
+    /// 동일한 입력에 대해 항상 동일한 ID를 반환하여 합성 시스템의 일관성 보장
     /// </summary>
     private string GetNextGradeItemId(string itemId, int newGrade)
     {
-        // ID에서 등급 부분만 변경
-        return itemId.Substring(0, itemId.LastIndexOf('_') + 1) + newGrade + "_" + Random.Range(1000, 9999);
+        // 해시 기반 결정론적 ID 생성
+        return $"{itemId}_grade{newGrade}_{GetStableHash(itemId, newGrade):D4}";
+    }
+
+    /// <summary>
+    /// 안정적인 해시값 생성 (동일 입력 → 동일 출력 보장)
+    /// </summary>
+    private int GetStableHash(string itemId, int grade)
+    {
+        unchecked
+        {
+            int hash = 17;
+            hash = hash * 31 + itemId.GetHashCode();
+            hash = hash * 31 + grade;
+            return Math.Abs(hash) % 10000;
+        }
     }
 
     /// <summary>

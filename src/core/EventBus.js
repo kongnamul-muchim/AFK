@@ -168,6 +168,12 @@ const GAME_EVENTS = {
     DAILY_MISSIONS_RESET: 'daily:missions_reset',
     DAILY_MISSION_COMPLETED: 'daily:mission_completed',
     DAILY_MISSION_CLAIMED: 'daily:mission_claimed',
+    
+    // 주간 미션
+    WEEKLY_MISSIONS_RESET: 'weekly:missions_reset',
+    WEEKLY_MISSION_COMPLETED: 'weekly:mission_completed',
+    WEEKLY_MISSION_CLAIMED: 'weekly:mission_claimed',
+    
     BUFF_ACTIVATED: 'buff:activated',
 
     // 환생

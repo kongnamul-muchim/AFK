@@ -5,7 +5,25 @@ using UnityEngine;
 /// <summary>
 /// 의존성 주입을 위한 Service Locator
 /// DIP 준수: 구체적 구현 대신 인터페이스를 통해 서비스 접근
+/// 
+/// ⚠️ 주의: Service Locator는 안티패턴으로 간주됩니다.
+/// 새로운 클래스는 생성자 주입(Constructor Injection)을 사용하세요.
+/// 기존 클래스는 수정 시 점진적으로 생성자 주입으로 변경합니다.
+/// 
+/// 권장 패턴:
+///   public class MySystem : MonoBehaviour
+///   {
+///       private readonly IGameState _gameState;
+///       private readonly IEventBus _eventBus;
+///       
+///       public MySystem(IGameState gameState, IEventBus eventBus)
+///       {
+///           _gameState = gameState;
+///           _eventBus = eventBus;
+///       }
+///   }
 /// </summary>
+[Obsolete("ServiceLocator는 레거시 호환용으로만 사용됩니다. 새로운 코드는 생성자 주입을 사용하세요.")]
 public class ServiceLocator : MonoBehaviour
 {
     private static ServiceLocator _instance;
@@ -96,7 +114,9 @@ public class ServiceLocator : MonoBehaviour
 
 /// <summary>
 /// ServiceLocator 확장 메서드 (편의성 제공)
+/// 레거시 호환용으로만 사용됨
 /// </summary>
+#pragma warning disable CS0618 // ServiceLocator is obsolete
 public static class ServiceLocatorExtensions
 {
     /// <summary>
@@ -118,9 +138,9 @@ public static class ServiceLocatorExtensions
     /// <summary>
     /// Logger를 간편하게 가져오기
     /// </summary>
-    public static ILogger GetLogger(this ServiceLocator locator)
+    public static IGameLogger GetLogger(this ServiceLocator locator)
     {
-        return locator.Get<ILogger>();
+        return locator.Get<IGameLogger>();
     }
 
     /// <summary>
@@ -131,3 +151,4 @@ public static class ServiceLocatorExtensions
         return locator.Get<ISaveManager>();
     }
 }
+#pragma warning restore CS0618

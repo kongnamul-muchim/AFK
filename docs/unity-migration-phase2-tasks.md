@@ -289,7 +289,7 @@
 - [x] 환생 실행 시 데이터 초기화 정확
 - [x] 오프라인 보상 계산값이 웹 버전과 ±5% 이내
 - [x] 모든 시스템 간 이벤트 연동 검증 완료
-- [ ] 통합 테스트 5개 시나리오 모두 통과
+- [x] 통합 테스트 5개 시나리오 모두 통과
 
 ### 코드 품질
 - [x] 모든 시스템 클래스에 XML 문서 주석
@@ -303,8 +303,15 @@
 - [x] Day 8: `feat: implement StageSystem and InventorySystem`
 - [x] Day 9: `feat: implement DailyMissionSystem and RebirthSystem`
 - [x] Day 10: `feat: implement OfflineRewards, TutorialSystem, StatsTracker`
-- [ ] Day 11-12: `feat: complete Phase 2 integration testing`
-- [ ] Phase 2 완료: `feat: complete Phase 2 - game systems`
+- [x] Day 11-12: `feat: complete Phase 2 integration testing`
+- [x] Phase 2 완료: `feat: complete Phase 2 - game systems`
+
+### SOLID 리팩토링 (Phase 2 완료 후 추가 수행)
+- [x] 모든 Systems에 DI 적용 (ServiceLocator 통한 의존성 주입)
+- [x] GameState.Instance → ServiceLocator.Get<IGameState>() 변경
+- [x] EventBus.Instance → ServiceLocator.Get<IEventBus>() 변경
+- [x] 하드코딩 제거 (GameConfig 참조로 통합)
+- [x] BaseSystem 추상 클래스로 InjectDependencies 패턴 통합
 
 ### 다음 Phase 준비
 - [ ] Phase 3 (UI 이식)을 위한 UI Toolkit/UML 설계
