@@ -240,17 +240,11 @@ public class CombatSystem : MonoBehaviour
                 break;
                 
             case CombatPhase.VICTORY:
-                if (_phaseTimer >= PHASE_DELAY)
+                if (_phaseTimer >= PHASE_DELAY * 2) // 승리 후 1초 대기
                 {
-                    // 다음 스테이지로
-                    if (_autoRepeatMode)
-                    {
-                        ChangePhase(CombatPhase.MOVING);
-                    }
-                    else
-                    {
-                        ChangePhase(CombatPhase.IDLE);
-                    }
+                    // 다음 스테이지로 자동 진행
+                    _logger.Debug($"VICTORY 페이즈 완료, 다음 스테이지로 이동");
+                    StageSystem.Instance.NextStage();
                 }
                 break;
                 

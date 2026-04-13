@@ -114,12 +114,12 @@ public class UIGameRenderer : MonoBehaviour
         _playerElement.style.position = Position.Absolute;
         _playerElement.style.left = Length.Percent(20);
         _playerElement.style.bottom = Length.Percent(20);
-        _playerElement.style.width = 100;
-        _playerElement.style.height = 100;
-        _playerElement.style.minWidth = 100;
-        _playerElement.style.minHeight = 100;
+        _playerElement.style.width = 256;
+        _playerElement.style.height = 256;
+        _playerElement.style.minWidth = 256;
+        _playerElement.style.minHeight = 256;
         _playerElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
-        _playerElement.style.backgroundColor = new Color(1, 0, 0, 0.3f); // 디버그: 빨간 반투명 (실제로 보이면 성공)
+        _playerElement.style.backgroundColor = new Color(1, 0, 0, 0.3f); // 디버그: 빨간 반투명
         _gameView.Add(_playerElement);
         
         // 몬스터 (오른쪽)
@@ -128,12 +128,12 @@ public class UIGameRenderer : MonoBehaviour
         _monsterElement.style.position = Position.Absolute;
         _monsterElement.style.right = Length.Percent(20);
         _monsterElement.style.bottom = Length.Percent(20);
-        _monsterElement.style.width = 100;
-        _monsterElement.style.height = 100;
-        _monsterElement.style.minWidth = 100;
-        _monsterElement.style.minHeight = 100;
+        _monsterElement.style.width = 256;
+        _monsterElement.style.height = 256;
+        _monsterElement.style.minWidth = 256;
+        _monsterElement.style.minHeight = 256;
         _monsterElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
-        _monsterElement.style.backgroundColor = new Color(0, 1, 0, 0.3f); // 디버그: 초록 반투명 (실제로 보이면 성공)
+        _monsterElement.style.backgroundColor = new Color(0, 1, 0, 0.3f); // 디버그: 초록 반투명
         _gameView.Add(_monsterElement);
         Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
         
