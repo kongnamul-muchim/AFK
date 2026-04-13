@@ -465,6 +465,9 @@ public class CombatSystem : MonoBehaviour
         monster.currentHP -= damage;
         var combatPhase = _gameState.CombatPhase;
         combatPhase.monsterState = monster;
+        _gameState.CombatPhase = combatPhase;  // ✅ 중요: struct라서 다시 할당 필요
+        
+        Debug.Log($"[DEBUG] PlayerAttack - damage:{damage}, monsterHP after:{monster.currentHP}");
         
         _logger.Debug($"플레이어 공격 - 데미지: {damage:F1}, 몬스터 HP: {monster.currentHP:F1}/{monster.maxHP:F1}");
         
