@@ -273,8 +273,6 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     public void StartCombat()
     {
-        Debug.Log($"[DEBUG] StartCombat 호출됨 - 현재 페이즈: {_currentPhase}");
-        
         if (_currentPhase != CombatPhase.IDLE && _currentPhase != CombatPhase.DEFEATED)
         {
             _logger.Warn($"전투 시작 불가 - 현재 페이즈: {_currentPhase}");
@@ -283,14 +281,10 @@ public class CombatSystem : MonoBehaviour
         
         // ✅ 전투 데이터 초기화 (이전 전투의 잔여 데이터 제거)
         var combatPhase = _gameState.CombatPhase;
-        Debug.Log($"[DEBUG] StartCombat - 초기화 전 monsterState.currentHP: {combatPhase.monsterState.currentHP}");
-        
         combatPhase.phase = 0;
         combatPhase.timer = 0;
         combatPhase.monsterState = new MonsterData(); // HP=0인 몬스터 초기화
         _gameState.CombatPhase = combatPhase;
-        
-        Debug.Log($"[DEBUG] StartCombat - 초기화 후 monsterState.currentHP: {_gameState.CombatPhase.monsterState.currentHP}");
         
         // 플레이어 HP 회복 (스테이지 시작 시)
         _gameState.Player.currentHP = _gameState.GetTotalHealth();
@@ -357,7 +351,6 @@ public class CombatSystem : MonoBehaviour
             float playerAttackInterval = 1f / _playerAttackSpeed;
             if (_combatTimer - _lastAttackTime >= playerAttackInterval)
             {
-                Debug.Log($"[DEBUG] PlayerAttack 호출! _combatTimer:{_combatTimer}, _lastAttackTime:{_lastAttackTime}, interval:{playerAttackInterval}");
                 PlayerAttack();
                 _lastAttackTime = _combatTimer;
             }
@@ -466,8 +459,6 @@ public class CombatSystem : MonoBehaviour
         var combatPhase = _gameState.CombatPhase;
         combatPhase.monsterState = monster;
         _gameState.CombatPhase = combatPhase;  // ✅ 중요: struct라서 다시 할당 필요
-        
-        Debug.Log($"[DEBUG] PlayerAttack - damage:{damage}, monsterHP after:{monster.currentHP}");
         
         _logger.Debug($"플레이어 공격 - 데미지: {damage:F1}, 몬스터 HP: {monster.currentHP:F1}/{monster.maxHP:F1}");
         
@@ -607,23 +598,15 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     private void CheckCombatResult()
     {
-        float monsterHP = _gameState.CombatPhase.monsterState.currentHP;
-        float playerHP = _gameState.Player.currentHP;
-        
-        Debug.Log($"[DEBUG] CheckCombatResult - monsterHP:{monsterHP}, playerHP:{playerHP}");
-        
         // 몬스터 사망
-        if (monsterHP <= 0)
+        if (_gameState.CombatPhase.monsterState.currentHP <= 0)
         {
-            Debug.Log($"[DEBUG] 몬스터 사망 감지 - VICTORY로 전환");
             ChangePhase(CombatPhase.VICTORY);
-            return;
         }
         
         // 플레이어 사망
-        if (playerHP <= 0)
+        if (_gameState.Player.currentHP <= 0)
         {
-            Debug.Log($"[DEBUG] 플레이어 사망 감지 - DEFEATED로 전환");
             ChangePhase(CombatPhase.DEFEATED);
         }
     }
@@ -641,33 +624,21 @@ public class CombatSystem : MonoBehaviour
     {
         int stage = _gameState.Stage.currentStage;
         
-        Debug.Log($"[DEBUG] SpawnMonster 시작 - 스테이지 {stage}");
-        Debug.Log($"[DEBUG] 현재 combatPhase.monsterState.currentHP: {_gameState.CombatPhase.monsterState.currentHP}");
-        
         // MonsterFactory를 사용하여 몬스터 생성
         if (_monsterFactory == null)
             _monsterFactory = new MonsterFactory();
         
         MonsterData monster = _monsterFactory.CreateMonster(stage);
         
-        Debug.Log($"[DEBUG] MonsterFactory 생성 - name:{monster.name}, maxHP:{monster.maxHP}, currentHP:{monster.currentHP}");
-        
         // 몬스터 HP를 최대 HP로 명시적 초기화 (죽은 상태로 등장하는 버그 방지)
         monster.currentHP = monster.maxHP;
-        
-        Debug.Log($"[DEBUG] HP 초기화 후 - currentHP:{monster.currentHP}");
         
         var combatPhase = _gameState.CombatPhase;
         combatPhase.monsterState = monster;
         _gameState.CombatPhase = combatPhase;
         
-        Debug.Log($"[DEBUG] GameState에 할당 후 확인 - currentHP:{_gameState.CombatPhase.monsterState.currentHP}");
-        
         // 몬스터 공격 속도 설정
         _monsterAttackSpeed = _monsterFactory.GetMonsterAttackSpeed(monster);
-        
-        Debug.Log($"[DEBUG] _playerAttackSpeed: {_playerAttackSpeed}, _monsterAttackSpeed: {_monsterAttackSpeed}");
-        Debug.Log($"[DEBUG] playerAttackInterval: {1f / _playerAttackSpeed}, monsterAttackInterval: {1f / _monsterAttackSpeed}");
         
         _logger.Info($"몬스터 등장 - {monster.name} (스테이지 {stage}, HP: {monster.currentHP}/{monster.maxHP}, {(monster.grade >= 3 ? "보스" : "일반")})");
     }
