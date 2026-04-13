@@ -75,13 +75,26 @@ public class UIGameRenderer : MonoBehaviour
     /// </summary>
     public void Initialize(VisualElement gameView)
     {
+        if (gameView == null)
+        {
+            Debug.LogError("[UIGameRenderer] gameView가 null입니다!");
+            return;
+        }
+        
         _gameView = gameView;
+        Debug.Log("[UIGameRenderer] 초기화 시작");
         CreateRenderElements();
     }
     
     private void CreateRenderElements()
     {
-        if (_gameView == null) return;
+        if (_gameView == null)
+        {
+            Debug.LogError("[UIGameRenderer] _gameView가 null입니다!");
+            return;
+        }
+        
+        Debug.Log("[UIGameRenderer] 렌더 요소 생성 중...");
         
         // 배경
         _backgroundElement = new VisualElement();
@@ -93,6 +106,7 @@ public class UIGameRenderer : MonoBehaviour
         _backgroundElement.style.bottom = 0;
         _backgroundElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
         _gameView.Add(_backgroundElement);
+        Debug.Log("[UIGameRenderer] 배경 요소 추가 완료");
         
         // 플레이어 (왼쪽)
         _playerElement = new VisualElement();
@@ -104,6 +118,7 @@ public class UIGameRenderer : MonoBehaviour
         _playerElement.style.height = 100;
         _playerElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
         _gameView.Add(_playerElement);
+        Debug.Log("[UIGameRenderer] 플레이어 요소 추가 완료");
         
         // 몬스터 (오른쪽)
         _monsterElement = new VisualElement();
@@ -115,9 +130,11 @@ public class UIGameRenderer : MonoBehaviour
         _monsterElement.style.height = 100;
         _monsterElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
         _gameView.Add(_monsterElement);
+        Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
         
         // 초기 배경 설정
         SetBackground(BG_NORMAL_PATH);
+        Debug.Log("[UIGameRenderer] 초기 배경 설정 완료");
     }
     
     private void OnPhaseChanged()
@@ -172,6 +189,11 @@ public class UIGameRenderer : MonoBehaviour
         if (texture != null)
         {
             _backgroundElement.style.backgroundImage = texture;
+            Debug.Log($"[UIGameRenderer] 배경 설정: {path}");
+        }
+        else
+        {
+            Debug.LogError($"[UIGameRenderer] 배경 텍스처를 로드할 수 없음: {path}");
         }
     }
     
@@ -184,16 +206,22 @@ public class UIGameRenderer : MonoBehaviour
         {
             _monsterElement.style.backgroundImage = texture;
             _monsterElement.style.display = DisplayStyle.Flex;
+            Debug.Log($"[UIGameRenderer] 몬스터 스프라이트 설정: {MONSTER_SPRITE_PATH}");
+        }
+        else
+        {
+            Debug.LogError($"[UIGameRenderer] 몬스터 텍스처를 로드할 수 없음: {MONSTER_SPRITE_PATH}");
         }
     }
     
     private Texture2D LoadTexture(string path)
     {
-        // Resources 폴더에서 로드
+        // Resources 폴더에서 로드 (확장자 제외)
         Texture2D texture = Resources.Load<Texture2D>(path);
         if (texture == null)
         {
             Debug.LogWarning($"[UIGameRenderer] 텍스처를 찾을 수 없음: {path}");
+            Debug.LogWarning($"[UIGameRenderer] Resources/images 폴더에 파일이 있는지 확인하세요.");
         }
         return texture;
     }
