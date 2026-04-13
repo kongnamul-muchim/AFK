@@ -196,6 +196,7 @@ public class CombatSystem : MonoBehaviour
                 
             case CombatPhase.COMBAT:
                 // 전투 시작
+                Debug.Log($"[DEBUG] OnEnterPhase(COMBAT) - StartCombatLoop 호출");
                 StartCombatLoop();
                 _combatTimer = 0f;
                 break;
