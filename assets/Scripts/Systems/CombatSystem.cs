@@ -662,6 +662,9 @@ public class CombatSystem : MonoBehaviour
         // 몬스터 공격 속도 설정
         _monsterAttackSpeed = _monsterFactory.GetMonsterAttackSpeed(monster);
         
+        Debug.Log($"[DEBUG] _playerAttackSpeed: {_playerAttackSpeed}, _monsterAttackSpeed: {_monsterAttackSpeed}");
+        Debug.Log($"[DEBUG] playerAttackInterval: {1f / _playerAttackSpeed}, monsterAttackInterval: {1f / _monsterAttackSpeed}");
+        
         _logger.Info($"몬스터 등장 - {monster.name} (스테이지 {stage}, HP: {monster.currentHP}/{monster.maxHP}, {(monster.grade >= 3 ? "보스" : "일반")})");
     }
 
