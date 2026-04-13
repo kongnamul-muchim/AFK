@@ -357,6 +357,7 @@ public class CombatSystem : MonoBehaviour
             float playerAttackInterval = 1f / _playerAttackSpeed;
             if (_combatTimer - _lastAttackTime >= playerAttackInterval)
             {
+                Debug.Log($"[DEBUG] PlayerAttack 호출! _combatTimer:{_combatTimer}, _lastAttackTime:{_lastAttackTime}, interval:{playerAttackInterval}");
                 PlayerAttack();
                 _lastAttackTime = _combatTimer;
             }
