@@ -200,23 +200,26 @@ public class UIGameRenderer : MonoBehaviour
                 // 몬스터 등장
                 UpdateMonsterSprite();
                 UpdatePlayerSprite();
+                // 명시적으로 표시
+                if (_playerElement != null) _playerElement.style.display = DisplayStyle.Flex;
+                if (_monsterElement != null) _monsterElement.style.display = DisplayStyle.Flex;
+                Debug.Log("[UIGameRenderer] ENCOUNTERING - 플레이어/몬스터 표시");
                 break;
             case CombatPhase.COMBAT:
                 // 전투 중 - 몬스터 표시
-                if (_monsterElement != null)
-                    _monsterElement.style.display = DisplayStyle.Flex;
+                if (_monsterElement != null) _monsterElement.style.display = DisplayStyle.Flex;
+                if (_playerElement != null) _playerElement.style.display = DisplayStyle.Flex;
+                Debug.Log("[UIGameRenderer] COMBAT - 플레이어/몬스터 표시");
                 break;
             case CombatPhase.VICTORY:
                 // 승리 - 몬스터 숨기기
                 Debug.Log("[UIGameRenderer] 몬스터 숨김 (승리)");
-                if (_monsterElement != null)
-                    _monsterElement.style.display = DisplayStyle.None;
+                if (_monsterElement != null) _monsterElement.style.display = DisplayStyle.None;
                 break;
             case CombatPhase.MOVING:
                 // 다음 스테이지 이동 - 몬스터 다시 표시 (새 몬스터 등장 준비)
                 Debug.Log("[UIGameRenderer] 몬스터 표시 (다음 스테이지)");
-                if (_monsterElement != null)
-                    _monsterElement.style.display = DisplayStyle.Flex;
+                if (_monsterElement != null) _monsterElement.style.display = DisplayStyle.Flex;
                 break;
             case CombatPhase.IDLE:
                 // 대기 상태
