@@ -96,10 +96,13 @@ public class UIGameRenderer : MonoBehaviour
         
         Debug.Log("[UIGameRenderer] 렌더 요소 생성 중...");
         
-        // GameView의 실제 크기를 기반으로 스프라이트 크기 계산
-        // 화면 높이의 40% 정도로 설정
-        float spriteSize = _gameView.resolvedStyle.height * 0.4f;
-        Debug.Log($"[UIGameRenderer] GameView 크기: {_gameView.resolvedStyle.width}x{_gameView.resolvedStyle.height}, 스프라이트 크기: {spriteSize}");
+        // GameView의 크기를 픽셀 단위로 계산
+        // 초기에는 resolvedStyle이 0일 수 있으므로 기본값 사용
+        float viewHeight = _gameView.resolvedStyle.height;
+        if (viewHeight <= 0) viewHeight = 600; // 기본값
+        
+        float spriteSize = viewHeight * 0.35f; // 화면 높이의 35%
+        Debug.Log($"[UIGameRenderer] GameView 크기: {_gameView.resolvedStyle.width}x{viewHeight}, 스프라이트 크기: {spriteSize}");
         
         // 배경
         _backgroundElement = new VisualElement();

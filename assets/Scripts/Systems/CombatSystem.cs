@@ -240,7 +240,7 @@ public class CombatSystem : MonoBehaviour
                 break;
                 
             case CombatPhase.VICTORY:
-                if (_phaseTimer >= PHASE_DELAY * 2) // 승리 후 1초 대기
+                if (_phaseTimer >= 2f) // 승리 후 2초 대기 (몬스터가 죽는 걸 볼 수 있도록)
                 {
                     // 다음 스테이지로 자동 진행
                     _logger.Debug($"VICTORY 페이즈 완료, 다음 스테이지로 이동");
