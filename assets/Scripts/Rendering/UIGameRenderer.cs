@@ -153,6 +153,7 @@ public class UIGameRenderer : MonoBehaviour
             case CombatPhase.ENCOUNTERING:
                 // 몬스터 등장
                 UpdateMonsterSprite();
+                UpdatePlayerSprite();
                 break;
             case CombatPhase.COMBAT:
                 // 전투 중
@@ -167,6 +168,24 @@ public class UIGameRenderer : MonoBehaviour
                 if (_monsterElement != null)
                     _monsterElement.style.display = DisplayStyle.Flex;
                 break;
+        }
+    }
+    
+    private void UpdatePlayerSprite()
+    {
+        if (_playerElement == null) return;
+        
+        Texture2D texture = LoadTexture(PLAYER_SPRITE_PATH);
+        if (texture != null)
+        {
+            Debug.Log($"[UIGameRenderer] 플레이어 텍스처 로드 성공: {texture.width}x{texture.height}");
+            _playerElement.style.backgroundImage = texture;
+            _playerElement.style.display = DisplayStyle.Flex;
+            Debug.Log($"[UIGameRenderer] 플레이어 스프라이트 설정: {PLAYER_SPRITE_PATH}");
+        }
+        else
+        {
+            Debug.LogError($"[UIGameRenderer] 플레이어 텍스처를 로드할 수 없음: {PLAYER_SPRITE_PATH}");
         }
     }
     

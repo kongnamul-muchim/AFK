@@ -9,7 +9,7 @@ public static class GameConfig
     // ========== 몬스터 기본 스탯 ==========
     
     /// <summary>몬스터 기본 체력 (스테이지 1 기준)</summary>
-    public static readonly float BaseMonsterHP = 100f;
+    public static readonly float BaseMonsterHP = 500f;
     
     /// <summary>몬스터 기본 공격력</summary>
     public static readonly float BaseMonsterAttack = 10f;
