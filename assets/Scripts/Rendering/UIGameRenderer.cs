@@ -116,9 +116,11 @@ public class UIGameRenderer : MonoBehaviour
         _playerElement.style.bottom = Length.Percent(20);
         _playerElement.style.width = 100;
         _playerElement.style.height = 100;
+        _playerElement.style.minWidth = 100;
+        _playerElement.style.minHeight = 100;
         _playerElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+        _playerElement.style.backgroundColor = new Color(1, 0, 0, 0.3f); // 디버그: 빨간 반투명 (실제로 보이면 성공)
         _gameView.Add(_playerElement);
-        Debug.Log("[UIGameRenderer] 플레이어 요소 추가 완료");
         
         // 몬스터 (오른쪽)
         _monsterElement = new VisualElement();
@@ -128,7 +130,10 @@ public class UIGameRenderer : MonoBehaviour
         _monsterElement.style.bottom = Length.Percent(20);
         _monsterElement.style.width = 100;
         _monsterElement.style.height = 100;
+        _monsterElement.style.minWidth = 100;
+        _monsterElement.style.minHeight = 100;
         _monsterElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+        _monsterElement.style.backgroundColor = new Color(0, 1, 0, 0.3f); // 디버그: 초록 반투명 (실제로 보이면 성공)
         _gameView.Add(_monsterElement);
         Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
         
@@ -188,6 +193,7 @@ public class UIGameRenderer : MonoBehaviour
         Texture2D texture = LoadTexture(path);
         if (texture != null)
         {
+            Debug.Log($"[UIGameRenderer] 배경 텍스처 로드 성공: {texture.width}x{texture.height}");
             _backgroundElement.style.backgroundImage = texture;
             Debug.Log($"[UIGameRenderer] 배경 설정: {path}");
         }
@@ -204,6 +210,7 @@ public class UIGameRenderer : MonoBehaviour
         Texture2D texture = LoadTexture(MONSTER_SPRITE_PATH);
         if (texture != null)
         {
+            Debug.Log($"[UIGameRenderer] 몬스터 텍스처 로드 성공: {texture.width}x{texture.height}");
             _monsterElement.style.backgroundImage = texture;
             _monsterElement.style.display = DisplayStyle.Flex;
             Debug.Log($"[UIGameRenderer] 몬스터 스프라이트 설정: {MONSTER_SPRITE_PATH}");
@@ -222,8 +229,20 @@ public class UIGameRenderer : MonoBehaviour
         {
             Debug.LogWarning($"[UIGameRenderer] 텍스처를 찾을 수 없음: {path}");
             Debug.LogWarning($"[UIGameRenderer] Resources/images 폴더에 파일이 있는지 확인하세요.");
+            Debug.LogWarning($"[UIGameRenderer] Texture2D를 찾기 위해 Resources.LoadTexture2D 사용");
         }
         return texture;
+    }
+    
+    private Sprite LoadSprite(string path)
+    {
+        // Resources에서 Texture2D를 로드하고 Sprite로 변환
+        Texture2D texture = LoadTexture(path);
+        if (texture == null) return null;
+        
+        // Texture2D를 Sprite로 변환 (전체 텍스처 사용)
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+        return sprite;
     }
     
     /// <summary>
