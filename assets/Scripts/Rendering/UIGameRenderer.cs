@@ -96,6 +96,56 @@ public class UIGameRenderer : MonoBehaviour
         
         Debug.Log("[UIGameRenderer] 렌더 요소 생성 중...");
         
+        // GameView의 실제 크기를 기반으로 스프라이트 크기 계산
+        // 화면 높이의 40% 정도로 설정
+        float spriteSize = _gameView.resolvedStyle.height * 0.4f;
+        Debug.Log($"[UIGameRenderer] GameView 크기: {_gameView.resolvedStyle.width}x{_gameView.resolvedStyle.height}, 스프라이트 크기: {spriteSize}");
+        
+        // 배경
+        _backgroundElement = new VisualElement();
+        _backgroundElement.name = "GameBackground";
+        _backgroundElement.style.position = Position.Absolute;
+        _backgroundElement.style.left = 0;
+        _backgroundElement.style.top = 0;
+        _backgroundElement.style.right = 0;
+        _backgroundElement.style.bottom = 0;
+        _backgroundElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+        _gameView.Add(_backgroundElement);
+        Debug.Log("[UIGameRenderer] 배경 요소 추가 완료");
+        
+        // 플레이어 (왼쪽)
+        _playerElement = new VisualElement();
+        _playerElement.name = "PlayerSprite";
+        _playerElement.style.position = Position.Absolute;
+        _playerElement.style.left = Length.Percent(15);
+        _playerElement.style.bottom = Length.Percent(15);
+        _playerElement.style.width = spriteSize;
+        _playerElement.style.height = spriteSize;
+        _playerElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+        _playerElement.style.backgroundColor = new Color(1, 0, 0, 0.3f); // 디버그: 빨간 반투명
+        _gameView.Add(_playerElement);
+        Debug.Log("[UIGameRenderer] 플레이어 요소 추가 완료");
+        
+        // 몬스터 (오른쪽)
+        _monsterElement = new VisualElement();
+        _monsterElement.name = "MonsterSprite";
+        _monsterElement.style.position = Position.Absolute;
+        _monsterElement.style.right = Length.Percent(15);
+        _monsterElement.style.bottom = Length.Percent(15);
+        _monsterElement.style.width = spriteSize;
+        _monsterElement.style.height = spriteSize;
+        _monsterElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+        _monsterElement.style.backgroundColor = new Color(0, 1, 0, 0.3f); // 디버그: 초록 반투명
+        _gameView.Add(_monsterElement);
+        Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
+        
+        // 초기 배경 설정
+        SetBackground(BG_NORMAL_PATH);
+        Debug.Log("[UIGameRenderer] 초기 배경 설정 완료");
+    }
+        
+        Debug.Log("[UIGameRenderer] 렌더 요소 생성 중...");
+        
         // 배경
         _backgroundElement = new VisualElement();
         _backgroundElement.name = "GameBackground";
@@ -147,6 +197,7 @@ public class UIGameRenderer : MonoBehaviour
         if (_gameState == null) return;
         
         CombatPhase phase = CombatSystem.Instance.CurrentPhase;
+        Debug.Log($"[UIGameRenderer] 페이즈 변경: {phase}");
         
         switch (phase)
         {
@@ -156,17 +207,24 @@ public class UIGameRenderer : MonoBehaviour
                 UpdatePlayerSprite();
                 break;
             case CombatPhase.COMBAT:
-                // 전투 중
+                // 전투 중 - 몬스터 표시
+                if (_monsterElement != null)
+                    _monsterElement.style.display = DisplayStyle.Flex;
                 break;
             case CombatPhase.VICTORY:
                 // 승리 - 몬스터 숨기기
+                Debug.Log("[UIGameRenderer] 몬스터 숨김 (승리)");
                 if (_monsterElement != null)
                     _monsterElement.style.display = DisplayStyle.None;
                 break;
             case CombatPhase.MOVING:
-                // 다음 스테이지 이동
+                // 다음 스테이지 이동 - 몬스터 다시 표시 (새 몬스터 등장 준비)
+                Debug.Log("[UIGameRenderer] 몬스터 표시 (다음 스테이지)");
                 if (_monsterElement != null)
                     _monsterElement.style.display = DisplayStyle.Flex;
+                break;
+            case CombatPhase.IDLE:
+                // 대기 상태
                 break;
         }
     }
