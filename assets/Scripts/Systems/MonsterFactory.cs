@@ -37,40 +37,39 @@ public class MonsterFactory
     }
 
     /// <summary>
-    /// 몬스터 스탯 계산
+    /// 몬스터 스탯 계산 (Web 버전과 동일: 1.1^(stage-1) 스케일링)
     /// </summary>
     private MonsterData CalculateMonsterStats(int stage, bool isBoss)
     {
-        float baseHP = GameConfig.BaseMonsterHP;
-        float baseAttack = GameConfig.BaseMonsterAttack;
-        float baseDefense = GameConfig.BaseMonsterDefense;
-
-        // 스테이지 비례 증가
-        float hpMultiplier = 1f + (stage - 1) * GameConfig.MonsterStatPerStage;
-        float attackMultiplier = 1f + (stage - 1) * GameConfig.MonsterStatPerStage * 0.8f;
-        float defenseMultiplier = 1f + (stage - 1) * GameConfig.MonsterStatPerStage * 0.6f;
-
-        float hp = baseHP * hpMultiplier;
-        float attack = baseAttack * attackMultiplier;
-        float defense = baseDefense * defenseMultiplier;
-
-        // 보스 배율
+        // Web 버전과 동일한 스케일링 공식: base * 1.1^(stage-1)
+        float stageMultiplier = Mathf.Pow(GameConfig.MonsterStatPerStage, stage - 1);
+        
+        // 기본 스탯 (Web 버전 monsters.csv 기준)
+        float baseHP = 50f;  // slime hp_base
+        float baseAttack = 5f; // slime atk_base
+        float baseDefense = 5f;
+        
+        float hp = baseHP * stageMultiplier;
+        float attack = baseAttack * stageMultiplier;
+        float defense = baseDefense * stageMultiplier;
+        
+        // 보스 배율 (Web 버전: 보스 스테이지만)
         if (isBoss)
         {
-            hp *= GameConfig.BossStatMultiplier;
+            hp *= GameConfig.BossStatMultiplier; // 3x
             attack *= GameConfig.BossStatMultiplier;
             defense *= GameConfig.BossStatMultiplier;
         }
-
-        // 몬스터 등급 결정
+        
+        // 몬스터 등급 결정 (Web 버전: stage 기반)
         int grade = isBoss ? 3 : GetMonsterGrade(stage);
-
+        
         // 등급별 스탯 보정
         float gradeMult = GameConfig.GradeStatMultipliers[Mathf.Min(grade, 4)];
         hp *= gradeMult;
         attack *= gradeMult;
         defense *= gradeMult;
-
+        
         return new MonsterData
         {
             stage = stage,

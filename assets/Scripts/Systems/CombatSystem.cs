@@ -26,6 +26,31 @@ public enum CombatPhase
 }
 
 /// <summary>
+/// 플레이어 애니메이션 상태
+/// Web 버전과 동일: idle, attacking, hit, dead
+/// </summary>
+public enum PlayerAnimState
+{
+    idle,
+    attacking,
+    hit,
+    dead
+}
+
+/// <summary>
+/// 몬스터 애니메이션 상태
+/// Web 버전과 동일: appearing, charging, idle, hit, dead
+/// </summary>
+public enum MonsterAnimState
+{
+    appearing,
+    charging,
+    idle,
+    hit,
+    dead
+}
+
+/// <summary>
 /// 게임 전투 시스템을 관리하는 클래스
 /// 플레이어와 몬스터의 전투 로직을 처리하며, 페이즈 머신 기반으로 동작합니다.
 /// DIP 준수: ServiceLocator를 통한 의존성 주입
@@ -83,11 +108,20 @@ public class CombatSystem : MonoBehaviour
     /// <summary>페이즈 전환 지연 시간 (초)</summary>
     private const float PHASE_DELAY = 0.5f;
     
+    /// <summary>이동 페이즈 총 시간 (초) - Web 버전의 moveDuration 1500ms 대응</summary>
+    private const float MOVE_DURATION = 1.5f;
+    
     /// <summary>자동 반복 모드 여부</summary>
     private bool _autoRepeatMode = false;
     
     /// <summary>HP 재생 타이머 (ms)</summary>
     private float _hpRegenTimer = 0f;
+    
+    /// <summary>VICTORY에서 NextStage 호출 완료 플래그 (중복 호출 방지)</summary>
+    private bool _victoryNextStageCalled = false;
+    
+    /// <summary>이동 진행률 (0~1, MOVING 페이즈에서 사용)</summary>
+    public float moveProgress { get; private set; } = 0f;
 
     // ========== 현재 상태 ==========
     
@@ -102,6 +136,47 @@ public class CombatSystem : MonoBehaviour
     
     /// <summary>마지막 공격 시간</summary>
     private float _lastAttackTime = 0f;
+
+    // ========== 애니메이션 상태 (Web 버전과 동일) ==========
+    
+    /// <summary>플레이어 애니메이션 상태</summary>
+    public PlayerAnimState playerAnimState { get; private set; } = PlayerAnimState.idle;
+    
+    /// <summary>몬스터 애니메이션 상태</summary>
+    public MonsterAnimState monsterAnimState { get; private set; } = MonsterAnimState.appearing;
+    
+    /// <summary>현재 공격 프레임 (0, 1, 2)</summary>
+    public int attackCurrentFrame { get; private set; } = 0;
+    
+    /// <summary>공격 애니메이션 시작 시간</summary>
+    private float _attackAnimStartTime = 0f;
+    
+    /// <summary>피격 애니메이션 시작 시간</summary>
+    private float _hitAnimStartTime = 0f;
+    
+    /// <summary>피격 애니메이션 지속 시간 (ms)</summary>
+    private const float HIT_DURATION = 300f;
+    
+    /// <summary>데미지 판정 완료 플래그 (공격 프레임 2에서 한 번만)</summary>
+    private bool _damageDealt = false;
+    
+    /// <summary>반동 데미지 판정 완료 플래그</summary>
+    private bool _recoilDealt = false;
+    
+    /// <summary>공격 애니메이션 1프레임당 시간 (ms)</summary>
+    private const float FRAME_DURATION = 200f;
+    
+    /// <summary>공격 애니메이션 총 프레임 수</summary>
+    private const int ATTACK_FRAMES = 3;
+    
+    /// <summary>공격 애니메이션 시작 시간 (UIGameRenderer에서 접근용)</summary>
+    public float AttackAnimStartTime => _attackAnimStartTime;
+    
+    /// <summary>피격 애니메이션 시작 시간 (UIGameRenderer에서 접근용)</summary>
+    public float HitAnimStartTime => _hitAnimStartTime;
+    
+    /// <summary>피격 애니메이션 지속 시간 (ms)</summary>
+    public float HitDuration => HIT_DURATION;
     
     /// <summary>플레이어 공격 속도 (초당 공격 횟수)</summary>
     private float _playerAttackSpeed = 1f;
@@ -186,23 +261,38 @@ public class CombatSystem : MonoBehaviour
             case CombatPhase.MOVING:
                 // 이동 애니메이션 시작
                 _phaseTimer = 0f;
+                moveProgress = 0f;
+                // 몬스터 초기화 (새 몬스터는 moveProgress 0.5에서 스폰)
+                var combatPhase = _gameState.CombatPhase;
+                combatPhase.monsterState = new MonsterData(); // HP=0인 빈 몬스터
+                _gameState.CombatPhase = combatPhase;
                 break;
                 
             case CombatPhase.ENCOUNTERING:
-                // 몬스터 등장
-                SpawnMonster();
+                // 몬스터 등장 (Web 버전: appearing → charging → idle)
+                // 몬스터는 MOVING 페이즈의 moveProgress 0.5에서 이미 스폰됨
+                SetMonsterAppearing();
                 _phaseTimer = 0f;
                 break;
                 
             case CombatPhase.COMBAT:
-                // 전투 시작
+                // 전투 시작 - 공격 애니메이션 상태 초기화
                 Debug.Log($"[DEBUG] OnEnterPhase(COMBAT) - StartCombatLoop 호출");
-                StartCombatLoop();
+                playerAnimState = PlayerAnimState.idle;
+                attackCurrentFrame = 0;
+                _attackAnimStartTime = 0f;
+                _damageDealt = false;
+                _recoilDealt = false;
                 _combatTimer = 0f;
+                _lastAttackTime = 0f;
+                StartCombatLoop();
                 break;
                 
             case CombatPhase.VICTORY:
-                // 승리 처리
+                // 승리 처리 - 공격 애니메이션 상태 초기화
+                playerAnimState = PlayerAnimState.idle;
+                attackCurrentFrame = 0;
+                _victoryNextStageCalled = false; // 플래그 리셋
                 StopCombatLoop();
                 ProcessVictory();
                 break;
@@ -227,13 +317,33 @@ public class CombatSystem : MonoBehaviour
         switch (_currentPhase)
         {
             case CombatPhase.MOVING:
-                if (_phaseTimer >= PHASE_DELAY)
+                // Web 버전: moveProgress 계산 (0 ~ 1)
+                moveProgress = Mathf.Min(1f, _phaseTimer / MOVE_DURATION);
+                
+                // 이동 50% 지점에서 몬스터 스폰
+                if (moveProgress >= 0.5f && _gameState.CombatPhase.monsterState.currentHP <= 0)
+                {
+                    SpawnMonster();
+                }
+                
+                if (_phaseTimer >= MOVE_DURATION)
                 {
                     ChangePhase(CombatPhase.ENCOUNTERING);
                 }
                 break;
                 
             case CombatPhase.ENCOUNTERING:
+                // Web 버전: charging → idle 전환 (200ms 후)
+                if (monsterAnimState == MonsterAnimState.charging && _phaseTimer >= 0.2f)
+                {
+                    SetMonsterIdle();
+                }
+                // charging 상태로 전환 (조우 시작 시)
+                if (monsterAnimState == MonsterAnimState.appearing)
+                {
+                    SetMonsterCharging();
+                }
+                
                 if (_phaseTimer >= PHASE_DELAY)
                 {
                     ChangePhase(CombatPhase.COMBAT);
@@ -241,11 +351,26 @@ public class CombatSystem : MonoBehaviour
                 break;
                 
             case CombatPhase.VICTORY:
-                if (_phaseTimer >= 2f) // 승리 후 2초 대기 (몬스터가 죽는 걸 볼 수 있도록)
+                // 승리 후 2초 대기 후 다음 스테이지로
+                if (_phaseTimer >= 2f && !_victoryNextStageCalled)
                 {
-                    // 다음 스테이지로 자동 진행
+                    _victoryNextStageCalled = true;
                     _logger.Debug($"VICTORY 페이즈 완료, 다음 스테이지로 이동");
-                    StageSystem.Instance.NextStage();
+                    
+                    // 플레이어 HP 회복
+                    _gameState.Player.currentHP = _gameState.GetTotalHealth();
+                    
+                    // 새 전투 데이터 초기화 (MonsterData는 MOVING 50%에서 스폰되므로 여기서는 0 HP로)
+                    var combatPhase = _gameState.CombatPhase;
+                    combatPhase.phase = 0;
+                    combatPhase.timer = 0;
+                    combatPhase.monsterState = new MonsterData();
+                    _gameState.CombatPhase = combatPhase;
+                    
+                    // 직접 MOVING으로 전환
+                    _logger.Debug("VICTORY → MOVING 전환 시도");
+                    ChangePhase(CombatPhase.MOVING);
+                    _logger.Debug($"VICTORY 후 _currentPhase: {_currentPhase}");
                 }
                 break;
                 
@@ -342,30 +467,234 @@ public class CombatSystem : MonoBehaviour
     {
         WaitForSeconds wait = new WaitForSeconds(COMBAT_TICK);
         
+        Debug.Log("[CombatLoop] Combat started!");
+        
         while (_currentPhase == CombatPhase.COMBAT)
         {
             yield return wait;
             
             _combatTimer += COMBAT_TICK;
             
-            // 플레이어 공격
+            // DEBUG - 너무 많은 로그 방지
+            if (_combatTimer < 0.5f || Mathf.Approximately(_combatTimer, 1f) || Mathf.Approximately(_combatTimer, 2f))
+            {
+                Debug.Log($"[CombatLoop] timer={_combatTimer:F2}, playerSpeed={_playerAttackSpeed}");
+            }
+            
+            // 플레이어 공격 애니메이션 업데이트
+            UpdatePlayerAttackAnimation();
+            
+            // 몬스터 피격 상태 업데이트
+            UpdateMonsterHitAnimation();
+            
+            // 플레이어 공격 시작 (쿨타임 기준)
             float playerAttackInterval = 1f / _playerAttackSpeed;
             if (_combatTimer - _lastAttackTime >= playerAttackInterval)
             {
-                PlayerAttack();
+                StartPlayerAttackAnimation();
                 _lastAttackTime = _combatTimer;
-            }
-            
-            // 몬스터 공격
-            float monsterAttackInterval = 1f / _monsterAttackSpeed;
-            if (_combatTimer >= monsterAttackInterval)
-            {
-                MonsterAttack();
             }
             
             // 승패 판정
             CheckCombatResult();
         }
+        
+        Debug.Log("[CombatLoop] Combat ended!");
+    }
+    
+    /// <summary>
+    /// 플레이어 공격 애니메이션 업데이트 (Web 버전과 동일)
+    /// 3프레임 애니메이션에서 3번째 프레임(인덱스 2)에 데미지 판정
+    /// </summary>
+    private void UpdatePlayerAttackAnimation()
+    {
+        if (playerAnimState != PlayerAnimState.attacking) return;
+        
+        // _attackAnimStartTime는 밀리초 (Time.time * 1000f로 저장)
+        float elapsedMs = (Time.time * 1000f) - _attackAnimStartTime;
+        int currentFrame = Mathf.FloorToInt(elapsedMs / FRAME_DURATION);
+        
+        // 현재 프레임 저장 (렌더러에서 사용)
+        attackCurrentFrame = Mathf.Min(currentFrame, ATTACK_FRAMES - 1);
+        
+        // DEBUG
+        Debug.Log($"[AttackAnim] frame={currentFrame}, elapsed={elapsedMs}, damageDealt={_damageDealt}");
+        
+        // 애니메이션 완료 확인 (3프레임 끝)
+        if (currentFrame >= ATTACK_FRAMES)
+        {
+            playerAnimState = PlayerAnimState.idle;
+            attackCurrentFrame = 0;
+        }
+        else
+        {
+            // 3번째 프레임(인덱스 2)에서 데미지 판정과 체력 소모 (한 번만)
+            if (currentFrame >= 2 && !_damageDealt)
+            {
+                Debug.Log("[AttackAnim] 3번째 프레임 - 데미지 판정!");
+                
+                // 1. 몬스터에게 데미지
+                DealDamageToMonster();
+                _damageDealt = true;
+                
+                // 2. 플레이어 체력 소모 (데미지 판정 직후)
+                ConsumePlayerHP();
+                _recoilDealt = true;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 몬스터 피격 애니메이션 업데이트
+    /// </summary>
+    private void UpdateMonsterHitAnimation()
+    {
+        if (monsterAnimState != MonsterAnimState.hit) return;
+        
+        float elapsedMs = Time.time * 1000f - _hitAnimStartTime;
+        if (elapsedMs >= HIT_DURATION)
+        {
+            monsterAnimState = MonsterAnimState.idle;
+        }
+    }
+    
+    /// <summary>
+    /// 플레이어 공격 애니메이션 시작 (Web 버전의 startPlayerAttack)
+    /// </summary>
+    private void StartPlayerAttackAnimation()
+    {
+        if (monsterAnimState == MonsterAnimState.dead) return;
+        if (playerAnimState == PlayerAnimState.attacking) return;
+        
+        playerAnimState = PlayerAnimState.attacking;
+        _attackAnimStartTime = Time.time * 1000f; // 밀리초로 저장
+        _damageDealt = false;
+        _recoilDealt = false;
+        
+        Debug.Log($"[AttackAnim] 공격 시작! timer={_combatTimer}, lastAttack={_lastAttackTime}, speed={_playerAttackSpeed}");
+        
+        // UIGameRenderer에 애니메이션 시작 알림
+        UIGameRenderer.Instance?.OnPlayerAttackStart();
+    }
+    
+    /// <summary>
+    /// 몬스터에게 데미지 판정 (공격 애니메이션 중 3번째 프레임에서 발생)
+    /// Web 버전과 동일한 공식: max(1, attack - 5) * stageMultiplier * buffs * autoCombat
+    /// </summary>
+    private void DealDamageToMonster()
+    {
+        var monster = _gameState.CombatPhase.monsterState;
+        if (monster.currentHP <= 0) return;
+        
+        int stage = _gameState.Stage.currentStage;
+        
+        // 버프 확인 (공격력 2배)
+        float attackBuff = GetBuffMultiplier("attackDouble");
+        
+        // 자동 전투 보너스 (Web 버전과 동일: 2%/레벨, 최대 100%)
+        float autoCombatBonus = 1f;
+        /*
+        if (_gameState.Stage.autoRepeat)
+        {
+            var gemUpgrades = _gameState.Player.gemUpgrades;
+            if (gemUpgrades != null && gemUpgrades.ContainsKey("autoCombatDamage"))
+            {
+                int autoCombatLevel = gemUpgrades["autoCombatDamage"];
+                autoCombatBonus = 1f + Mathf.Min(1f, autoCombatLevel * 0.02f);
+            }
+        }
+        */
+        
+        // 크리티컬 판정 (Web 버전과 동일)
+        bool isCrit = Random.value < _gameState.Player.critChance;
+        float critMultiplier = isCrit ? _gameState.GetCritDamageMultiplier() : 1f;
+        
+        // Web 버전 공식: max(1, attack - 5) * stageMultiplier * critMultiplier * buffs * autoCombat
+        float minDamage = GameConfig.MinDamage; // 1
+        float stageMultiplier = 1f + (stage - 1) * 0.1f; // 1.0, 1.1, 1.2, ...
+        float baseDamage = Mathf.Max(minDamage, _gameState.GetTotalAttack() - 5);
+        float damage = baseDamage * stageMultiplier * critMultiplier * attackBuff * autoCombatBonus;
+        damage = Mathf.Floor(damage); // Web 버전은 Math.floor
+        
+        // 몬스터 HP 감소
+        monster.currentHP = Mathf.Max(0, monster.currentHP - damage);
+        var combatPhase = _gameState.CombatPhase;
+        combatPhase.monsterState = monster;
+        _gameState.CombatPhase = combatPhase;
+        
+        _logger.Debug($"플레이어 공격 - 데미지: {damage:F1}, 몬스터 HP: {monster.currentHP:F1}/{monster.maxHP:F1}");
+        
+        // 몬스터 피격 상태 설정
+        SetMonsterHit();
+        
+        // UIGameRenderer에 데미지 알림
+        UIGameRenderer.Instance?.OnMonsterDamaged(damage, isCrit);
+        
+        // 몬스터 사망 확인
+        if (monster.currentHP <= 0)
+        {
+            SetMonsterDead();
+            _logger.Debug("몬스터 처치됨");
+        }
+    }
+    
+    /// <summary>
+    /// 몬스터 피격 상태로 전환
+    /// </summary>
+    public void SetMonsterHit()
+    {
+        monsterAnimState = MonsterAnimState.hit;
+        _hitAnimStartTime = Time.time * 1000f;
+        
+        // UIGameRenderer에 피격 알림
+        UIGameRenderer.Instance?.OnMonsterHit();
+    }
+    
+    /// <summary>
+    /// 몬스터 죽음 상태로 전환
+    /// </summary>
+    public void SetMonsterDead()
+    {
+        monsterAnimState = MonsterAnimState.dead;
+        
+        // UIGameRenderer에 죽음 알림
+        UIGameRenderer.Instance?.OnMonsterDead();
+    }
+    
+    /// <summary>
+    /// 몬스터 등장 상태로 전환
+    /// </summary>
+    public void SetMonsterAppearing()
+    {
+        monsterAnimState = MonsterAnimState.appearing;
+        UIGameRenderer.Instance?.OnMonsterAppearing();
+    }
+    
+    /// <summary>
+    /// 몬스터 돌진 상태로 전환
+    /// </summary>
+    public void SetMonsterCharging()
+    {
+        monsterAnimState = MonsterAnimState.charging;
+        UIGameRenderer.Instance?.OnMonsterCharging();
+    }
+    
+    /// <summary>
+    /// 몬스터 Idle 상태로 전환
+    /// </summary>
+    public void SetMonsterIdle()
+    {
+        monsterAnimState = MonsterAnimState.idle;
+        UIGameRenderer.Instance?.OnMonsterIdle();
+    }
+    
+    /// <summary>
+    /// 플레이어 죽음 상태로 전환
+    /// </summary>
+    public void SetPlayerDead()
+    {
+        playerAnimState = PlayerAnimState.dead;
+        UIGameRenderer.Instance?.OnPlayerDead();
     }
 
     // ========== 공격/데미지 ==========
@@ -421,66 +750,8 @@ public class CombatSystem : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// 플레이어 공격
-    /// </summary>
-    private void PlayerAttack()
-    {
-        // 버프 확인 (공격력 2배)
-        float attackBuff = GetBuffMultiplier("attackDouble");
-        
-        // 보석 업그레이드: 자동 전투 강화 (자동 반복 시 2%/레벨, 최대 100%) - 해금 필요
-        // TODO: StageData.autoRepeat와 PlayerData.gemUpgrades 구현 후 활성화
-        float autoCombatBonus = 1f;
-        /*
-        if (_gameState.Stage.autoRepeat)
-        {
-            var gemUpgrades = _gameState.Player.gemUpgrades;
-            if (gemUpgrades != null && gemUpgrades.ContainsKey("autoCombatDamage"))
-            {
-                int autoCombatLevel = gemUpgrades["autoCombatDamage"];
-                autoCombatBonus = 1f + Mathf.Min(1f, autoCombatLevel * 0.02f);
-            }
-        }
-        */
-        
-        // 데미지 계산
-        float damage = CalculateDamage(
-            _gameState.GetTotalAttack(),
-            _gameState.CombatPhase.monsterState.defense,
-            _gameState.Player.critChance,
-            _gameState.GetCritDamageMultiplier(),
-            attackBuff,
-            autoCombatBonus
-        );
-        
-        // 몬스터 HP 감소
-        var monster = _gameState.CombatPhase.monsterState;
-        monster.currentHP -= damage;
-        var combatPhase = _gameState.CombatPhase;
-        combatPhase.monsterState = monster;
-        _gameState.CombatPhase = combatPhase;  // ✅ 중요: struct라서 다시 할당 필요
-        
-        _logger.Debug($"플레이어 공격 - 데미지: {damage:F1}, 몬스터 HP: {monster.currentHP:F1}/{monster.maxHP:F1}");
-        
-        // 공격 애니메이션 트리거 (GameRenderer)
-        GameRenderer.Instance?.TriggerPlayerAttack();
-        GameRenderer.Instance?.TriggerMonsterHit();
-        
-        // 몬스터 사망 확인
-        if (monster.currentHP <= 0)
-        {
-            monster.currentHP = 0;
-            combatPhase.monsterState = monster;
-            ChangePhase(CombatPhase.VICTORY);
-            return; // 몬스터가 죽었으면 반동 데미지 없음
-        }
-        
-        // 공격 반동 데미지: 플레이어 체력 소모
-        // 공식: (stage * 4) - playerDefense, 최소 1
-        ConsumePlayerHP();
-    }
-
+    // ========== 공격/데미지 (프레임 기반 애니메이션으로 대체) ==========
+    
     /// <summary>
     /// 버프 배율 가져오기
     /// </summary>
@@ -513,7 +784,12 @@ public class CombatSystem : MonoBehaviour
         player.currentHP = Mathf.Max(0f, player.currentHP - recoilDamage);
         _gameState.Player = player;
         
+        Debug.Log($"[ConsumeHP] 데미지={recoilDamage}, HP={player.currentHP}/{_gameState.GetTotalHealth()}");
+        
         _logger.Debug($"공격 반동 데미지: {recoilDamage:F1}, 플레이어 HP: {player.currentHP:F1}/{_gameState.GetTotalHealth():F1}");
+        
+        // HP 변경 이벤트 발생 (UI 업데이트를 위해)
+        _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
         
         // 플레이어 사망 확인
         if (player.currentHP <= 0)
@@ -547,15 +823,21 @@ public class CombatSystem : MonoBehaviour
         
         _logger.Debug($"몬스터 공격 - 데미지: {damage:F1}, 플레이어 HP: {player.currentHP:F1}/{_gameState.GetTotalHealth():F1}");
         
-        // 몬스터 공격 애니메이션 트리거
-        GameRenderer.Instance?.TriggerMonsterAttack();
-        GameRenderer.Instance?.TriggerPlayerHit();
+        // HP 변경 이벤트 발생 (UI 업데이트를 위해)
+        _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        
+        // 몬스터 공격 애니메이션 (UIGameRenderer)
+        UIGameRenderer.Instance?.OnMonsterAttack();
+        // 플레이어 피격 애니메이션
+        playerAnimState = PlayerAnimState.hit;
+        UIGameRenderer.Instance?.OnPlayerHit();
         
         // 플레이어 사망 확인
         if (player.currentHP <= 0)
         {
             player.currentHP = 0;
             _gameState.Player = player;
+            SetPlayerDead();
             ChangePhase(CombatPhase.DEFEATED);
         }
     }
@@ -651,15 +933,18 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     private void ProcessVictory()
     {
-        // 경험치 지급
+        // 경험치 지급 (Web 버전과 동일: GameState.AddExperience 사용)
         long expReward = CalculateExpReward();
-        var player = _gameState.Player;
-        player.experience += expReward;
-        _gameState.Player = player;
+        bool leveledUp = _gameState.AddExperience(expReward);
+        
+        if (leveledUp)
+        {
+            _logger.Info($"레벨업! 현재 레벨: {_gameState.Player.level}");
+        }
         
         // 골드 드롭
         int goldReward = CalculateGoldDrop();
-        player = _gameState.Player;
+        var player = _gameState.Player;
         player.gold += goldReward;
         _gameState.Player = player;
         

@@ -20,22 +20,22 @@ public static class GameConfig
     // ========== 플레이어 기본 스탯 ==========
     
     /// <summary>플레이어 기본 체력 (레벨 1 기준)</summary>
-    public static readonly float BasePlayerHP = 200f;
+    public static readonly float BasePlayerHP = 100f;
     
     /// <summary>플레이어 기본 공격력</summary>
-    public static readonly float BasePlayerAttack = 15f;
+    public static readonly float BasePlayerAttack = 10f;
     
     /// <summary>플레이어 기본 방어력</summary>
-    public static readonly float BasePlayerDefense = 8f;
+    public static readonly float BasePlayerDefense = 5f;
     
     /// <summary>플레이어 기본 이동속도</summary>
-    public static readonly float BasePlayerSpeed = 5f;
+    public static readonly float BasePlayerSpeed = 100f;
     
-    /// <summary>플레이어 기본 치명확률 (%)</summary>
-    public static readonly float BasePlayerCritChance = 5f;
+    /// <summary>플레이어 기본 치명확률 (0-1)</summary>
+    public static readonly float BasePlayerCritChance = 0.05f;
     
-    /// <summary>플레이어 기본 치명피해 (%)</summary>
-    public static readonly float BasePlayerCritDamage = 50f;
+    /// <summary>플레이어 기본 치명피해 배율</summary>
+    public static readonly float BasePlayerCritDamage = 1.5f;
 
     // ========== 레벨업 및 경험치 ==========
     
@@ -43,7 +43,7 @@ public static class GameConfig
     public static readonly long ExpToLevelUp = 100;
     
     /// <summary>레벨업마다 증가하는 경험치 배율</summary>
-    public static readonly float ExpMultiplier = 1.5f;
+    public static readonly float ExpMultiplier = 1.2f;
     
     /// <summary>레벨당 스탯 포인트 증가량</summary>
     public static readonly float StatPointPerLevel = 1f;
@@ -103,8 +103,8 @@ public static class GameConfig
 
     // ========== 스테이지 ==========
     
-    /// <summary>스테이지당 몬스터 스탯 증가량 (%)</summary>
-    public static readonly float MonsterStatPerStage = 0.1f;
+    /// <summary>스테이지당 몬스터 스탯 증가 배율 (1.1 = 10% 증가)</summary>
+    public static readonly float MonsterStatPerStage = 1.1f;
     
     /// <summary>보스 스테이지 간격</summary>
     public static readonly int BossStageInterval = 10;
@@ -157,6 +157,9 @@ public static class GameConfig
     public static readonly float ToastDuration = 2f;
 
     // ========== 전투 ==========
+    
+    /// <summary>최소 데미지</summary>
+    public static readonly float MinDamage = 1f;
     
     /// <summary>데미지 변동폭 최소값</summary>
     public static readonly float DamageVarianceMin = 0.9f;

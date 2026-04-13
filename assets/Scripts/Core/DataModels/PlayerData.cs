@@ -137,7 +137,7 @@ public class PlayerData
     }
 
     /// <summary>
-    /// 경험치 추가 및 레벨업 확인
+    /// 경험치 추가 및 레벨업 확인 (Web 버전과 동일)
     /// </summary>
     /// <param name="amount">획득한 경험치</param>
     /// <returns>레벨업 여부</returns>
@@ -145,16 +145,22 @@ public class PlayerData
     {
         experience += amount;
         
-        // 간단한 레벨업 체크 (실제로는 GameState에서 처리)
-        long expNeeded = 100 * (long)Math.Pow(1.5, level - 1);
-        if (experience >= expNeeded)
+        // Web 버전과 동일: 1.2배 스케일
+        long expNeeded = 100 * (long)Math.Pow(1.2, level - 1);
+        bool leveledUp = false;
+        
+        while (experience >= expNeeded)
         {
             experience -= expNeeded;
             level++;
             statPoints += 1;
-            return true;
+            expNeeded = 100 * (long)Math.Pow(1.2, level - 1); // 다음 레벨업에 필요한 EXP 재계산
+            leveledUp = true;
+            
+            // HP 완전 회복 (Web 버전과 동일)
+            currentHP = maxHP;
         }
         
-        return false;
+        return leveledUp;
     }
 }

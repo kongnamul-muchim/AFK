@@ -9,6 +9,33 @@ using System.Collections.Generic;
 /// </summary>
 public class GameState : MonoBehaviour, IGameState
 {
+    /// <summary>
+    /// 이벤트 버스 참조
+    /// </summary>
+    private IEventBus EventBus => ServiceLocator.Instance.Get<IEventBus>();
+    
+    /// <summary>
+    /// 이벤트 버스 (다른 시스템과의 통신용) - 프로퍼티 미사용 시 지연 초기화
+    /// </summary>
+    private IEventBus eventBus;
+    
+    /// <summary>
+    /// 이벤트 버스 게터 (지연 초기화)
+    /// </summary>
+    private IEventBus EventBusGetter
+    {
+        get
+        {
+            if (eventBus == null)
+                eventBus = ServiceLocator.Instance.Get<IEventBus>();
+            return eventBus;
+        }
+    }
+    
+    /// <summary>
+    /// 이벤트 버스 직접 접근용 (null 체크 포함)
+    /// </summary>
+    private IEventBus eventBusInstance => EventBusGetter;
     private static GameState _instance;
     
     /// <summary>
@@ -79,7 +106,7 @@ public class GameState : MonoBehaviour, IGameState
     /// 보석 업그레이드 데이터
     /// </summary>
     public GemUpgradeData gemUpgrades;
-
+    
     // ========== IGameState 인터페이스 구현 ==========
     
     PlayerData IGameState.Player { get => player; set => player = value; }
@@ -161,7 +188,35 @@ public class GameState : MonoBehaviour, IGameState
     {
         return StatCalculator.CalculateTotalDefense(player, inventory, gemUpgrades, rebirth);
     }
-
+    
+    /// <summary>
+    /// 경험치 추가 및 레벨업 처리 (Web 버전과 동일)
+    /// </summary>
+    /// <param name="amount">추가할 경험치량</param>
+    /// <returns>레벨업 여부</returns>
+    public bool AddExperience(long amount)
+    {
+        if (player == null) return false;
+        
+        bool leveledUp = player.AddExperience(amount);
+        
+        // 경험치 변경 이벤트 (UI 업데이트용)
+        eventBusInstance.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        
+        if (leveledUp)
+        {
+            // 레벨업 시 파생 스탯 재계산
+            player.maxHP = GetTotalHealth();
+            player.currentHP = player.maxHP; // HP 완전 회복
+            
+            // 레벨업 이벤트
+            eventBusInstance.Emit(GameEvents.PLAYER_LEVEL_UP);
+            Debug.Log($"[GameState] 레벨업! Lv.{player.level}");
+        }
+        
+        return leveledUp;
+    }
+    
     /// <summary>
     /// 현재 플레이어의 총 체력 계산 (StatCalculator로 위임)
     /// </summary>

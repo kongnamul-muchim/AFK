@@ -50,4 +50,5 @@ public interface IGameState
     float GetAutoBattleDamageMultiplier();
     float GetCritDamageMultiplier();
     float[] GetDropRates();
+    bool AddExperience(long amount);
 }
