@@ -104,11 +104,15 @@ public class UIGameRenderer : MonoBehaviour
         
         // GameView의 크기를 픽셀 단위로 계산
         // 초기에는 resolvedStyle이 0일 수 있으므로 기본값 사용
+        float viewWidth = _gameView.resolvedStyle.width;
         float viewHeight = _gameView.resolvedStyle.height;
-        if (viewHeight <= 0) viewHeight = 600; // 기본값
+        
+        // NaN 또는 0인 경우 기본값 사용
+        if (viewHeight <= 0 || float.IsNaN(viewHeight)) viewHeight = 600;
+        if (viewWidth <= 0 || float.IsNaN(viewWidth)) viewWidth = 800;
         
         float spriteSize = viewHeight * 0.35f; // 화면 높이의 35%
-        Debug.Log($"[UIGameRenderer] GameView 크기: {_gameView.resolvedStyle.width}x{viewHeight}, 스프라이트 크기: {spriteSize}");
+        Debug.Log($"[UIGameRenderer] GameView 크기: {viewWidth}x{viewHeight}, 스프라이트 크기: {spriteSize}");
         
         // 배경
         _backgroundElement = new VisualElement();
