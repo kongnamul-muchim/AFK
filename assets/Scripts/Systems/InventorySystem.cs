@@ -12,7 +12,9 @@ public enum EquipmentSlot
     /// <summary>방어구</summary>
     Armor = 1,
     /// <summary>액세서리</summary>
-    Accessory = 2
+    Accessory = 2,
+    /// <summary>부츠</summary>
+    Boots = 3
 }
 
 /// <summary>
@@ -221,7 +223,7 @@ public class InventorySystem : MonoBehaviour
     /// 장비 장착
     /// </summary>
     /// <param name="itemId">아이템 ID</param>
-    /// <param name="grade">아이템 등급</param>
+    /// <param name="grade">아이탬 등급</param>
     /// <returns>성공 여부</returns>
     public bool EquipItem(string itemId, int grade)
     {
@@ -234,14 +236,15 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
         
-        // 장비 슬롯 확인
-        EquipmentSlot slot = GetEquipmentSlot(itemId);
+        // 장비 슬롯 결정: item.type을 직접 사용 (Web 버전과 동일)
+        // type: "weapon", "armor", "accessory", "boots" 등
+        EquipmentSlot slot = GetSlotFromItemType(item.Value.type);
         
         // 기존 장비 해제
         UnequipItem(slot);
         
-        // 인벤토리에서 제거
-        RemoveItem(itemId, grade);
+        // 인벤토리에서 제거 (수량 1 감소)
+        RemoveItem(itemId, grade, 1);
         
         // 장비 슬롯에 추가
         EquipmentData equipment = new EquipmentData
@@ -324,15 +327,23 @@ public class InventorySystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 장비 슬롯 판별
+    /// 아이템 타입으로 장비 슬롯 결정 (Web 버전과 동일)
     /// </summary>
-    private EquipmentSlot GetEquipmentSlot(string itemId)
+    private EquipmentSlot GetSlotFromItemType(string itemType)
     {
-        if (itemId.Contains("sword") || itemId.Contains("weapon"))
-            return EquipmentSlot.Weapon;
-        if (itemId.Contains("armor"))
-            return EquipmentSlot.Armor;
-        return EquipmentSlot.Accessory;
+        // item.type을 그대로 사용: "weapon", "armor", "accessory", "boots"
+        switch (itemType?.ToLower())
+        {
+            case "weapon":
+                return EquipmentSlot.Weapon;
+            case "armor":
+                return EquipmentSlot.Armor;
+            case "boots":
+                return EquipmentSlot.Boots;
+            case "accessory":
+            default:
+                return EquipmentSlot.Accessory;
+        }
     }
 
     /// <summary>

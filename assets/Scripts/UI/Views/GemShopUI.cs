@@ -201,11 +201,11 @@ public class GemShopUIClass : MonoBehaviour
         
         var buyBtn = new Button(() => PurchaseBuff(item));
         buyBtn.text = $"{item.cost} 💎";
-        buyBtn.style.fontSize = 22;
-        buyBtn.style.paddingLeft = 20;
-        buyBtn.style.paddingRight = 20;
-        buyBtn.style.paddingTop = 10;
-        buyBtn.style.paddingBottom = 10;
+        buyBtn.style.fontSize = 32;
+        buyBtn.style.paddingLeft = 30;
+        buyBtn.style.paddingRight = 30;
+        buyBtn.style.paddingTop = 12;
+        buyBtn.style.paddingBottom = 12;
         
         if (canAfford && !hasActiveBuff)
         {

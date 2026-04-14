@@ -753,11 +753,11 @@ public class UpgradeUIClass : MonoBehaviour
         {
             var buyBtn = new Button(onClick);
             buyBtn.text = "구매";
-            buyBtn.style.fontSize = 22;
-            buyBtn.style.paddingLeft = 20;
-            buyBtn.style.paddingRight = 20;
-            buyBtn.style.paddingTop = 8;
-            buyBtn.style.paddingBottom = 8;
+            buyBtn.style.fontSize = 32;
+            buyBtn.style.paddingLeft = 30;
+            buyBtn.style.paddingRight = 30;
+            buyBtn.style.paddingTop = 12;
+            buyBtn.style.paddingBottom = 12;
             buyBtn.style.backgroundColor = canBuy ? new Color(0.29f, 0.93f, 0.5f) : new Color(0.3f, 0.3f, 0.3f);
             buyBtn.style.color = canBuy ? Color.black : Color.gray;
             buyBtn.style.borderTopLeftRadius = 8;
@@ -831,11 +831,11 @@ public class UpgradeUIClass : MonoBehaviour
         {
             var buyBtn = new Button(onClick);
             buyBtn.text = isMaxLevel ? "완료" : "구매";
-            buyBtn.style.fontSize = 22;
-            buyBtn.style.paddingLeft = 20;
-            buyBtn.style.paddingRight = 20;
-            buyBtn.style.paddingTop = 8;
-            buyBtn.style.paddingBottom = 8;
+            buyBtn.style.fontSize = 32;
+            buyBtn.style.paddingLeft = 30;
+            buyBtn.style.paddingRight = 30;
+            buyBtn.style.paddingTop = 12;
+            buyBtn.style.paddingBottom = 12;
             buyBtn.style.backgroundColor = canBuy ? new Color(0.29f, 0.62f, 1) : new Color(0.3f, 0.3f, 0.3f);
             buyBtn.style.color = canBuy ? Color.white : Color.gray;
             buyBtn.style.borderTopLeftRadius = 8;
@@ -909,11 +909,11 @@ public class UpgradeUIClass : MonoBehaviour
         {
             var buyBtn = new Button(onClick);
             buyBtn.text = isMaxLevel ? "완성" : "구매";
-            buyBtn.style.fontSize = 22;
-            buyBtn.style.paddingLeft = 20;
-            buyBtn.style.paddingRight = 20;
-            buyBtn.style.paddingTop = 8;
-            buyBtn.style.paddingBottom = 8;
+            buyBtn.style.fontSize = 32;
+            buyBtn.style.paddingLeft = 30;
+            buyBtn.style.paddingRight = 30;
+            buyBtn.style.paddingTop = 12;
+            buyBtn.style.paddingBottom = 12;
             buyBtn.style.backgroundColor = canBuy ? new Color(1, 0.84f, 0) : new Color(0.3f, 0.3f, 0.3f);
             buyBtn.style.color = canBuy ? Color.black : Color.gray;
             buyBtn.style.borderTopLeftRadius = 8;

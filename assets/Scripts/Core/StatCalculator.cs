@@ -9,19 +9,21 @@ public static class StatCalculator
     /// <summary>
     /// 총 공격력 계산 (기본 + 장비 + 버프)
     /// Web 버전과 동일하게 goldUpgrades, statUpgrades 포함
+    /// 장비 공격력은 비율 기반 (Web 버전과 동일)
     /// </summary>
     public static float CalculateTotalAttack(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
         // 기본 공격력 (업그레이드 포함)
         float baseAttack = CalculateBaseAttack(player);
         
-        float total = baseAttack;
-        
-        // 장비 공격력 추가
+        // 장비 공격력 보너스: Web 버전과 동일하게 비율 적용
+        float atkBonusPercent = 0f;
         foreach (var equip in inventory.equipment)
         {
-            total += equip.attackBonus;
+            atkBonusPercent += equip.attackBonus;
         }
+        
+        float total = baseAttack * (1 + atkBonusPercent / 100f);
         
         // 보석 업그레이드 보너스
         total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
@@ -29,7 +31,7 @@ public static class StatCalculator
         // 환생 보너스
         total *= (1 + rebirth.rebirthCount * 0.1f);
         
-        return total;
+        return Mathf.Floor(total);
     }
     
     /// <summary>
@@ -96,43 +98,49 @@ public static class StatCalculator
     /// <summary>
     /// 총 방어력 계산
     /// Web 버전과 동일하게 goldUpgrades, statUpgrades 포함
+    /// 장비 방어력은 비율 기반 (Web 버전과 동일)
     /// </summary>
     public static float CalculateTotalDefense(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
         float baseDefense = CalculateBaseDefense(player);
         
-        float total = baseDefense;
-        
+        // 장비 방어력 보너스: Web 버전과 동일하게 비율 적용
+        float defBonusPercent = 0f;
         foreach (var equip in inventory.equipment)
         {
-            total += equip.defenseBonus;
+            defBonusPercent += equip.defenseBonus;
         }
+        
+        float total = baseDefense * (1 + defBonusPercent / 100f);
         
         total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
         total *= (1 + rebirth.rebirthCount * 0.1f);
         
-        return total;
+        return Mathf.Floor(total);
     }
 
     /// <summary>
     /// 총 체력 계산
     /// Web 버전과 동일하게 goldUpgrades, statUpgrades 포함
+    /// HP 버프 (hpDouble)는 호출자(GameState)에서 적용
     /// </summary>
     public static float CalculateTotalHealth(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
         float baseHealth = CalculateBaseHealth(player);
         
-        float total = baseHealth;
-        
+        // 장비 HP 보너스: Web 버전과 동일하게 비율 적용 (1 + hpBonus/100)
+        float hpBonusPercent = 0f;
         foreach (var equip in inventory.equipment)
         {
-            total += equip.healthBonus;
+            hpBonusPercent += equip.healthBonus;
         }
+        
+        float total = baseHealth * (1 + hpBonusPercent / 100f);
         
         total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
         total *= (1 + rebirth.rebirthCount * 0.1f);
         
-        return total;
+        return Mathf.Floor(total);
     }
 
     /// <summary>

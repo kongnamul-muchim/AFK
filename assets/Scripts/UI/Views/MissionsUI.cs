@@ -412,11 +412,11 @@ public class MissionsUIClass : MonoBehaviour
             claimBtn.SetEnabled(false);
         }
         
-        claimBtn.style.fontSize = 20;
-        claimBtn.style.paddingLeft = 15;
-        claimBtn.style.paddingRight = 15;
-        claimBtn.style.paddingTop = 8;
-        claimBtn.style.paddingBottom = 8;
+        claimBtn.style.fontSize = 32;
+        claimBtn.style.paddingLeft = 30;
+        claimBtn.style.paddingRight = 30;
+        claimBtn.style.paddingTop = 12;
+        claimBtn.style.paddingBottom = 12;
         claimBtn.style.borderTopLeftRadius = 8;
         claimBtn.style.borderTopRightRadius = 8;
         claimBtn.style.borderBottomLeftRadius = 8;
