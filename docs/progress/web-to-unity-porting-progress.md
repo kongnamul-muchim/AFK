@@ -64,6 +64,15 @@
 ### 9. hpDouble 버프
 - [x] GetTotalHealth()에 hpDouble 버프 적용
 
+### 10. 버그 수정 (2026-04-14)
+- [x] SP Point TextUI 메인화면 미업데이트: OnPlayerStatChanged에서 SP 업데이트 추가
+- [x] 미션 보상 중복 수령: MissionsUI가 실제 gameState.DailyMissions 사용하도록 수정
+- [x] 인벤토리 Tooltip 미출력: MouseEnterEvent → PointerEnterEvent 변경, discovered 아이템에도 tooltip 추가
+- [x] 인벤토리 아이템 클릭 미작동: OnItemClicked에서 InventorySystem.EquipItem() 호출
+- [x] 업그레이드 공격력 미적용: StatCalculator에 goldUpgrades/statUpgrades 계산 추가
+- [x] 골드 UI 불일치: UIManager에 GOLD_CHANGED 이벤트 구독, UpgradeUI는 Player.gold 사용
+- [x] PlayerData attack=15 → GameConfig.BasePlayerAttack=10로 통일
+
 ---
 
 ## 진행 중 (Pending)
@@ -93,6 +102,11 @@
 
 | 커밋 | 내용 |
 |------|------|
+| 9439cb0 | PlayerData attack/defense/health GameConfig.BasePlayer* 값으로 통일 |
+| 343dd76 | gold UI mismatch and not updating |
+| e0e07fb | 업그레이드 공격력이 데미지에 반영되도록 수정 |
+| 9c8cb56 | 인벤토리 Tooltip 및 아이템 장착 기능 수정 |
+| 2711316 | SP Point UI 및 미션 보상 중복 수령 버그 수정 |
 | 0d3840c | Boss First-Clear Gem Rewards 구현 |
 | c184435 | Web to Unity 포팅 진행 상황 문서화 및 hpDouble 버프 |
 | d850caa | DropTable, CombatSystem, UIManager 동기화 |
