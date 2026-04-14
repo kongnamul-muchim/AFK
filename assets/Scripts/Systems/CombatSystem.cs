@@ -593,17 +593,10 @@ public class CombatSystem : MonoBehaviour
         
         // 자동 전투 보너스 (Web 버전과 동일: 2%/레벨, 최대 100%)
         float autoCombatBonus = 1f;
-        /*
-        if (_gameState.Stage.autoRepeat)
+        if (_autoRepeatMode)
         {
-            var gemUpgrades = _gameState.Player.gemUpgrades;
-            if (gemUpgrades != null && gemUpgrades.ContainsKey("autoCombatDamage"))
-            {
-                int autoCombatLevel = gemUpgrades["autoCombatDamage"];
-                autoCombatBonus = 1f + Mathf.Min(1f, autoCombatLevel * 0.02f);
-            }
+            autoCombatBonus = _gameState.GetAutoBattleDamageMultiplier();
         }
-        */
         
         // 크리티컬 판정 (Web 버전과 동일)
         bool isCrit = Random.value < _gameState.Player.critChance;
@@ -1028,7 +1021,7 @@ public class CombatSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 경험치 보상 계산 (DropTable로 위임)
+    /// 경험치 보상 계산 (DropTable로 위임, 버프 적용)
     /// </summary>
     private long CalculateExpReward()
     {
@@ -1038,11 +1031,16 @@ public class CombatSystem : MonoBehaviour
         int stage = _gameState.Stage.currentStage;
         bool isBoss = (stage % 10 == 0);
         
-        return _dropTable.GetExpReward(stage, isBoss);
+        long baseExp = _dropTable.GetExpReward(stage, isBoss);
+        
+        // expDouble 버프 적용 (Web 버전과 동일)
+        float expBuff = GetBuffMultiplier("expDouble");
+        
+        return (long)(baseExp * expBuff);
     }
 
     /// <summary>
-    /// 골드 드롭량 계산 (DropTable로 위임)
+    /// 골드 드롭량 계산 (DropTable로 위임, 버프 적용)
     /// </summary>
     private int CalculateGoldDrop()
     {
@@ -1053,7 +1051,12 @@ public class CombatSystem : MonoBehaviour
         bool isBoss = (stage % 10 == 0);
         int monsterGrade = _gameState.CombatPhase.monsterState.grade;
         
-        return _dropTable.GetGoldDrop(monsterGrade, stage, isBoss);
+        int baseGold = _dropTable.GetGoldDrop(monsterGrade, stage, isBoss);
+        
+        // goldDouble 버프 적용 (Web 버전과 동일)
+        float goldBuff = GetBuffMultiplier("goldDouble");
+        
+        return (int)(baseGold * goldBuff);
     }
 
     /// <summary>

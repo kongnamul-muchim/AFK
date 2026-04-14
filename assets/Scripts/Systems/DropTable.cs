@@ -1,40 +1,193 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// 드롭 테이블 - 아이템/골드 드롭 로직을 담당 (SRP 준수)
 /// CombatSystem에서 드롭 관련 책임을 분리
+/// Web 버전과 동일한 드롭 로직 구현
 /// </summary>
 public class DropTable
 {
-    private static readonly string[] ItemTypes = new string[] { "sword", "armor", "boots", "accessory" };
-    private static readonly string[] ItemNames = new string[] { "검", "방어구", "신발", "장신구" };
-    private static readonly string[] GradePrefixes = new string[] { "일반 ", "고급 ", "희귀 ", "영웅 ", "전설 " };
+    // Web 버전과 동일한 타입 (items.csv의 type과 일치)
+    private static readonly string[] ItemTypes = new string[] { "weapon", "armor", "boots", "accessory" };
+    
+    // Web 버전의 gradeProbabilities (선형 감소)
+    // common 70%, rare 20%, epic 7%, legendary 2.5%, mythic 0.5%
+    private static readonly float[] GradeProbabilities = new float[] { 0.70f, 0.20f, 0.07f, 0.025f, 0.005f };
+    
+    // rarity 인덱스 ->rarity 이름 (items.csv의 rarity와 일치)
+    private static readonly string[] RarityNames = new string[] { "common", "rare", "epic", "legendary", "mythic" };
+    
+    // 등급 이름 (일반 이름)
+    private static readonly string[] GradeNames = new string[] { "일반", "고급", "희귀", "영웅", "전설" };
 
     /// <summary>
-    /// 드롭 아이템 결정
+    /// 드롭 아이템 결정 - Web 버전 rollItemDrop() 로직
     /// </summary>
     public ItemData? GetDrop(int monsterGrade, int stage)
     {
-        // 드롭 확률 확인
+        // 드롭 확률 확인 (기본 30%)
         if (Random.value > GameConfig.ItemDropRate)
         {
             return null; // 드롭 없음
         }
 
-        // 등급 결정 (몬스터 등급 기반)
-        int dropGrade = CalculateDropGrade(monsterGrade);
-
-        // 아이템 생성
-        string itemId = GenerateItemId(dropGrade);
-        string itemName = GenerateItemName(dropGrade);
-
-        return new ItemData
+        // Web 버전: stage >= 91이면 baseGrade = 21, 아니면 Math.ceil(stage / 10)
+        int baseGrade;
+        if (stage >= 91)
         {
-            id = itemId,
-            name = itemName,
-            grade = dropGrade,
+            baseGrade = 21; // Mythril tier
+        }
+        else
+        {
+            baseGrade = Mathf.CeilToInt(stage / 10f);
+        }
+        
+        // grade 범위: [baseGrade, baseGrade+1, baseGrade+2, baseGrade+3, baseGrade+4]
+        int[] dropGrades = new int[] {
+            baseGrade,
+            baseGrade + 1,
+            baseGrade + 2,
+            baseGrade + 3,
+            baseGrade + 4
+        };
+        
+        // Web 버전: 선형 감소 확률 (70%, 20%, 7%, 2.5%, 0.5%)
+        // Grade 랜덤 선택 (가중치 적용)
+        int selectedGradeIndex = WeightedRandomIndex(GradeProbabilities);
+        int selectedGrade = dropGrades[selectedGradeIndex];
+        string selectedRarity = RarityNames[selectedGradeIndex];
+        
+        // Web 버전: 타입 랜덤 선택 (균등 25%)
+        string selectedType = ItemTypes[Random.Range(0, ItemTypes.Length)];
+        
+        // items.csv에서 grade + type 매칭
+        var itemsData = DataLoader.Load("items");
+        var matchingItems = new List<Dictionary<string, object>>();
+        
+        foreach (var item in itemsData)
+        {
+            if (item.TryGetValue("grade", out var gradeObj) &&
+                item.TryGetValue("type", out var typeObj))
+            {
+                int itemGrade = System.Convert.ToInt32(gradeObj);
+                string itemType = typeObj.ToString();
+                
+                // grade와 type이 일치하면 추가
+                if (itemGrade == selectedGrade && itemType == selectedType)
+                {
+                    matchingItems.Add(item);
+                }
+            }
+        }
+        
+        // 일치하는 아이템이 없으면 null 반환
+        if (matchingItems.Count == 0)
+        {
+            return null;
+        }
+        
+        // 일치하는 아이템 중 무작위 선택
+        var selectedItem = matchingItems[Random.Range(0, matchingItems.Count)];
+        
+        // ItemData 생성
+        var itemData = new ItemData
+        {
+            id = selectedItem["id"].ToString(),
+            name = selectedItem["name"].ToString(),
+            grade = selectedGrade,
+            rarity = selectedGradeIndex, // 0:common, 1:rare, 2:epic, 3:legendary, 4:mythic
+            type = selectedType,
             count = 1
         };
+        
+        // stats JSON 파싱
+        if (selectedItem.TryGetValue("stats", out var statsObj))
+        {
+            ParseStats(statsObj.ToString(), ref itemData);
+        }
+        
+        return itemData;
+    }
+
+    /// <summary>
+    /// stats JSON 파싱 (Bootstrap.cs의 로직 참고)
+    /// </summary>
+    private void ParseStats(string statsStr, ref ItemData item)
+    {
+        // {"attackBonus":2} 형태
+        // 간단한 substring 파싱
+        try
+        {
+            // attackBonus 파싱
+            int atkStart = statsStr.IndexOf("attackBonus");
+            if (atkStart >= 0)
+            {
+                int colon = statsStr.IndexOf(":", atkStart);
+                int commaOrEnd = statsStr.IndexOf(",", atkStart);
+                if (commaOrEnd < 0) commaOrEnd = statsStr.IndexOf("}", atkStart);
+                if (colon >= 0 && commaOrEnd > colon)
+                {
+                    string atkStr = statsStr.Substring(colon + 1, commaOrEnd - colon - 1).Trim();
+                    if (int.TryParse(atkStr, out var atk))
+                        item.attackBonus = atk;
+                }
+            }
+            
+            // defenseBonus 파싱
+            int defStart = statsStr.IndexOf("defenseBonus");
+            if (defStart >= 0)
+            {
+                int colon = statsStr.IndexOf(":", defStart);
+                int commaOrEnd = statsStr.IndexOf(",", defStart);
+                if (commaOrEnd < 0) commaOrEnd = statsStr.IndexOf("}", defStart);
+                if (colon >= 0 && commaOrEnd > colon)
+                {
+                    string defStr = statsStr.Substring(colon + 1, commaOrEnd - colon - 1).Trim();
+                    if (int.TryParse(defStr, out var def))
+                        item.defenseBonus = def;
+                }
+            }
+            
+            // hpBonus 파싱
+            int hpStart = statsStr.IndexOf("hpBonus");
+            if (hpStart >= 0)
+            {
+                int colon = statsStr.IndexOf(":", hpStart);
+                int commaOrEnd = statsStr.IndexOf(",", hpStart);
+                if (commaOrEnd < 0) commaOrEnd = statsStr.IndexOf("}", hpStart);
+                if (colon >= 0 && commaOrEnd > colon)
+                {
+                    string hpStr = statsStr.Substring(colon + 1, commaOrEnd - colon - 1).Trim();
+                    if (int.TryParse(hpStr, out var hp))
+                        item.healthBonus = hp;
+                }
+            }
+        }
+        catch (System.Exception)
+        {
+            // 파싱 실패 시 기본값 0
+        }
+    }
+
+    /// <summary>
+    /// 가중치 기반 랜덤 인덱스 선택 - Web 버전 weightedRandomIndex()
+    /// </summary>
+    private int WeightedRandomIndex(float[] probabilities)
+    {
+        float roll = Random.value;
+        float cumulative = 0f;
+        
+        for (int i = 0; i < probabilities.Length; i++)
+        {
+            cumulative += probabilities[i];
+            if (roll < cumulative)
+            {
+                return i;
+            }
+        }
+        
+        return probabilities.Length - 1; // 마지막 인덱스
     }
 
     /// <summary>
@@ -75,63 +228,14 @@ public class DropTable
     }
 
     /// <summary>
-    /// 드롭 등급 결정 (몬스터 등급 기반)
-    /// </summary>
-    private int CalculateDropGrade(int monsterGrade)
-    {
-        // 몬스터 등급에 비례하되, 확률적으로 결정
-        float[] rates = GetDropRates();
-        
-        float roll = Random.value;
-        float cumulative = 0f;
-
-        for (int i = 0; i < rates.Length; i++)
-        {
-            cumulative += rates[i];
-            if (roll < cumulative)
-            {
-                // 몬스터 등급 보정 (고등급 몬스터는 더 좋은 아이템 드롭)
-                return Mathf.Min(i + (monsterGrade > 2 ? 1 : 0), rates.Length - 1);
-            }
-        }
-
-        return 0;
-    }
-
-    /// <summary>
-    /// 드롭 확률 테이블 가져오기
-    /// </summary>
-    private float[] GetDropRates()
-    {
-        // 일반(40%), 고급(30%), 희귀(20%), 영웅(8%), 전설(2%)
-        return new float[] { 0.4f, 0.3f, 0.2f, 0.08f, 0.02f };
-    }
-
-    /// <summary>
-    /// 아이템 ID 생성
-    /// </summary>
-    private string GenerateItemId(int grade)
-    {
-        string type = ItemTypes[Random.Range(0, ItemTypes.Length)];
-        return $"{type}_grade{grade}_{Random.Range(1000, 9999)}";
-    }
-
-    /// <summary>
-    /// 아이템 이름 생성
-    /// </summary>
-    private string GenerateItemName(int grade)
-    {
-        string prefix = GradePrefixes[grade];
-        string type = ItemNames[Random.Range(0, ItemNames.Length)];
-        return prefix + type;
-    }
-
-    /// <summary>
-    /// 등급 이름 가져오기
+    /// 등급 이름 가져오기 (Web 버전 호환)
     /// </summary>
     public string GetGradeName(int grade)
     {
-        string[] names = new string[] { "일반", "고급", "희귀", "영웅", "전설" };
-        return names[Mathf.Min(grade, names.Length - 1)];
+        // grade를 rarity 인덱스로 변환 (grade 1-5: common/rare/epic/legendary/mythic)
+        // grade 6-10: common/rare/epic/legendary/mythic
+        // etc.
+        int rarityIndex = (grade - 1) % 5;
+        return GradeNames[rarityIndex];
     }
 }

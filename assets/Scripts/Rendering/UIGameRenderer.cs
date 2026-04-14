@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Collections.Generic;
 
 /// <summary>
 /// UI Toolkit 기반 게임 뷰 렌더러
@@ -32,6 +33,9 @@ public class UIGameRenderer : MonoBehaviour
     private VisualElement _monsterHPBarContainer;
     private VisualElement _monsterHPBarFill;
     private Label _monsterNameLabel;
+    
+    // 데미지 텍스트 컨테이너
+    private VisualElement _damageTextContainer;
     
     private IGameState _gameState;
     private IEventBus _eventBus;
@@ -84,7 +88,7 @@ public class UIGameRenderer : MonoBehaviour
     
     // ========== 데미지 텍스트 ==========
     
-    private class DamageText
+    private class DamageTextInfo
     {
         public float x;
         public float y;
@@ -93,9 +97,10 @@ public class UIGameRenderer : MonoBehaviour
         public bool isCrit;
         public float createdAt;
         public float duration = 1000f;
+        public VisualElement element; // 데미지 텍스트 VisualElement
     }
     
-    private System.Collections.Generic.List<DamageText> _damageTexts = new System.Collections.Generic.List<DamageText>();
+    private System.Collections.Generic.List<DamageTextInfo> _damageTexts = new System.Collections.Generic.List<DamageTextInfo>();
     
     // ========== MonoBehaviour 라이프사이클 ==========
     
@@ -244,6 +249,9 @@ public class UIGameRenderer : MonoBehaviour
         // 몬스터 HP 바 생성 (Web 버전과 동일)
         CreateMonsterHPBar();
         
+        // 데미지 텍스트 컨테이너 생성
+        CreateDamageTextContainer();
+        
         // 초기 텍스처 로드
         Debug.Log("[UIGameRenderer] 초기 텍스처 로드 시도...");
         LoadPlayerFrame(0);
@@ -296,6 +304,23 @@ public class UIGameRenderer : MonoBehaviour
         _gameView.Add(_monsterNameLabel);
         
         Debug.Log("[UIGameRenderer] 몬스터 HP 바 생성 완료");
+    }
+    
+    /// <summary>
+    /// 데미지 텍스트 컨테이너 생성
+    /// </summary>
+    private void CreateDamageTextContainer()
+    {
+        _damageTextContainer = new VisualElement();
+        _damageTextContainer.name = "DamageTextContainer";
+        _damageTextContainer.style.position = Position.Absolute;
+        _damageTextContainer.style.left = 0;
+        _damageTextContainer.style.top = 0;
+        _damageTextContainer.style.right = 0;
+        _damageTextContainer.style.bottom = 0;
+        _gameView.Add(_damageTextContainer);
+        
+        Debug.Log("[UIGameRenderer] 데미지 텍스트 컨테이너 생성 완료");
     }
     
     /// <summary>
@@ -779,20 +804,102 @@ public class UIGameRenderer : MonoBehaviour
     
     // ========== 데미지 텍스트 (Web 버전과 동일) ==========
     
+    /// <summary>
+    /// 데미지 텍스트 표시 (몬스터 위에 랜덤 위치)
+    /// </summary>
     private void ShowDamageText(float damage, bool isCrit)
     {
-        if (_monsterElement == null) return;
+        if (_monsterElement == null || _damageTextContainer == null) return;
         
-        // TODO: UI Toolkit에서 데미지 텍스트 렌더링 (현재는 단순 로그)
-        // Web 버전에서는 Canvas에 텍스트를 그리지만, UI Toolkit에서는 VisualElement 기반이므로 별도 처리 필요
-        Debug.Log($"[UIGameRenderer] 데미지: {(isCrit ? "CRIT! " : "")}{Mathf.RoundToInt(damage)}");
+        // 몬스터 위치 계산 (오른쪽에서 12% 지점)
+        float viewWidth = _gameView.resolvedStyle.width;
+        float viewHeight = _gameView.resolvedStyle.height;
+        
+        float monsterX = viewWidth * (1f - 0.12f); // right 12%
+        float monsterY = viewHeight * (1f - 0.12f - 0.35f); // bottom 12% + sprite height 35%
+        
+        // 랜덤 오프셋 (-30 ~ +30)
+        float randomOffsetX = Random.Range(-30f, 30f);
+        float randomOffsetY = Random.Range(-20f, 20f);
+        
+        // 데미지 텍스트 생성
+        Label damageLabel = new Label();
+        damageLabel.name = "DamageText";
+        damageLabel.text = Mathf.RoundToInt(damage).ToString();
+        damageLabel.style.position = Position.Absolute;
+        damageLabel.style.left = new Length(monsterX + randomOffsetX - 50, LengthUnit.Pixel);
+        damageLabel.style.top = new Length(monsterY + randomOffsetY - 20, LengthUnit.Pixel);
+        damageLabel.style.width = 100;
+        damageLabel.style.fontSize = isCrit ? 32 : 24;
+        damageLabel.style.color = isCrit ? new Color(1f, 0.8f, 0f, 1f) : new Color(1f, 1f, 1f, 1f); // 크리트는 노란색
+        damageLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+        damageLabel.style.display = DisplayStyle.Flex;
+        
+        _damageTextContainer.Add(damageLabel);
+        
+        // 데미지 텍스트 정보 저장
+        DamageTextInfo info = new DamageTextInfo();
+        info.x = monsterX + randomOffsetX;
+        info.y = monsterY + randomOffsetY;
+        info.startY = monsterY + randomOffsetY;
+        info.text = damageLabel.text;
+        info.isCrit = isCrit;
+        info.createdAt = Time.time * 1000f;
+        info.duration = 1000f;
+        info.element = damageLabel;
+        
+        _damageTexts.Add(info);
+        
+        Debug.Log($"[UIGameRenderer] 데미지 텍스트: {(isCrit ? "CRIT! " : "")}{damage}");
     }
     
+    /// <summary>
+    /// 데미지 텍스트 업데이트 (위로 올라가며 페이드 아웃)
+    /// </summary>
     private void UpdateDamageTexts()
     {
         float now = Time.time * 1000f;
         
+        // 제거할 텍스트 목록
+        List<DamageTextInfo> toRemove = new List<DamageTextInfo>();
+        
+        foreach (DamageTextInfo info in _damageTexts)
+        {
+            float elapsed = now - info.createdAt;
+            
+            // 만료된 텍스트
+            if (elapsed >= info.duration)
+            {
+                toRemove.Add(info);
+                continue;
+            }
+            
+            // 진행도 (0 ~ 1)
+            float progress = elapsed / info.duration;
+            
+            // 위로 이동 (Web 버전과 동일: 60px rise)
+            float riseDistance = 60f * (1f - Mathf.Pow(1f - progress, 2f));
+            float currentY = info.startY - riseDistance;
+            
+            // 투명도 (점점 희미해짐)
+            float alpha = 1f - progress;
+            
+            // 위치 업데이트
+            if (info.element != null)
+            {
+                info.element.style.top = new Length(currentY - 20, LengthUnit.Pixel);
+                info.element.style.opacity = alpha;
+            }
+        }
+        
         // 만료된 텍스트 제거
-        _damageTexts.RemoveAll(dt => now - dt.createdAt >= dt.duration);
+        foreach (DamageTextInfo info in toRemove)
+        {
+            if (info.element != null && info.element.parent != null)
+            {
+                info.element.RemoveFromHierarchy();
+            }
+            _damageTexts.Remove(info);
+        }
     }
 }

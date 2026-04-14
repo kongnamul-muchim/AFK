@@ -96,6 +96,31 @@ public class UIManager : MonoBehaviour
     private void OnDisable()
     {
         EventBus.Instance.Off(GameEvents.GAME_LOADED, OnGameLoaded);
+        EventBus.Instance.Off(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
+        EventBus.Instance.Off(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
+    }
+    
+    /// <summary>
+    /// 플레이어 스탯 변경 시 HP 바, 레벨, EXP 업데이트
+    /// </summary>
+    private void OnPlayerStatChanged()
+    {
+        if (_gameState == null) return;
+        Debug.Log($"[UIManager] 스탯 업데이트! HP={_gameState.Player.currentHP}/{_gameState.GetTotalHealth()}, Lv={_gameState.Player.level}");
+        UpdatePlayerLevel(_gameState.Player.level);
+        UpdateHP(_gameState.Player.currentHP, _gameState.GetTotalHealth());
+        UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
+    }
+    
+    /// <summary>
+    /// 레벨업 시 호출 (알림, 이펙트 등)
+    /// </summary>
+    private void OnPlayerLevelUp()
+    {
+        if (_gameState == null) return;
+        Debug.Log($"[UIManager] 레벨업! Lv.{_gameState.Player.level}");
+        // 레벨업 알림 표시 (웹 버전과 동일하게)
+        UpdatePlayerLevel(_gameState.Player.level);
     }
     
     private void InitializeUI()
@@ -140,6 +165,10 @@ public class UIManager : MonoBehaviour
         _gameState = serviceLocator.Get<IGameState>();
         _eventBus = serviceLocator.Get<IEventBus>();
         _logger = serviceLocator.Get<IGameLogger>();
+        
+        // 플레이어 스탯 변경 이벤트 구독 (DI 완료 후)
+        EventBus.Instance.On(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
+        EventBus.Instance.On(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
     }
     
     /// <summary>
