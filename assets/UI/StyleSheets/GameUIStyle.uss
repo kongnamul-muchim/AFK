@@ -299,13 +299,13 @@
 
 .menu-btn {
     flex: 1;
-    padding: 30px 20px;
+    padding: 40px 25px;
     background-color: var(--color-accent);
     color: white;
-    border-radius: 8px;
+    border-radius: 12px;
     -unity-font-style: bold;
-    font-size: 35px;
-    margin: 0 10px;
+    font-size: 50px;
+    margin: 0 12px;
 }
 
 .menu-btn:hover {
