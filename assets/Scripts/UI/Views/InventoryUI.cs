@@ -246,13 +246,13 @@ public class InventoryUIClass : MonoBehaviour
             slot.RegisterCallback<ClickEvent>(evt => OnItemClicked(itemId));
             slot.RegisterCallback<ContextClickEvent>(evt => OnItemRightClicked(itemId, evt));
             
-            // 툴팁 이벤트
-            slot.RegisterCallback<MouseEnterEvent>(evt =>
+            // 툴팁 이벤트 (PointerEnter/Leave가 더 안정적)
+            slot.RegisterCallback<PointerEnterEvent>(evt =>
             {
                 int grade = GetRarityGrade(rarity);
-                TooltipManager.Instance?.ShowItemTooltip(itemName, grade, evt.mousePosition);
+                TooltipManager.Instance?.ShowItemTooltip(itemName, grade, evt.position);
             });
-            slot.RegisterCallback<MouseLeaveEvent>(evt =>
+            slot.RegisterCallback<PointerLeaveEvent>(evt =>
             {
                 TooltipManager.Instance?.HideItemTooltip();
             });
@@ -280,6 +280,17 @@ public class InventoryUIClass : MonoBehaviour
             slot.Add(countLabel);
             
             slot.RegisterCallback<ClickEvent>(evt => OnItemClicked(itemId));
+            
+            // 발견된 아이템도 툴팁 지원
+            slot.RegisterCallback<PointerEnterEvent>(evt =>
+            {
+                int grade = GetRarityGrade(rarity);
+                TooltipManager.Instance?.ShowItemTooltip(itemName, grade, evt.position);
+            });
+            slot.RegisterCallback<PointerLeaveEvent>(evt =>
+            {
+                TooltipManager.Instance?.HideItemTooltip();
+            });
         }
         else
         {
@@ -347,11 +358,25 @@ public class InventoryUIClass : MonoBehaviour
     }
     
     /// <summary>
-    /// 아이템 클릭 이벤트
+    /// 아이템 클릭 이벤트 (장착)
     /// </summary>
     private void OnItemClicked(string itemId)
     {
         Debug.Log($"아이템 클릭: {itemId}");
+        
+        // 아이템 정보 가져오기
+        var item = _allItemsData.FirstOrDefault(i => i["id"].ToString() == itemId);
+        if (item == null) return;
+        
+        int grade = System.Convert.ToInt32(item["grade"]);
+        
+        // InventorySystem으로 장비 장착
+        bool success = InventorySystem.Instance.EquipItem(itemId, grade);
+        if (success)
+        {
+            Debug.Log($"아이템 장착 성공: {itemId}");
+            RefreshInventoryGrid(); // UI 새로고침
+        }
     }
     
     /// <summary>
