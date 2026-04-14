@@ -25,6 +25,7 @@ public class CombatLogManager : MonoBehaviour
     }
     
     private ScrollView _logScrollView;
+    private IEventBus _eventBus;
     private const int MAX_LOG_ENTRIES = 50;
     private Queue<string> _logHistory = new Queue<string>();
     
@@ -40,7 +41,7 @@ public class CombatLogManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 전투 로그 초기화
+    /// 전투 로그 초기화 (Web 버전의 gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, ...) 연동)
     /// </summary>
     public void Initialize(VisualElement root)
     {
@@ -63,6 +64,66 @@ public class CombatLogManager : MonoBehaviour
             _logScrollView.name = "CombatLogScrollView";
             _logScrollView.style.flexGrow = 1;
             combatLogContainer.Add(_logScrollView);
+        }
+        
+        // 이벤트 버스 연결 (이벤트 구독)
+        _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+        if (_eventBus != null)
+        {
+            _eventBus.On(GameEvents.GOLD_CHANGED, OnGoldChanged);
+            _eventBus.On(GameEvents.ITEM_ACQUIRED, OnItemAcquired);
+            _eventBus.On(GameEvents.ITEM_DISCOVERED, OnItemDiscovered);
+            _eventBus.On(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
+            _eventBus.On(GameEvents.GEM_CHANGED, OnGemChanged);
+        }
+    }
+    
+    private void OnGoldChanged()
+    {
+        var state = ServiceLocator.Instance.Get<IGameState>();
+        if (state != null)
+        {
+            AddLog($"골드: {state.Player.gold}", LogType.Gold);
+        }
+    }
+    
+    private void OnItemAcquired()
+    {
+        AddLog("아이템을 획득했습니다!", LogType.Item);
+    }
+    
+    private void OnItemDiscovered()
+    {
+        AddLog("새로운 아이템을 발견했습니다!", LogType.Item);
+    }
+    
+    private void OnPlayerLevelUp()
+    {
+        var state = ServiceLocator.Instance.Get<IGameState>();
+        if (state != null)
+        {
+            AddLog($"레벨업! Lv.{state.Player.level}", LogType.Info);
+        }
+    }
+    
+    private void OnGemChanged()
+    {
+        var state = ServiceLocator.Instance.Get<IGameState>();
+        if (state != null)
+        {
+            AddLog($"보석: {state.Player.gems}", LogType.Item);
+        }
+    }
+    
+    private void OnDestroy()
+    {
+        if (_eventBus != null)
+        {
+            _eventBus.Off(GameEvents.GOLD_CHANGED, OnGoldChanged);
+            _eventBus.Off(GameEvents.ITEM_ACQUIRED, OnItemAcquired);
+            _eventBus.Off(GameEvents.ITEM_DISCOVERED, OnItemDiscovered);
+            _eventBus.Off(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
+            _eventBus.Off(GameEvents.GEM_CHANGED, OnGemChanged);
         }
     }
     
