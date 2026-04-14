@@ -54,17 +54,19 @@
 - [x] PLAYER_LEVEL_UP 이벤트 구독
 - [x] GEM_CHANGED 이벤트 구독
 
+### 8. Boss First-Clear Gem Rewards
+- [x] StatsData에 clearedBossStages 추가 (List<int>)
+- [x] HasClearedBossStage(), AddClearedBossStage() 메서드 추가
+- [x] GameState에 CalculateBossGemReward() 추가 (10층=5개, 20층=10개...)
+- [x] IGameState 인터페이스에 CalculateBossGemReward() 추가
+- [x] CombatSystem.ProcessVictory()에서 보스 첫 클리어 시 보석 보상
+
+### 9. hpDouble 버프
+- [x] GetTotalHealth()에 hpDouble 버프 적용
+
 ---
 
 ## 진행 중 (Pending)
-
-### Boss First-Clear Gem Rewards
-- **우선순위**: 높음
-- **필요 변경**:
-  - `StatsData`에 `clearedBossStages: HashSet<int>` 추가
-  - `GameState`에 `CalculateBossGemReward(int bossLevel)` 메서드 추가
-  - `CombatSystem.ProcessVictory()`에서 스테이지 클리어 시 보스 첫 클리어 체크
-  - Web 버전: `10층=5개, 20층=10개, ..., 100층=50개, 이후 50개 고정`
 
 ### Item Synthesis System
 - **우선순위**: 중간
@@ -91,6 +93,8 @@
 
 | 커밋 | 내용 |
 |------|------|
+| 0d3840c | Boss First-Clear Gem Rewards 구현 |
+| c184435 | Web to Unity 포팅 진행 상황 문서화 및 hpDouble 버프 |
 | d850caa | DropTable, CombatSystem, UIManager 동기화 |
 | 6169cec | CombatLogManager 이벤트 연동 |
 | 70c34b8 | Web 버전 밸런스 및 애니메이션 시스템 동기화 |
