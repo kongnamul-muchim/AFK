@@ -101,15 +101,16 @@ public class UIManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 플레이어 스탯 변경 시 HP 바, 레벨, EXP 업데이트
+    /// 플레이어 스탯 변경 시 HP 바, 레벨, EXP, SP 업데이트
     /// </summary>
     private void OnPlayerStatChanged()
     {
         if (_gameState == null) return;
-        Debug.Log($"[UIManager] 스탯 업데이트! HP={_gameState.Player.currentHP}/{_gameState.GetTotalHealth()}, Lv={_gameState.Player.level}");
+        Debug.Log($"[UIManager] 스탯 업데이트! HP={_gameState.Player.currentHP}/{_gameState.GetTotalHealth()}, Lv={_gameState.Player.level}, SP={_gameState.Player.statPoints}");
         UpdatePlayerLevel(_gameState.Player.level);
         UpdateHP(_gameState.Player.currentHP, _gameState.GetTotalHealth());
         UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
+        UpdateStatPoints(_gameState.Player.statPoints);
     }
     
     /// <summary>

@@ -433,21 +433,54 @@ public class MissionsUIClass : MonoBehaviour
     /// </summary>
     private void ClaimReward(string missionId)
     {
-        var missions = GetMissions();
-        var mission = missions.Find(m => m.id == missionId);
+        // 실제 게임 상태에서 미션 찾기
+        var dailyMissions = _gameState.DailyMissions;
+        int dailyIndex = dailyMissions.missions.FindIndex(m => m.id == missionId);
+        int weeklyIndex = dailyMissions.weeklyMissions.FindIndex(m => m.id == missionId);
         
-        if (mission == null || !mission.completed || mission.claimed) return;
+        bool isWeekly = false;
         
-        // 보상 지급
-        if (_gameState.Player != null)
+        if (dailyIndex < 0 && weeklyIndex < 0)
         {
-            _gameState.Player.statPoints += mission.reward.statPoints;
-            _gameState.Player.gems += mission.reward.gems;
+            return; // 미션을 찾을 수 없음
         }
         
-        mission.claimed = true;
+        isWeekly = weeklyIndex >= 0;
+        int targetIndex = isWeekly ? weeklyIndex : dailyIndex;
         
-        Debug.Log($"미션 보상 청구: {mission.name} - ⭐{mission.reward.statPoints}pt, 💎{mission.reward.gems}");
+        // 미션 가져오기 및 확인
+        var missionList = isWeekly ? dailyMissions.weeklyMissions : dailyMissions.missions;
+        var mission = missionList[targetIndex];
+        
+        if (!mission.completed || mission.claimed) return;
+        
+        // 보상 지급 (실제 gameState 사용)
+        if (_gameState.Player != null)
+        {
+            _gameState.Player.statPoints += 5; // 기본 보상
+            _gameState.Player.gems += 2;
+            if (isWeekly)
+            {
+                _gameState.Player.gems += 16; // 주간 미션 추가 보석
+            }
+        }
+        
+        // 보상 청구 완료 표시 - 실제 게임 상태 직접 수정
+        mission.claimed = true;
+        missionList[targetIndex] = mission;
+        
+        if (isWeekly)
+        {
+            dailyMissions.weeklyMissions = missionList;
+        }
+        else
+        {
+            dailyMissions.missions = missionList;
+        }
+        
+        _gameState.DailyMissions = dailyMissions;
+        
+        Debug.Log($"미션 보상 청구: {missionId} - ⭐5pt, 💎{(isWeekly ? 18 : 2)}");
         
         UpdateDisplay();
         RefreshMissionsGrid();
