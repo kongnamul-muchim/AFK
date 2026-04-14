@@ -978,6 +978,35 @@ public class CombatSystem : MonoBehaviour
             _gameState.Stage = stage2;
         }
         
+        // 보스 스테이지 첫 클리어 보석 보상 (Web 버전과 동일)
+        int currentStage = _gameState.Stage.currentStage;
+        bool isBossStage = (currentStage % 10 == 0);
+        
+        if (isBossStage)
+        {
+            // 이미 클리어한 보스인지 확인 (stats는 위에서 이미 선언됨)
+            if (!stats.HasClearedBossStage(currentStage))
+            {
+                // 처음 클리어하는 보스
+                stats.AddClearedBossStage(currentStage);
+                
+                int bossLevel = currentStage / 10; // 1=10층, 2=20층, ...
+                int gemReward = _gameState.CalculateBossGemReward(bossLevel);
+                
+                if (gemReward > 0)
+                {
+                    var playerData = _gameState.Player;
+                    playerData.gems += gemReward;
+                    _gameState.Player = playerData;
+                    // stats는 이미 위에서 할당됨
+                    
+                    _eventBus.Emit(GameEvents.GEM_CHANGED);
+                    
+                    _logger.Info($"보스 스테이지 {currentStage}층 첫 클리어! 보석 +{gemReward}");
+                }
+            }
+        }
+        
         // 이벤트 발생
         _eventBus.Emit(GameEvents.MONSTER_KILL);
         _eventBus.Emit(GameEvents.COMBAT_VICTORY);

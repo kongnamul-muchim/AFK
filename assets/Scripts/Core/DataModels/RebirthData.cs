@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 환생 데이터
@@ -46,6 +47,31 @@ public class StatsData
     public int totalBossKills;
     public long totalGoldEarned;
     public int totalItemsDiscovered;
+    
+    /// <summary>
+    /// 클리어한 보스 스테이지 목록 (보석 보상을 위해)
+    /// Web 버전의 clearedBossStages: Set<number>와 동일
+    /// </summary>
+    public List<int> clearedBossStages = new List<int>();
+    
+    /// <summary>
+    /// 보스 스테이지를 클리어했는지 확인
+    /// </summary>
+    public bool HasClearedBossStage(int stage)
+    {
+        return clearedBossStages.Contains(stage);
+    }
+    
+    /// <summary>
+    /// 보스 스테이지를 클리어한 것으로 표시
+    /// </summary>
+    public void AddClearedBossStage(int stage)
+    {
+        if (!clearedBossStages.Contains(stage))
+        {
+            clearedBossStages.Add(stage);
+        }
+    }
 }
 
 /// <summary>

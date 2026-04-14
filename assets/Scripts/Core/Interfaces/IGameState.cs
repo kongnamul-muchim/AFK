@@ -51,4 +51,5 @@ public interface IGameState
     float GetCritDamageMultiplier();
     float[] GetDropRates();
     bool AddExperience(long amount);
+    int CalculateBossGemReward(int bossLevel);
 }

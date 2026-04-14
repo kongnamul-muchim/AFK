@@ -272,4 +272,19 @@ public class GameState : MonoBehaviour, IGameState
     {
         return StatCalculator.CalculateDropRates(gemUpgrades);
     }
+    
+    /// <summary>
+    /// 보스 스테이지 첫 클리어 시 보석 보상 계산 (Web 버전과 동일)
+    /// 10층: 5개, 20층: 10개, 30층: 15개, ... 100층: 50개, 이후 50개 고정
+    /// </summary>
+    /// <param name="bossLevel">보스 레벨 (1=10층, 2=20층, ...)</param>
+    /// <returns>보석 보상량</returns>
+    public int CalculateBossGemReward(int bossLevel)
+    {
+        // 10층 단위 보스 첫 클리어 시 보석 보상 (높은 보상)
+        // 10층: 5개, 20층: 10개, 30층: 15개, ... 100층: 50개
+        // 100층 이후: 50개 고정
+        int baseReward = Mathf.Min(bossLevel * 5, 50);
+        return baseReward;
+    }
 }
