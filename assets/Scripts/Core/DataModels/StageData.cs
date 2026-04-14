@@ -9,10 +9,12 @@ public struct StageData
     public int currentStage;
     public int maxStage;
     public bool[] clearedStages;
+    public bool autoRepeat;
 
     public void Reset()
     {
         currentStage = 1;
+        autoRepeat = false;
     }
 }
 

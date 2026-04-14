@@ -390,7 +390,127 @@ public class InventorySystem : MonoBehaviour
     }
 
     // ========== 합성 시스템 ==========
-    
+
+    /// <summary>
+    /// Rarity 문자열을 int로 변환
+    /// </summary>
+    private int ParseRarity(string rarity)
+    {
+        switch (rarity?.ToLower())
+        {
+            case "common": return 0;
+            case "rare": return 1;
+            case "epic": return 2;
+            case "legendary": return 3;
+            case "mythic": return 4;
+            default: return 0;
+        }
+    }
+
+    /// <summary>
+    /// 다음 등급 아이템 데이터 (CSV 기반 조회)
+    /// </summary>
+    private class NextGradeItemResult
+    {
+        public string id;
+        public string name;
+        public int grade;
+        public string type;
+        public int rarity;
+    }
+
+    /// <summary>
+    /// CSV에서 다음 등급 아이템 찾기 (Web 버전과 동일 로직)
+    /// 1. 같은 이름 + 다음 등급 먼저 찾기
+    /// 2. 없으면 같은 타입 + 다음 등급 찾기 (베이스 아이템 전환)
+    /// </summary>
+    private NextGradeItemResult FindNextGradeItemFromCSV(string currentName, string itemType, int nextGrade)
+    {
+        var itemsData = DataLoader.Load("items");
+        
+        _logger.Debug($"[FindNextGradeItem] currentName=\"{currentName}\", type=\"{itemType}\", nextGrade={nextGrade}");
+        
+        // 1. 같은 이름 + 다음 등급 먼저 찾기
+        foreach (var row in itemsData)
+        {
+            if (row.TryGetValue("name", out var nameObj) && row.TryGetValue("grade", out var gradeObj))
+            {
+                string name = nameObj?.ToString();
+                if (int.TryParse(gradeObj?.ToString(), out int grade))
+                {
+                    if (name == currentName && grade == nextGrade)
+                    {
+                        _logger.Debug($"[FindNextGradeItem] Found same name: {name} grade {grade} (id:{row["id"]})");
+                        return new NextGradeItemResult
+                        {
+                            id = row["id"]?.ToString(),
+                            name = name,
+                            grade = grade,
+                            type = row["type"]?.ToString(),
+                            rarity = ParseRarity(row["rarity"]?.ToString())
+                        };
+                    }
+                }
+            }
+        }
+        
+        _logger.Debug($"[FindNextGradeItem] No same name found, searching by type...");
+        
+        // 2. 같은 타입 + 다음 등급 찾기 (베이스 아이템 전환)
+        foreach (var row in itemsData)
+        {
+            if (row.TryGetValue("type", out var typeObj) && row.TryGetValue("grade", out var gradeObj))
+            {
+                string type = typeObj?.ToString();
+                if (int.TryParse(gradeObj?.ToString(), out int grade))
+                {
+                    if (type == itemType && grade == nextGrade)
+                    {
+                        _logger.Debug($"[FindNextGradeItem] Found type match: {row["name"]} grade {grade} (id:{row["id"]})");
+                        return new NextGradeItemResult
+                        {
+                            id = row["id"]?.ToString(),
+                            name = row["name"]?.ToString(),
+                            grade = grade,
+                            type = type,
+                            rarity = ParseRarity(row["rarity"]?.ToString())
+                        };
+                    }
+                }
+            }
+        }
+        
+        // 찾기 실패
+        _logger.Warn($"[FindNextGradeItem] No item found! type=\"{itemType}\", grade={nextGrade}");
+        return null;
+    }
+
+    /// <summary>
+    /// 타입별 최대 등급 (CSV 기반 동적 계산 - Web 버전과 동일)
+    /// </summary>
+    private int GetMaxGradeByType(string itemType)
+    {
+        var itemsData = DataLoader.Load("items");
+        
+        int maxGrade = 10; // 기본값
+        
+        foreach (var row in itemsData)
+        {
+            if (row.TryGetValue("type", out var typeObj) && row.TryGetValue("grade", out var gradeObj))
+            {
+                string type = typeObj?.ToString();
+                if (type == itemType && int.TryParse(gradeObj?.ToString(), out int grade))
+                {
+                    if (grade > maxGrade)
+                        maxGrade = grade;
+                }
+            }
+        }
+        
+        _logger.Debug($"[GetMaxGradeByType] type={itemType}, maxGrade={maxGrade}");
+        return maxGrade;
+    }
+
     /// <summary>
     /// 아이템 합성
     /// </summary>
@@ -399,6 +519,14 @@ public class InventorySystem : MonoBehaviour
     /// <returns>성공 여부</returns>
     public bool Synthesize(string itemId, int grade)
     {
+        // 아이템 존재 확인
+        ItemData? existingItem = FindItem(itemId, grade);
+        if (existingItem == null)
+        {
+            _logger.Warn($"합성 불가 - 아이템 없음: {itemId}");
+            return false;
+        }
+        
         // 필요한 수량 확인 (5개)
         if (!HasItem(itemId, grade, GameConfig.SynthesisRequiredCount))
         {
@@ -406,13 +534,27 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
         
-        // 최대 등급 확인
-        int maxGrade = GetMaxGrade(itemId);
+        // 최대 등급 확인 (CSV 기반)
+        string itemType = existingItem.Value.type ?? "weapon";
+        int maxGrade = GetMaxGradeByType(itemType);
+        
         if (grade >= maxGrade)
         {
             _logger.Warn($"최대 등급 도달: {itemId} (최대: {maxGrade})");
             return false;
         }
+        
+        // 다음 등급 아이템 CSV에서 찾기
+        string currentName = existingItem.Value.name;
+        var nextItem = FindNextGradeItemFromCSV(currentName, itemType, grade + 1);
+        
+        if (nextItem == null)
+        {
+            _logger.Warn($"다음 등급 아이템을 찾을 수 없음: {currentName} grade {grade} -> {grade + 1}");
+            return false;
+        }
+        
+        _logger.Debug($"Found next grade: {nextItem.name} grade {nextItem.grade} (max: {maxGrade})");
         
         // 아이템 제거 (5개)
         for (int i = 0; i < GameConfig.SynthesisRequiredCount; i++)
@@ -420,16 +562,15 @@ public class InventorySystem : MonoBehaviour
             RemoveItem(itemId, grade);
         }
         
-        // 다음 등급 아이템 생성
-        string nextItemId = GetNextGradeItemId(itemId, grade + 1);
-        string nextItemName = GetNextGradeItemName(itemId, grade + 1);
-        
+        // 다음 등급 아이템 생성 (실제 CSV 데이터 기반)
         ItemData synthesizedItem = new ItemData
         {
-            id = nextItemId,
-            name = nextItemName,
-            grade = grade + 1,
-            count = 1
+            id = nextItem.id,
+            name = nextItem.name,
+            grade = nextItem.grade,
+            count = 1,
+            type = nextItem.type,
+            rarity = nextItem.rarity
         };
         
         // 인벤토리에 추가
@@ -439,12 +580,19 @@ public class InventorySystem : MonoBehaviour
         
         _logger.Info($"합성 성공: {synthesizedItem.name}");
         
+        // 발견 아이템 등록
+        if (!inventory.discoveredItems.Contains(synthesizedItem.id))
+        {
+            inventory.discoveredItems.Add(synthesizedItem.id);
+            _gameState.Inventory = inventory;
+        }
+        
         // 이벤트 발생
         _eventBus.Emit(GameEvents.ITEM_SYNTHESIZED);
         _eventBus.Emit(GameEvents.ITEM_ACQUIRED);
         
         // 연쇄 합성 확인
-        CheckChainSynthesis(nextItemId, grade + 1);
+        CheckChainSynthesis(nextItem.id, nextItem.grade);
         
         return true;
     }
@@ -494,7 +642,9 @@ public class InventorySystem : MonoBehaviour
             if (totalQuantity >= GameConfig.SynthesisRequiredCount)
             {
                 ItemData firstItem = kvp.Value[0];
-                int maxGrade = GetMaxGrade(firstItem.id);
+                // CSV 기반 최대 등급 조회
+                string itemType = firstItem.type ?? "weapon";
+                int maxGrade = GetMaxGradeByType(itemType);
                 
                 if (firstItem.grade < maxGrade)
                 {

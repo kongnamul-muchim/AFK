@@ -65,7 +65,7 @@ public static class GameConfig
     public static readonly float OfflineRewardMultiplier = 0.1f;
     
     /// <summary>최대 오프라인 보상 시간 (시간)</summary>
-    public static readonly float MaxOfflineTime = 8f;
+    public static readonly float MaxOfflineTime = 24f;
 
     // ========== 자동 전투 ==========
     
@@ -132,7 +132,7 @@ public static class GameConfig
     public static readonly int EquipmentSlots = 3;
     
     /// <summary>아이템 합성에 필요한 개수</summary>
-    public static readonly int SynthesisRequiredCount = 3;
+    public static readonly int SynthesisRequiredCount = 5;
 
     // ========== 미션 ==========
     

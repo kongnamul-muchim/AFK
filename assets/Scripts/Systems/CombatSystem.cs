@@ -202,6 +202,21 @@ public class CombatSystem : MonoBehaviour
         
         // 의존성 주입
         InjectDependencies();
+        
+        // GameState에서 autoRepeat 모드 복원
+        RestoreAutoRepeatMode();
+    }
+    
+    /// <summary>
+    /// GameState에서 autoRepeat 모드 복원 (저장/로드 후 호출)
+    /// </summary>
+    private void RestoreAutoRepeatMode()
+    {
+        if (_gameState != null)
+        {
+            _autoRepeatMode = _gameState.Stage.autoRepeat;
+            _logger.Debug($"autoRepeat 모드 복원: {_autoRepeatMode}");
+        }
     }
 
     private void OnDestroy()
@@ -446,6 +461,12 @@ public class CombatSystem : MonoBehaviour
     public void SetAutoRepeatMode(bool enabled)
     {
         _autoRepeatMode = enabled;
+        
+        // GameState에도 저장 (저장/로드 시 유지)
+        var stage = _gameState.Stage;
+        stage.autoRepeat = enabled;
+        _gameState.Stage = stage;
+        
         _logger.Info($"자동 반복 모드: {enabled}");
     }
 
