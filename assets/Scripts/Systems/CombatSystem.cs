@@ -355,10 +355,19 @@ public class CombatSystem : MonoBehaviour
                 if (_phaseTimer >= 2f && !_victoryNextStageCalled)
                 {
                     _victoryNextStageCalled = true;
-                    _logger.Debug($"VICTORY 페이즈 완료, 다음 스테이지로 이동");
+                    Debug.Log($"[VICTORY] 2초 경과! 다음 스테이지로. phaseTimer={_phaseTimer}, stage={_gameState.Stage.currentStage}");
                     
                     // 플레이어 HP 회복
                     _gameState.Player.currentHP = _gameState.GetTotalHealth();
+                    
+                    // 스테이지 증가
+                    int currentStage = _gameState.Stage.currentStage;
+                    int nextStage = currentStage + 1;
+                    var stageData = _gameState.Stage;
+                    stageData.currentStage = nextStage;
+                    stageData.maxStage = Mathf.Max(stageData.maxStage, nextStage);
+                    _gameState.Stage = stageData;
+                    Debug.Log($"[VICTORY] 스테이지 {currentStage} -> {nextStage}");
                     
                     // 새 전투 데이터 초기화 (MonsterData는 MOVING 50%에서 스폰되므로 여기서는 0 HP로)
                     var combatPhase = _gameState.CombatPhase;
@@ -368,9 +377,9 @@ public class CombatSystem : MonoBehaviour
                     _gameState.CombatPhase = combatPhase;
                     
                     // 직접 MOVING으로 전환
-                    _logger.Debug("VICTORY → MOVING 전환 시도");
+                    Debug.Log("[VICTORY] MOVING으로 전환");
                     ChangePhase(CombatPhase.MOVING);
-                    _logger.Debug($"VICTORY 후 _currentPhase: {_currentPhase}");
+                    Debug.Log($"[VICTORY] 전환 후 currentPhase={_currentPhase}");
                 }
                 break;
                 
