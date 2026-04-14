@@ -81,6 +81,15 @@
 - [x] 메뉴 버튼 크기 축소: USS에서 font-size 35px → 50px, padding 확대
 - [x] 스테이지 1에서 진행 안됨: CombatSystem VICTORY case에서 stage.currentStage 증가 로직 누락되어 있었음, 수정됨
 
+### 12. Web 버전과의 핵심 차이 분석 및 수정 (2026-04-14)
+- [x] 장비 슬롯 결정 방식: item.type을 직접 사용 (이름 파싱 방식 제거)
+- [x] GetSlotFromItemType() 추가: item.type ("weapon", "armor", "accessory", "boots") → EquipmentSlot 직접 매핑
+- [x] HP/공격력/방어력 계산식: Web 버전과 동일하게 비율 기반 보너스로 수정
+  - HP: baseHealth * (1 + hpBonusPercent/100)
+  - 공격력: baseAttack * (1 + atkBonusPercent/100)
+  - 방어력: baseDefense * (1 + defBonusPercent/100)
+- [x] UI 버튼 크기 확대: UpgradeUI/MissionsUI/GemShopUI 구매 버튼 22px → 32px
+
 ---
 
 ## 진행 중 (Pending)
@@ -102,7 +111,6 @@
 | Move Speed → Animation Timing | 미구현 | 고정 시간 사용 |
 | Tutorial System | 미구현 | UI 없음 |
 | Data Export/Import | 미구현 | localStorage 처리 |
-| Boots Equipment Slot | 다름 | Unity는 5슬롯, Web은 4슬롯 |
 
 ---
 
@@ -110,9 +118,11 @@
 
 | 커밋 | 내용 |
 |------|------|
+| c309122 | fix: Web 버전과 동일하게 장비 슬롯/HP계산/버튼크기 수정 |
 | 932275a | fix: VICTORY 페이즈에서 스테이지 증가 로직 누락 추가 |
 | d443ddf | style: 메뉴 버튼 크기 확대 (35px -> 50px, padding 확대) |
 | b3244fe | fix: 아이템 장착/카운트/골드 UI/장비슬롯/툴팁 관련 버그 수정 |
+| fc6ceb5 | docs: 2026-04-14 버그 수정 내용 추가 |
 | 9439cb0 | PlayerData attack/defense/health GameConfig.BasePlayer* 값으로 통일 |
 | 343dd76 | gold UI mismatch and not updating |
 | e0e07fb | 업그레이드 공격력이 데미지에 반영되도록 수정 |
