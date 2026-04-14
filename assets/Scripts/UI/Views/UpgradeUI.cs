@@ -339,7 +339,7 @@ public class UpgradeUIClass : MonoBehaviour
         {
             if (_currentTab == "gold")
             {
-                var gold = _gameState.Inventory.gold;
+                var gold = _gameState.Player.gold; // Player.gold 사용 (CombatSystem과 일치)
                 _upgradeGoldDisplay.text = $"💰 {gold:N0}";
                 _upgradeGoldDisplay.style.display = DisplayStyle.Flex;
             }

@@ -98,6 +98,7 @@ public class UIManager : MonoBehaviour
         EventBus.Instance.Off(GameEvents.GAME_LOADED, OnGameLoaded);
         EventBus.Instance.Off(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
         EventBus.Instance.Off(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
+        EventBus.Instance.Off(GameEvents.GOLD_CHANGED, OnGoldChanged);
     }
     
     /// <summary>
@@ -111,6 +112,15 @@ public class UIManager : MonoBehaviour
         UpdateHP(_gameState.Player.currentHP, _gameState.GetTotalHealth());
         UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
         UpdateStatPoints(_gameState.Player.statPoints);
+    }
+    
+    /// <summary>
+    /// 골드 변경 시 호출
+    /// </summary>
+    private void OnGoldChanged()
+    {
+        if (_gameState == null) return;
+        UpdateGold((int)_gameState.Player.gold);
     }
     
     /// <summary>
@@ -170,6 +180,7 @@ public class UIManager : MonoBehaviour
         // 플레이어 스탯 변경 이벤트 구독 (DI 완료 후)
         EventBus.Instance.On(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
         EventBus.Instance.On(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
+        EventBus.Instance.On(GameEvents.GOLD_CHANGED, OnGoldChanged);
     }
     
     /// <summary>
