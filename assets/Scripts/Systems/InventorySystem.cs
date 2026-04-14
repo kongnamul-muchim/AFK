@@ -154,6 +154,15 @@ public class InventorySystem : MonoBehaviour
         
         ItemData item = inventory.items[index];
         
+        // 카운트가 0 이하면 제거만 하고 리턴 (음수 방지)
+        if (item.count <= 0)
+        {
+            inventory.items.RemoveAt(index);
+            _gameState.Inventory = inventory;
+            _logger.Warn($"아이템 카운트 0 이하: {itemId}, 제거만 수행");
+            return false;
+        }
+        
         if (item.count > quantity)
         {
             item.count -= quantity;

@@ -23,6 +23,12 @@ public class InventoryUIClass : MonoBehaviour
     private Button _tabArmor;
     private Button _tabAccessory;
     private Button _tabBoots;
+    
+    // 장비 슬롯들
+    private VisualElement _weaponSlot;
+    private VisualElement _armorSlot;
+    private VisualElement _accessorySlot;
+    private VisualElement _bootsSlot;
 
     private void Awake()
     {
@@ -56,6 +62,21 @@ public class InventoryUIClass : MonoBehaviour
         // ScrollView와 아이템 컨테이너 찾기
         _scrollView = _root.Q<ScrollView>("InventoryScrollContainer");
         _inventoryContainer = _root.Q<VisualElement>("InventoryItems");
+        
+        // 장비 슬롯 찾기 (USS의 .equipment-slot 클래스로 찾아서 순서대로 저장)
+        var allSlots = _root.Query<VisualElement>(className: "equipment-slot").ToList();
+        if (allSlots.Count >= 4)
+        {
+            _weaponSlot = allSlots[0];
+            _armorSlot = allSlots[1];
+            _accessorySlot = allSlots[2];
+            _bootsSlot = allSlots[3];
+            Debug.Log($"장비 슬롯 발견: weapon={_weaponSlot != null}, armor={_armorSlot != null}, accessory={_accessorySlot != null}, boots={_bootsSlot != null}");
+        }
+        else
+        {
+            Debug.LogWarning($"장비 슬롯 부족: {allSlots.Count}개 (4개 기대)");
+        }
         
         // ScrollView 설정
         if (_scrollView != null)
@@ -95,6 +116,100 @@ public class InventoryUIClass : MonoBehaviour
         if (_tabAccessory != null) _tabAccessory.RemoveFromClassList("active");
         if (_tabBoots != null) _tabBoots.RemoveFromClassList("active");
     }
+    
+    /// <summary>
+    /// 장비 슬롯 UI 업데이트 (장착된 아이템 표시)
+    /// </summary>
+    private void UpdateEquipmentSlots()
+    {
+        if (_gameState == null) return;
+        
+        // 장비 목록 가져오기
+        var equipment = _gameState.Inventory.equipment;
+        
+        // 각 슬롯에 대해
+        UpdateSingleEquipmentSlot(_weaponSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Weapon), "⚔️", "무기");
+        UpdateSingleEquipmentSlot(_armorSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Armor), "🛡️", "방어구");
+        UpdateSingleEquipmentSlot(_accessorySlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Accessory), "💍", "액세서리");
+        UpdateSingleEquipmentSlot(_bootsSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Accessory + 1), "👢", "부츠");
+    }
+    
+    /// <summary>
+    /// 개별 장비 슬롯 업데이트
+    /// </summary>
+    private void UpdateSingleEquipmentSlot(VisualElement slot, EquipmentData? equipment, string defaultEmoji, string slotName)
+    {
+        if (slot == null) return;
+        
+        // 슬롯 안의 모든 자식 제거 (아이템 아이콘, 텍스트 등)
+        slot.Clear();
+        
+        if (equipment.HasValue)
+        {
+            var eq = equipment.Value;
+            
+            // 아이템 아이콘 (이모지)
+            var iconLabel = new Label(defaultEmoji);
+            iconLabel.style.fontSize = 60;
+            iconLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            slot.Add(iconLabel);
+            
+            // 아이템 이름
+            var nameLabel = new Label(eq.name);
+            nameLabel.style.fontSize = 16;
+            nameLabel.style.color = Color.white;
+            nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            nameLabel.style.marginTop = 5;
+            slot.Add(nameLabel);
+            
+            // 등급 표시 (색상)
+            string[] gradeNames = GetGradeNames();
+            Color gradeColor = GetGradeColor(eq.grade);
+            var gradeLabel = new Label(gradeNames[Mathf.Min(eq.grade, gradeNames.Length - 1)]);
+            gradeLabel.style.fontSize = 14;
+            gradeLabel.style.color = gradeColor;
+            gradeLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            slot.Add(gradeLabel);
+            
+            // 슬롯 스타일 - 장착됨 상태
+            slot.style.borderLeftColor = gradeColor;
+            slot.style.borderRightColor = gradeColor;
+            slot.style.borderTopColor = gradeColor;
+            slot.style.borderBottomColor = gradeColor;
+            slot.style.borderLeftWidth = 3;
+            slot.style.borderRightWidth = 3;
+            slot.style.borderTopWidth = 3;
+            slot.style.borderBottomWidth = 3;
+            
+            Debug.Log($"장비 슬롯 업데이트: {slotName} = {eq.name} (Grade {eq.grade})");
+        }
+        else
+        {
+            // 빈 슬롯 - 기본 이모지
+            var iconLabel = new Label(defaultEmoji);
+            iconLabel.style.fontSize = 50;
+            iconLabel.style.color = new Color(0.5f, 0.5f, 0.5f);
+            iconLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            slot.Add(iconLabel);
+            
+            var nameLabel = new Label($"빈 {slotName}");
+            nameLabel.style.fontSize = 14;
+            nameLabel.style.color = new Color(0.4f, 0.4f, 0.4f);
+            nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            nameLabel.style.marginTop = 5;
+            slot.Add(nameLabel);
+            
+            // 슬롯 스타일 - 빈 상태
+            slot.style.borderLeftColor = new Color(0.3f, 0.3f, 0.3f);
+            slot.style.borderRightColor = new Color(0.3f, 0.3f, 0.3f);
+            slot.style.borderTopColor = new Color(0.3f, 0.3f, 0.3f);
+            slot.style.borderBottomColor = new Color(0.3f, 0.3f, 0.3f);
+            slot.style.borderLeftWidth = 2;
+            slot.style.borderRightWidth = 2;
+            slot.style.borderTopWidth = 2;
+            slot.style.borderBottomWidth = 2;
+        }
+    }
 
     /// <summary>
     /// 인벤토리 리스트 새로고침 (자동 줄바꿈 그리드)
@@ -132,6 +247,9 @@ public class InventoryUIClass : MonoBehaviour
                 _inventoryContainer.Add(slot);
             }
         }
+        
+        // 장비 슬롯 업데이트 (장착된 아이템 표시)
+        UpdateEquipmentSlots();
         
         Debug.Log($"인벤토리 그리드 업데이트: {groupedItems.Count}개 그룹 ({_currentTab})");
     }
@@ -338,6 +456,30 @@ public class InventoryUIClass : MonoBehaviour
             case "legendary": return 3;
             case "mythic": return 4;
             default: return 0;
+        }
+    }
+    
+    /// <summary>
+    /// 등급 이름 배열 반환 (0=일반, 1=고급, 2=희귀, 3=영웅, 4=전설)
+    /// </summary>
+    public string[] GetGradeNames()
+    {
+        return new[] { "일반", "고급", "희귀", "영웅", "전설" };
+    }
+    
+    /// <summary>
+    /// 등급별 색상 반환
+    /// </summary>
+    private Color GetGradeColor(int grade)
+    {
+        switch (grade)
+        {
+            case 0: return new Color(0.61f, 0.64f, 0.69f); // 일반
+            case 1: return new Color(0.23f, 0.51f, 0.96f); // 고급
+            case 2: return new Color(0.66f, 0.33f, 0.97f); // 희귀
+            case 3: return new Color(0.96f, 0.62f, 0.04f); // 영웅
+            case 4: return new Color(0.93f, 0.27f, 0.27f); // 전설
+            default: return Color.white;
         }
     }
     

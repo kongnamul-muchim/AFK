@@ -439,7 +439,7 @@ public class UpgradeUIClass : MonoBehaviour
             var level = GetGoldUpgradeLevel(kvp.Key);
             var isMaxLevel = kvp.Value.maxLevel.HasValue && level >= kvp.Value.maxLevel.Value;
             var cost = isMaxLevel ? 0 : CalculateGoldCost(kvp.Key, level);
-            var hasCurrency = _gameState.Inventory.gold >= cost;
+            var hasCurrency = _gameState.Player.gold >= cost;
             var currentValue = kvp.Value.getValue(level);
             var nextValue = isMaxLevel ? "" : kvp.Value.getValue(level + 1);
             
@@ -1064,13 +1064,17 @@ public class UpgradeUIClass : MonoBehaviour
         var level = GetGoldUpgradeLevel(key);
         var cost = CalculateGoldCost(key, level);
         
-        if (_gameState.Inventory.gold < cost) return;
+        if (_gameState.Player.gold < cost) return;
         if (_statDefinitions[key].maxLevel.HasValue && level >= _statDefinitions[key].maxLevel.Value) return;
         
-        _gameState.Inventory.gold -= cost;
+        _gameState.Player.gold -= cost;
         _gameState.Player.goldUpgrades[key] = level + 1;
         
         Debug.Log($"골드 업그레이드 구매: {key} → Lv.{level + 1}");
+        
+        // 골드 변경 이벤트 발생 (HUD 업데이트를 위해)
+        EventBus.Instance?.Emit(GameEvents.GOLD_CHANGED);
+        
         UpdateDisplay();
         RefreshUpgradeGrid();
     }

@@ -52,10 +52,23 @@ public class TooltipManager : MonoBehaviour
             tooltipGrade.style.color = GetGradeColor(grade);
         }
         
-        // 툴팁 위치 설정
-        _itemTooltip.style.left = position.x;
-        _itemTooltip.style.top = position.y;
+        // 툴팁을 화면 중앙 근처에 표시 (로컬 좌표를-world 좌표로 변환)
+        // UIToolkit에서 position은 로컬 좌표이므로, 부모 기준 오프셋 추가
+        var parent = _itemTooltip.parent;
+        if (parent != null)
+        {
+            var parentRect = parent.worldBound;
+            _itemTooltip.style.left = parentRect.x + position.x + 20; // 20px 오프셋
+            _itemTooltip.style.top = parentRect.y + position.y + 20;
+        }
+        else
+        {
+            _itemTooltip.style.left = position.x + 20;
+            _itemTooltip.style.top = position.y + 20;
+        }
+        
         _itemTooltip.style.display = DisplayStyle.Flex;
+        Debug.Log($"[Tooltip] 표시: {itemName}, 위치: ({position.x}, {position.y})");
     }
     
     /// <summary>
