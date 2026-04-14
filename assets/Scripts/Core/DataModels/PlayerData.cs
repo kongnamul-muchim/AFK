@@ -48,17 +48,17 @@ public class PlayerData
     /// </summary>
     public void Initialize()
     {
-        // 기본 스탯 초기화
+        // 기본 스탯 초기화 (GameConfig 값 사용 - Web 버전과 일치)
         level = 1;
         experience = 0;
-        currentHP = 100;
-        maxHP = 100;
-        attack = 15;
-        defense = 8;
-        health = 200;
-        speed = 200;
-        critChance = 0.05f;
-        critDamage = 1.5f;
+        currentHP = GameConfig.BasePlayerHP;
+        maxHP = GameConfig.BasePlayerHP;
+        attack = GameConfig.BasePlayerAttack;
+        defense = GameConfig.BasePlayerDefense;
+        health = GameConfig.BasePlayerHP * 2; // Web 버전과 동일하게 HP = Base * 2
+        speed = GameConfig.BasePlayerSpeed;
+        critChance = GameConfig.BasePlayerCritChance;
+        critDamage = GameConfig.BasePlayerCritDamage;
         gold = 0;
         gems = 0;
         rebirthCount = 0;
@@ -108,9 +108,10 @@ public class PlayerData
         experience = 0;
         currentHP = maxHP;
         gold = 0; // 환생 시 골드 초기화
-        attack = 15;
-        defense = 8;
-        health = 200;
+        // GameConfig 값 사용 (Web 버전과 일치)
+        attack = GameConfig.BasePlayerAttack;
+        defense = GameConfig.BasePlayerDefense;
+        health = GameConfig.BasePlayerHP * 2;
         rebirthCount++;
         statPoints = 0;
         
