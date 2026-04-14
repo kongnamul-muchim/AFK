@@ -8,10 +8,14 @@ public static class StatCalculator
 {
     /// <summary>
     /// 총 공격력 계산 (기본 + 장비 + 버프)
+    /// Web 버전과 동일하게 goldUpgrades, statUpgrades 포함
     /// </summary>
     public static float CalculateTotalAttack(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
-        float total = player.attack;
+        // 기본 공격력 (업그레이드 포함)
+        float baseAttack = CalculateBaseAttack(player);
+        
+        float total = baseAttack;
         
         // 장비 공격력 추가
         foreach (var equip in inventory.equipment)
@@ -27,13 +31,77 @@ public static class StatCalculator
         
         return total;
     }
+    
+    /// <summary>
+    /// 기본 공격력 계산 (Web 버전의 derivedStats 계산 방식)
+    /// goldUpgrades + statUpgrades 포함
+    /// </summary>
+    public static float CalculateBaseAttack(PlayerData player)
+    {
+        int goldAttack = player.goldUpgrades.ContainsKey("attack") ? player.goldUpgrades["attack"] : 0;
+        int statAttack = player.statUpgrades.ContainsKey("attack") ? player.statUpgrades["attack"] : 0;
+        
+        int attackValue = CalcUpgradeValue(goldAttack) + CalcUpgradeValue(statAttack);
+        return GameConfig.BasePlayerAttack + attackValue * 2;
+    }
+    
+    /// <summary>
+    /// 기본 방어력 계산
+    /// </summary>
+    public static float CalculateBaseDefense(PlayerData player)
+    {
+        int goldDefense = player.goldUpgrades.ContainsKey("defense") ? player.goldUpgrades["defense"] : 0;
+        int statDefense = player.statUpgrades.ContainsKey("defense") ? player.statUpgrades["defense"] : 0;
+        
+        int defenseValue = CalcUpgradeValue(goldDefense) + CalcUpgradeValue(statDefense);
+        return GameConfig.BasePlayerDefense + defenseValue * 1;
+    }
+    
+    /// <summary>
+    /// 기본 HP 계산
+    /// </summary>
+    public static float CalculateBaseHealth(PlayerData player)
+    {
+        int goldHp = player.goldUpgrades.ContainsKey("hp") ? player.goldUpgrades["hp"] : 0;
+        int statHp = player.statUpgrades.ContainsKey("hp") ? player.statUpgrades["hp"] : 0;
+        
+        int hpValue = CalcUpgradeValue(goldHp) + CalcUpgradeValue(statHp);
+        return GameConfig.BasePlayerHP + hpValue * 10;
+    }
+    
+    /// <summary>
+    /// 업그레이드 효율값 계산 (Web 버전의 calcUpgradeValue와 동일)
+    /// </summary>
+    private static int CalcUpgradeValue(int level)
+    {
+        if (level < 10) return level;
+        if (level < 20) return 10 + Mathf.RoundToInt((level - 10) * 1.5f);
+        if (level < 30) return 10 + 15 + Mathf.RoundToInt((level - 20) * 2.0f);
+        if (level < 40) return 10 + 15 + 20 + Mathf.RoundToInt((level - 30) * 2.5f);
+        return 10 + 15 + 20 + 25 + Mathf.RoundToInt((level - 40) * 3.0f);
+    }
+    
+    /// <summary>
+    /// 기본 크리티컬 확률 계산
+    /// </summary>
+    public static float CalculateCritChance(PlayerData player)
+    {
+        int goldCrit = player.goldUpgrades.ContainsKey("critChance") ? player.goldUpgrades["critChance"] : 0;
+        int statCrit = player.statUpgrades.ContainsKey("critChance") ? player.statUpgrades["critChance"] : 0;
+        
+        float critValue = CalcUpgradeValue(goldCrit) + CalcUpgradeValue(statCrit);
+        return 0.05f + critValue * 0.002f; // 0.5% per upgrade level
+    }
 
     /// <summary>
     /// 총 방어력 계산
+    /// Web 버전과 동일하게 goldUpgrades, statUpgrades 포함
     /// </summary>
     public static float CalculateTotalDefense(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
-        float total = player.defense;
+        float baseDefense = CalculateBaseDefense(player);
+        
+        float total = baseDefense;
         
         foreach (var equip in inventory.equipment)
         {
@@ -48,10 +116,13 @@ public static class StatCalculator
 
     /// <summary>
     /// 총 체력 계산
+    /// Web 버전과 동일하게 goldUpgrades, statUpgrades 포함
     /// </summary>
     public static float CalculateTotalHealth(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
-        float total = player.health;
+        float baseHealth = CalculateBaseHealth(player);
+        
+        float total = baseHealth;
         
         foreach (var equip in inventory.equipment)
         {
