@@ -73,6 +73,14 @@
 - [x] 골드 UI 불일치: UIManager에 GOLD_CHANGED 이벤트 구독, UpgradeUI는 Player.gold 사용
 - [x] PlayerData attack=15 → GameConfig.BasePlayerAttack=10로 통일
 
+### 11. 버그 수정 (2026-04-14 추가)
+- [x] 아이템 장착 시 카운트 -1 버그: RemoveItem에 count <= 0 체크 추가
+- [x] 아이템 장착 시 장착UI 미표시: UpdateEquipmentSlots 메서드 추가, 장비 슬롯 UI 갱신
+- [x] Tooltip 위치 문제: TooltipManager.ShowItemTooltip에서 좌표 계산 방식 개선 (parent.worldBound 사용)
+- [x] 골드 획득 시 업그레이드 버튼 미활성화: UpgradeUI가 Player.gold 사용하도록 수정, PurchaseGoldUpgrade에서 GOLD_CHANGED 이벤트 발생
+- [x] 메뉴 버튼 크기 축소: USS에서 font-size 35px → 50px, padding 확대
+- [x] 스테이지 1에서 진행 안됨: CombatSystem VICTORY case에서 stage.currentStage 증가 로직 누락되어 있었음, 수정됨
+
 ---
 
 ## 진행 중 (Pending)
@@ -102,6 +110,9 @@
 
 | 커밋 | 내용 |
 |------|------|
+| 932275a | fix: VICTORY 페이즈에서 스테이지 증가 로직 누락 추가 |
+| d443ddf | style: 메뉴 버튼 크기 확대 (35px -> 50px, padding 확대) |
+| b3244fe | fix: 아이템 장착/카운트/골드 UI/장비슬롯/툴팁 관련 버그 수정 |
 | 9439cb0 | PlayerData attack/defense/health GameConfig.BasePlayer* 값으로 통일 |
 | 343dd76 | gold UI mismatch and not updating |
 | e0e07fb | 업그레이드 공격력이 데미지에 반영되도록 수정 |
