@@ -218,11 +218,19 @@ public class GameState : MonoBehaviour, IGameState
     }
     
     /// <summary>
-    /// 현재 플레이어의 총 체력 계산 (StatCalculator로 위임)
+    /// 현재 플레이어의 총 체력 계산 (StatCalculator로 위임, hpDouble 버프 적용)
     /// </summary>
     public float GetTotalHealth()
     {
-        return StatCalculator.CalculateTotalHealth(player, inventory, gemUpgrades, rebirth);
+        float baseHealth = StatCalculator.CalculateTotalHealth(player, inventory, gemUpgrades, rebirth);
+        
+        // hpDouble 버프 적용 (Web 버전과 동일)
+        if (DailyMissionSystem.Instance.HasActiveBuff("hpDouble"))
+        {
+            baseHealth *= 2.0f;
+        }
+        
+        return baseHealth;
     }
 
     /// <summary>
