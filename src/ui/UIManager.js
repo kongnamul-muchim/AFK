@@ -485,7 +485,8 @@ class UIManager {
      * 오프라인 보상 상세 표시 (새 버전)
      */
     showOfflineRewardDetailed(data) {
-        const { hours, kills, gold, exp, equipment } = data;
+        const { hours, gold, exp, items, equipment } = data;
+        const drops = items || equipment || [];
         
         // 오프라인 시간
         const durationEl = document.getElementById('offline-duration');
@@ -493,10 +494,10 @@ class UIManager {
             durationEl.textContent = `${hours.toFixed(1)}시간`;
         }
         
-        // 처치 수
+        // 아이템 수
         const killsEl = document.getElementById('offline-kills');
         if (killsEl) {
-            killsEl.textContent = `${kills.toLocaleString()}마리`;
+            killsEl.textContent = drops.length > 0 ? `${drops.length}개 획득` : '없음';
         }
         
         // 골드
@@ -516,20 +517,19 @@ class UIManager {
         if (equipmentListEl) {
             equipmentListEl.innerHTML = '';
             
-            if (equipment && equipment.length > 0) {
+            if (drops.length > 0) {
                 const equipmentSection = document.getElementById('offline-equipment-section');
                 if (equipmentSection) {
                     equipmentSection.style.display = 'block';
                 }
                 
                 const equipmentHeader = document.createElement('p');
-                equipmentHeader.textContent = `드롭된 장비 (${equipment.length}개):`;
+                equipmentHeader.textContent = `드롭된 장비 (${drops.length}개):`;
                 equipmentListEl.appendChild(equipmentHeader);
                 
-                // 최대 10개만 표시
-                const displayCount = Math.min(equipment.length, 10);
+                const displayCount = Math.min(drops.length, 10);
                 for (let i = 0; i < displayCount; i++) {
-                    const equip = equipment[i];
+                    const equip = drops[i];
                     const itemDiv = document.createElement('div');
                     itemDiv.className = `offline-item ${equip.rarity}`;
                     itemDiv.innerHTML = `
@@ -540,10 +540,10 @@ class UIManager {
                     equipmentListEl.appendChild(itemDiv);
                 }
                 
-                if (equipment.length > 10) {
+                if (drops.length > 10) {
                     const moreDiv = document.createElement('div');
                     moreDiv.className = 'offline-item-more';
-                    moreDiv.textContent = `...외 ${equipment.length - 10}개`;
+                    moreDiv.textContent = `...외 ${drops.length - 10}개`;
                     equipmentListEl.appendChild(moreDiv);
                 }
             }

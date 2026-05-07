@@ -127,131 +127,17 @@ class Game {
                 }
                 
                 // 오프라인 보상 계산 (UI 표시는 나중에)
-                const offlineSeconds = (Date.now() - savedData.lastSaveTime) / 1000;
+                const offlineSeconds = this.offlineRewards.calculateOfflineSeconds();
                 gameLogger.info(`Offline seconds: ${offlineSeconds}, condition: ${offlineSeconds > 60}`);
-                if (offlineSeconds > 60) {
-                    // 1. 오프라인 시간 계산
-                    const hours = Math.min(offlineSeconds / 3600, gameConfig.offline.maxHours || 24);
-                    
-                    // 2. 최대 스테이지 가져오기 (환생 시 초기화됨)
-                    const maxStage = this.gameState.stage.maxStage || 1;
-                    
-                    // 3. 처치 수 계산 (최대 스테이지 몬스터 기준)
-                    const attackSpeedMs = 100; // 기본 공격 속도
-                    const baseInterval = 100; // combat.attackInterval
-                    const actualIntervalMs = baseInterval / (attackSpeedMs / 100);
-                    const attacksPerSecond = 1000 / actualIntervalMs;
-                    
-                    // 몬스터 HP/골드/경험치 (스테이지 기반)
-                    // monsters.csv에서 최대 스테이지 몬스터 정보 가져오기
-                    const monsters = gameDataLoader.get('monsters');
-                    let monsterData = null;
-                    if (monsters && monsters.length > 0) {
-                        // maxStage에 해당하는 몬스터 찾기 (없으면 첫 번째 몬스터)
-                        monsterData = monsters.find(m => m.stage === maxStage) || monsters[0];
-                    }
-                    
-                    const monsterHpBase = monsterData ? monsterData.hp_base : 50;
-                    const monsterHpScale = monsterData ? monsterData.hp_scale : 15;
-                    const monsterHp = monsterHpBase + (maxStage - 1) * monsterHpScale;
-                    
-                    const goldPerKillBase = monsterData ? monsterData.gold_reward : 5;
-                    const goldPerKillScale = monsterData ? monsterData.gold_scale : 1;
-                    const goldPerKill = goldPerKillBase + (maxStage - 1) * goldPerKillScale;
-                    
-                    const expPerKillBase = monsterData ? monsterData.exp_reward : 10;
-                    const expPerKillScale = monsterData ? monsterData.exp_scale : 2;
-                    const expPerKill = expPerKillBase + (maxStage - 1) * expPerKillScale;
-                    
-                    const playerDamage = this.gameState.player.derivedStats.attack || 10;
-                    const attacksPerKill = Math.ceil(Math.max(1, monsterHp / playerDamage));
-                    const killsPerSecond = attacksPerSecond / attacksPerKill;
-                    const kills = Math.floor(killsPerSecond * offlineSeconds);
-                    
-                    // 4. 골드/경험치 계산
-                    const totalGold = Math.floor(kills * goldPerKill);
-                    const totalExp = Math.floor(kills * expPerKill);
-                    
-                    // 5. 장비 드롭 계산 (최대 스테이지에 해당하는 등급의 장비)
-                    const maxDropsPerHour = 12.5;
-                    const maxDrops = Math.floor(maxDropsPerHour * hours);
-                    const variance = 0.8 + Math.random() * 0.4;
-                    const actualDrops = Math.floor(maxDrops * variance);
-                    
-                    // 6. 골드/경험치 1/10 배율 적용 (온라인의 10%)
-                    // 장비 드롭은 그대로 유지
-                    let rewardScale = 0.1;
-                    
-                    // 보석 업그레이드: 오프라인 보상 증가 (2%/레벨) - 해금 필요
-                    if (this.gameState.gemUpgrades.offlineBonus.unlocked) {
-                        const offlineBonus = this.gameState.gemUpgrades.offlineBonus.level;
-                        rewardScale *= (1 + offlineBonus * 0.02);
-                    }
-                    
-                    const scaledKills = Math.max(1, Math.floor(kills * rewardScale));
-                    const scaledGold = Math.max(1, Math.floor(totalGold * rewardScale));
-                    const scaledExp = Math.max(1, Math.floor(totalExp * rewardScale));
-                    
-                    const equipmentDrops = [];
-                    const items = gameDataLoader.get('items');
-                    if (items) {
-                        // 보석 업그레이드: 드롭 확률 업 (등급별 차등 적용) - 해금 필요
-                        const dropRateLevel = this.gameState.gemUpgrades.dropRate.unlocked ? this.gameState.gemUpgrades.dropRate.level : 0;
-                        const dropRates = {
-                            mythic: 0.005 + (dropRateLevel * 0.001),      // 전설: 0.5% → 2.5%
-                            legendary: 0.025 + (dropRateLevel * 0.004),    // 영웅: 2.5% → 10.5%
-                            epic: 0.07 + (dropRateLevel * 0.004),          // 희귀: 7% → 15%
-                            rare: 0.20 + (dropRateLevel * 0.002),          // 고급: 20% → 24%
-                            common: 0.50 + (dropRateLevel * -0.011)        // 일반: 50% → 28%
-                        };
-                        
-                        for (let i = 0; i < actualDrops; i++) {
-                            const rarityRoll = Math.random();
-                            let rarity;
-                            if (rarityRoll < dropRates.mythic) rarity = 'mythic';
-                            else if (rarityRoll < dropRates.mythic + dropRates.legendary) rarity = 'legendary';
-                            else if (rarityRoll < dropRates.mythic + dropRates.legendary + dropRates.epic) rarity = 'epic';
-                            else if (rarityRoll < dropRates.mythic + dropRates.legendary + dropRates.epic + dropRates.rare) rarity = 'rare';
-                            else rarity = 'common';
-                            
-                            // 최대 스테이지에 해당하는 등급의 장비 (maxStage에 맞는 grade)
-                            // grade 1-5는 stage 1-5, grade 6-10은 stage 6-10, ...
-                            const targetGrade = Math.min(maxStage, 50); // 최대 50
-                            const gradeRange = 5; // ±5 범위
-                            const minGrade = Math.max(1, targetGrade - gradeRange);
-                            const maxGrade = Math.min(50, targetGrade + gradeRange);
-                            
-                            const candidates = items.filter(item => 
-                                (item.type === 'weapon' || item.type === 'armor' || 
-                                 item.type === 'boots' || item.type === 'accessory') &&
-                                item.grade >= minGrade && item.grade <= maxGrade &&
-                                item.rarity === rarity
-                            );
-                            
-                            if (candidates.length > 0) {
-                                const selected = candidates[Math.floor(Math.random() * candidates.length)];
-                                equipmentDrops.push({
-                                    itemId: selected.id,
-                                    name: selected.name,
-                                    grade: selected.grade,
-                                    rarity: selected.rarity,
-                                    type: selected.type,
-                                    stats: selected.stats
-                                });
-                            }
-                        }
-                    }
-                    
-                    // 오프라인 보상 데이터 저장 (UI 표시는 나중에)
+                if (offlineSeconds > 60 && this.offlineRewards.canClaimRewards()) {
+                    const reward = this.offlineRewards.calculateReward(offlineSeconds);
                     offlineRewardData = {
-                        hours,
-                        kills: scaledKills,
-                        gold: scaledGold,
-                        exp: scaledExp,
-                        equipment: equipmentDrops
+                        hours: reward.hours,
+                        gold: reward.gold,
+                        exp: reward.exp,
+                        items: reward.items
                     };
-                    
-                    gameLogger.info(`Offline reward calculated: ${hours.toFixed(1)}h, ${kills} kills, ${totalGold} gold, ${totalExp} exp, ${equipmentDrops.length} equipment`);
+                    gameLogger.info(`Offline reward calculated: ${reward.hours.toFixed(1)}h, ${reward.gold} gold, ${reward.exp} exp, ${reward.items.length} items`);
                 }
                 
                 gameLogger.info('Game loaded from save (inventory reset)');
@@ -355,7 +241,7 @@ class Game {
                     this.gameState.addGold(offlineRewardData.gold);
                     this.gameState.addExp(offlineRewardData.exp);
                     
-                    offlineRewardData.equipment.forEach(equip => {
+                    (offlineRewardData.items || offlineRewardData.equipment || []).forEach(item => {
                         this.gameState.inventory.addItem(equip);
                     });
                     
