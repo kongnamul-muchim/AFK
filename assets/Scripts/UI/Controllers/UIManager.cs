@@ -94,6 +94,8 @@ public class UIManager : MonoBehaviour
         EventBus.Instance.On(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
         EventBus.Instance.On(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
         EventBus.Instance.On(GameEvents.GOLD_CHANGED, OnGoldChanged);
+        EventBus.Instance.On(GameEvents.ITEM_EQUIPPED, OnEquipmentChanged);
+        EventBus.Instance.On(GameEvents.ITEM_UNEQUIPPED, OnEquipmentChanged);
     }
     
     private void OnDisable()
@@ -103,6 +105,8 @@ public class UIManager : MonoBehaviour
         EventBus.Instance.Off(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
         EventBus.Instance.Off(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
         EventBus.Instance.Off(GameEvents.GOLD_CHANGED, OnGoldChanged);
+        EventBus.Instance.Off(GameEvents.ITEM_EQUIPPED, OnEquipmentChanged);
+        EventBus.Instance.Off(GameEvents.ITEM_UNEQUIPPED, OnEquipmentChanged);
     }
     
     private void OnStageEntered()
@@ -110,18 +114,24 @@ public class UIManager : MonoBehaviour
         if (_gameState == null) return;
         UpdateStage(_gameState.Stage.currentStage);
     }
+
+    private void OnEquipmentChanged()
+    {
+        _inventoryUI?.RefreshInventoryGrid();
+    }
     
     /// <summary>
-    /// 플레이어 스탯 변경 시 HP 바, 레벨, EXP, SP 업데이트
+    /// 플레이어 스탯 변경 시 HP 바, 레벨, EXP, SP, 골드 업데이트
     /// </summary>
     private void OnPlayerStatChanged()
     {
         if (_gameState == null) return;
-        // Debug.Log($"[UIManager] 스탯 업데이트! HP={_gameState.Player.currentHP}/{_gameState.GetTotalHealth()}, Lv={_gameState.Player.level}, SP={_gameState.Player.statPoints}");
         UpdatePlayerLevel(_gameState.Player.level);
         UpdateHP(_gameState.Player.currentHP, _gameState.GetTotalHealth());
         UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
         UpdateStatPoints(_gameState.Player.statPoints);
+        UpdateGold((int)_gameState.Player.gold);
+        UpdateStatisticsDisplay();
     }
     
     /// <summary>
@@ -415,7 +425,7 @@ public class UIManager : MonoBehaviour
         if (_gameState == null) return;
         
         UpdatePlayerLevel(_gameState.Player.level);
-        UpdateHP(_gameState.Player.currentHP, _gameState.Player.maxHP);
+        UpdateHP(_gameState.Player.currentHP, _gameState.GetTotalHealth());
         UpdateGold((int)_gameState.Player.gold);
         UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
         UpdateStage(_gameState.Stage.currentStage);
@@ -794,11 +804,17 @@ public class UIManager : MonoBehaviour
         var statsAtkValue = _root.Q<Label>("StatsAtkValue");
         var statsDefValue = _root.Q<Label>("StatsDefValue");
         var statsHPValue = _root.Q<Label>("StatsHPValue");
+        var statsGoldValue = _root.Q<Label>("StatsGoldValue");
+        var statsGemsValue = _root.Q<Label>("StatsGemsValue");
+        var statsKillsValue = _root.Q<Label>("StatsKillsValue");
         
         if (statsLevelValue != null) statsLevelValue.text = _gameState.Player.level.ToString();
         if (statsAtkValue != null) statsAtkValue.text = _gameState.GetTotalAttack().ToString();
         if (statsDefValue != null) statsDefValue.text = _gameState.GetTotalDefense().ToString();
-        if (statsHPValue != null) statsHPValue.text = _gameState.Player.currentHP.ToString();
+        if (statsHPValue != null) statsHPValue.text = _gameState.GetTotalHealth().ToString();
+        if (statsGoldValue != null) statsGoldValue.text = _gameState.Player.gold.ToString("N0");
+        if (statsGemsValue != null) statsGemsValue.text = _gameState.Player.gems.ToString();
+        if (statsKillsValue != null) statsKillsValue.text = _gameState.Stats.totalKills.ToString("N0");
     }
     
     // ========== 인벤토리 UI 관련 (Infinity Scroll) ==========

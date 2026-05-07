@@ -25,6 +25,11 @@ public class InventoryUIClass : MonoBehaviour
     private Button _tabAccessory;
     private Button _tabBoots;
     
+    private Label _bonusAtk;
+    private Label _bonusDef;
+    private Label _bonusHP;
+    private Label _inventoryGold;
+    
     // 장비 슬롯들
     private VisualElement _weaponSlot;
     private VisualElement _armorSlot;
@@ -94,6 +99,12 @@ public class InventoryUIClass : MonoBehaviour
             _scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
         }
         
+        // 장비 보너스 합계 라벨
+        _bonusAtk = _root.Q<Label>("BonusAtk");
+        _bonusDef = _root.Q<Label>("BonusDef");
+        _bonusHP = _root.Q<Label>("BonusHP");
+        _inventoryGold = _root.Q<Label>("InventoryGold");
+        
         // 합성 버튼 찾기
         _synthesizeAllButton = _root.Q<Button>("BatchSynthesizeBtn");
         if (_synthesizeAllButton != null)
@@ -159,6 +170,29 @@ public class InventoryUIClass : MonoBehaviour
         UpdateSingleEquipmentSlot(_armorSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Armor), "🛡️", "방어구");
         UpdateSingleEquipmentSlot(_accessorySlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Accessory), "💍", "액세서리");
         UpdateSingleEquipmentSlot(_bootsSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Boots), "👢", "부츠");
+        
+        UpdateBonusDisplay();
+    }
+
+    /// <summary>
+    /// 장비 보너스 합계 + 골드 표시 갱신
+    /// </summary>
+    private void UpdateBonusDisplay()
+    {
+        if (_gameState == null) return;
+        
+        float totalAtk = 0, totalDef = 0, totalHp = 0;
+        foreach (var eq in _gameState.Inventory.equipment)
+        {
+            totalAtk += eq.attackBonus;
+            totalDef += eq.defenseBonus;
+            totalHp += eq.healthBonus;
+        }
+        
+        if (_bonusAtk != null) _bonusAtk.text = $"공격력: +{totalAtk}%";
+        if (_bonusDef != null) _bonusDef.text = $"방어력: +{totalDef}%";
+        if (_bonusHP != null) _bonusHP.text = $"체력: +{totalHp}%";
+        if (_inventoryGold != null) _inventoryGold.text = _gameState.Player.gold.ToString("N0");
     }
     
     /// <summary>

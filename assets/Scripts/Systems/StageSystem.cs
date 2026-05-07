@@ -72,8 +72,8 @@ public class StageSystem : MonoBehaviour
     {
         if (stageNumber < 1)
         {
-            _logger.Error($"잘못된 스테이지 번호: {stageNumber}");
-            return;
+            _logger.Warn($"잘못된 스테이지 번호: {stageNumber}, 1로 보정");
+            stageNumber = 1;
         }
         
         var stage = _gameState.Stage;

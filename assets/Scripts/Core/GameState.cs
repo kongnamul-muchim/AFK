@@ -120,6 +120,7 @@ public class GameState : MonoBehaviour, IGameState
     {
         player = new PlayerData();
         stage = new StageData();
+        stage.Reset();
         combatPhase = new CombatPhaseData();
         inventory = new InventoryData();
         settings = new SettingsData();
