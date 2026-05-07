@@ -223,25 +223,10 @@ public class MissionsUIClass : MonoBehaviour
         var sourceList = _currentTab == "daily" ? dailyMissions.missions : dailyMissions.weeklyMissions;
         
         // 보상 금액을 DailyMissionSystem에서 계산
-        System.Func<string, long> getDailyReward = (type) =>
-        {
-            var stage = Mathf.Max(1, _gameState.Stage.maxStage);
-            return type switch
-            {
-                "Kill" => 100 + stage * 10,
-                "ClearStage" => 200 + stage * 20,
-                "CollectGold" => 50 + stage * 5,
-                "Synthesize" => 150,
-                "Rebirth" => 500,
-                _ => 100
-            };
-        };
+
         
         foreach (var sysMission in sourceList)
         {
-            long rewardValue = _currentTab == "daily"
-                ? getDailyReward(sysMission.type)
-                : getDailyReward(sysMission.type) * 8;
             
             missions.Add(new MissionDisplayData
             {
@@ -252,7 +237,7 @@ public class MissionsUIClass : MonoBehaviour
                 target = sysMission.target,
                 completed = sysMission.completed,
                 claimed = sysMission.claimed,
-                reward = new MissionDisplayReward { statPoints = (int)(rewardValue / 100), gems = _currentTab == "weekly" ? 16 : 0 }
+                reward = new MissionDisplayReward { statPoints = sysMission.rewardStatPoints, gems = sysMission.rewardGems }
             });
         }
         
@@ -397,59 +382,16 @@ public class MissionsUIClass : MonoBehaviour
     /// <summary>
     /// 미션 보상 청구
     /// </summary>
+    /// <summary>
+    /// 미션 보상 청구 (DailyMissionSystem에 위임, Web 동일)
+    /// </summary>
     private void ClaimReward(string missionId)
     {
-        // 실제 게임 상태에서 미션 찾기
-        var dailyMissions = _gameState.DailyMissions;
-        int dailyIndex = dailyMissions.missions.FindIndex(m => m.id == missionId);
-        int weeklyIndex = dailyMissions.weeklyMissions.FindIndex(m => m.id == missionId);
-        
-        bool isWeekly = false;
-        
-        if (dailyIndex < 0 && weeklyIndex < 0)
+        if (DailyMissionSystem.Instance.ClaimReward(missionId))
         {
-            return; // 미션을 찾을 수 없음
+            UpdateDisplay();
+            RefreshMissionsGrid();
         }
-        
-        isWeekly = weeklyIndex >= 0;
-        int targetIndex = isWeekly ? weeklyIndex : dailyIndex;
-        
-        // 미션 가져오기 및 확인
-        var missionList = isWeekly ? dailyMissions.weeklyMissions : dailyMissions.missions;
-        var mission = missionList[targetIndex];
-        
-        if (!mission.completed || mission.claimed) return;
-        
-        // 보상 지급 (실제 gameState 사용)
-        if (_gameState.Player != null)
-        {
-            _gameState.Player.statPoints += 5; // 기본 보상
-            _gameState.Player.gems += 2;
-            if (isWeekly)
-            {
-                _gameState.Player.gems += 16; // 주간 미션 추가 보석
-            }
-        }
-        
-        // 보상 청구 완료 표시 - 실제 게임 상태 직접 수정
-        mission.claimed = true;
-        missionList[targetIndex] = mission;
-        
-        if (isWeekly)
-        {
-            dailyMissions.weeklyMissions = missionList;
-        }
-        else
-        {
-            dailyMissions.missions = missionList;
-        }
-        
-        _gameState.DailyMissions = dailyMissions;
-        
-        // Debug.Log($"미션 보상 청구: {missionId} - ⭐5pt, 💎{(isWeekly ? 18 : 2)}");
-        
-        UpdateDisplay();
-        RefreshMissionsGrid();
     }
     
     private void OnDestroy()

@@ -153,7 +153,7 @@ public class PlayerData
         experience += amount;
         
         // Web 버전과 동일: 1.2배 스케일
-        long expNeeded = 100 * (long)Math.Pow(1.2, level - 1);
+        long expNeeded = GameConfig.ExpToLevelUp * (long)Math.Pow(1.2, level - 1);
         bool leveledUp = false;
         
         while (experience >= expNeeded)
@@ -161,7 +161,7 @@ public class PlayerData
             experience -= expNeeded;
             level++;
             statPoints += 1;
-            expNeeded = 100 * (long)Math.Pow(1.2, level - 1); // 다음 레벨업에 필요한 EXP 재계산
+            expNeeded = GameConfig.ExpToLevelUp * (long)Math.Pow(1.2, level - 1); // 다음 레벨업에 필요한 EXP 재계산
             leveledUp = true;
             
             // HP 완전 회복 (Web 버전과 동일)

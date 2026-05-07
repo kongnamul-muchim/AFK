@@ -10,12 +10,14 @@ public struct StageData
     public int maxStage;
     public bool[] clearedStages;
     public bool autoRepeat;
+    public int killsInStage;
 
     public void Reset()
     {
         currentStage = 1;
         maxStage = 1;
         autoRepeat = false;
+        killsInStage = 0;
     }
 }
 

@@ -38,6 +38,14 @@ public class TooltipManager : MonoBehaviour
     /// </summary>
     public void ShowItemTooltip(string itemName, int grade, Vector2 position)
     {
+        ShowItemTooltip(itemName, grade, position, 0, 0, 0);
+    }
+    
+    /// <summary>
+    /// 아이템 툴팁 표시 (스탯 포함, Web 버전과 동일)
+    /// </summary>
+    public void ShowItemTooltip(string itemName, int grade, Vector2 position, int attackBonus, int defenseBonus, int hpBonus)
+    {
         if (_itemTooltip == null) return;
         
         var tooltipName = _root.Q<Label>("TooltipName");
@@ -53,13 +61,25 @@ public class TooltipManager : MonoBehaviour
             tooltipGrade.style.color = GetGradeColor(grade);
         }
         
-        // 툴팁을 화면 중앙 근처에 표시 (로컬 좌표를-world 좌표로 변환)
-        // UIToolkit에서 position은 로컬 좌표이므로, 부모 기준 오프셋 추가
+        // 스탯 표시 (Web 버전과 동일)
+        var statsContainer = _root.Q<VisualElement>("TooltipStats");
+        if (statsContainer != null)
+        {
+            statsContainer.Clear();
+            if (attackBonus != 0)
+                statsContainer.Add(CreateStatLabel($"⚔️ 공격력: +{attackBonus}%"));
+            if (defenseBonus != 0)
+                statsContainer.Add(CreateStatLabel($"🛡️ 방어력: +{defenseBonus}%"));
+            if (hpBonus != 0)
+                statsContainer.Add(CreateStatLabel($"❤️ 체력: +{hpBonus}%"));
+        }
+        
+        // 툴팁 위치 설정
         var parent = _itemTooltip.parent;
         if (parent != null)
         {
             var parentRect = parent.worldBound;
-            _itemTooltip.style.left = parentRect.x + position.x + 20; // 20px 오프셋
+            _itemTooltip.style.left = parentRect.x + position.x + 20;
             _itemTooltip.style.top = parentRect.y + position.y + 20;
         }
         else
@@ -69,7 +89,14 @@ public class TooltipManager : MonoBehaviour
         }
         
         _itemTooltip.style.display = DisplayStyle.Flex;
-        // Debug.Log($"[Tooltip] 표시: {itemName}, 위치: ({position.x}, {position.y})");
+    }
+    
+    private Label CreateStatLabel(string text)
+    {
+        var label = new Label(text);
+        label.style.fontSize = 18;
+        label.style.color = Color.white;
+        return label;
     }
     
     /// <summary>

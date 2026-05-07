@@ -20,6 +20,27 @@ public class GemShopUIClass : MonoBehaviour
     // 상점 아이템 정의 (Web 버전과 동일)
     private List<ShopItemDefinition> _shopItems;
     
+    private void OnEnable()
+    {
+        if (EventBus.Instance != null)
+        {
+            EventBus.Instance.On(GameEvents.GEM_CHANGED, OnGemChanged);
+        }
+    }
+    
+    private void OnDisable()
+    {
+        if (EventBus.Instance != null)
+        {
+            EventBus.Instance.Off(GameEvents.GEM_CHANGED, OnGemChanged);
+        }
+    }
+    
+    private void OnGemChanged()
+    {
+        _root.schedule.Execute(() => UpdateDisplay());
+    }
+    
     private void Awake()
     {
         try

@@ -5,5 +5,6 @@ public class ItemStatsJson
 {
     public int attackBonus;
     public int defenseBonus;
-    public int healthBonus;
+    public int hpBonus;
+    public int moveSpeed;
 }

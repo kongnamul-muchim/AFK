@@ -87,3 +87,29 @@ public class GemUpgradeData
     public int dropRateLevel;
     public int statBonusLevel;
 }
+
+/// <summary>
+/// 환생 업그레이드 통합 효과 (Web getCombinedEffects)
+/// </summary>
+[Serializable]
+public struct RebirthEffects
+{
+    public float missionBonus;
+    public float goldMultiplier;
+    public float dropRateMultiplier;
+    public float expMultiplier;
+    public float offlineMultiplier;
+    public float bossGoldMultiplier;
+    public float synthesisBonusChance;
+    public float stageSkipChance;
+    public float upgradeDiscount;
+
+    public static RebirthEffects Default => new RebirthEffects
+    {
+        goldMultiplier = 1f,
+        dropRateMultiplier = 1f,
+        expMultiplier = 1f,
+        offlineMultiplier = 1f,
+        bossGoldMultiplier = 1f
+    };
+}

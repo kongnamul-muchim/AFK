@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 미션 타입 열거형
@@ -46,6 +47,60 @@ public class DailyMissionSystem : MonoBehaviour
 
     // ========== 의존성 주입 ==========
     
+
+    // ========== 미션 템플릿 (Web DailyMissionSystem.js 기준) ==========
+
+    private class MissionTemplate
+    {
+        public MissionType type;
+        public int target;
+        public int statPoints;
+        public int gems;
+        public string name;
+        public string description;
+    }
+
+    private readonly MissionTemplate[] easyTemplates = new[]
+    {
+        new MissionTemplate { type = MissionType.Kill, target = 30, statPoints = 1, gems = 2,
+            name = "몬스터 퇴치 (Easy)", description = "몬스터 {0}마리 처치" },
+        new MissionTemplate { type = MissionType.ClearStage, target = 3, statPoints = 1, gems = 2,
+            name = "스테이지 돌파 (Easy)", description = "스테이지 {0}클리어" },
+        new MissionTemplate { type = MissionType.CollectGold, target = 1000, statPoints = 1, gems = 2,
+            name = "골드 수집 (Easy)", description = "골드 {0} 획득" },
+        new MissionTemplate { type = MissionType.Synthesize, target = 1, statPoints = 1, gems = 2,
+            name = "아이템 합성 (Easy)", description = "아이템 {0}회 합성" },
+    };
+
+    private readonly MissionTemplate[] hardTemplates = new[]
+    {
+        new MissionTemplate { type = MissionType.Kill, target = 60, statPoints = 2, gems = 3,
+            name = "몬스터 섬멸 (Hard)", description = "몬스터 {0}마리 처치" },
+        new MissionTemplate { type = MissionType.ClearStage, target = 5, statPoints = 2, gems = 3,
+            name = "스테이지 정복 (Hard)", description = "스테이지 {0}클리어" },
+        new MissionTemplate { type = MissionType.CollectGold, target = 2000, statPoints = 2, gems = 3,
+            name = "황금 사냥 (Hard)", description = "골드 {0} 획득" },
+        new MissionTemplate { type = MissionType.Synthesize, target = 3, statPoints = 2, gems = 3,
+            name = "합성 마스터 (Hard)", description = "아이템 {0}회 합성" },
+    };
+
+    private static System.Random _rng = new System.Random();
+
+    private T[] Shuffle<T>(T[] array)
+    {
+        var result = (T[])array.Clone();
+        int n = result.Length;
+        while (n > 1)
+        {
+            n--;
+            int k = _rng.Next(n + 1);
+            var tmp = result[k];
+            result[k] = result[n];
+            result[n] = tmp;
+        }
+        return result;
+    }
+
     private IGameState _gameState;
     private IEventBus _eventBus;
     private IGameLogger _logger;
@@ -112,12 +167,13 @@ public class DailyMissionSystem : MonoBehaviour
         var dailyMissions = _gameState.DailyMissions;
         dailyMissions.missions.Clear();
         
-        // 5개 미션 생성
-        AddMission(dailyMissions.missions, MissionType.Kill, GetDailyTarget(MissionType.Kill), GetDailyReward(MissionType.Kill));
-        AddMission(dailyMissions.missions, MissionType.ClearStage, GetDailyTarget(MissionType.ClearStage), GetDailyReward(MissionType.ClearStage));
-        AddMission(dailyMissions.missions, MissionType.CollectGold, GetDailyTarget(MissionType.CollectGold), GetDailyReward(MissionType.CollectGold));
-        AddMission(dailyMissions.missions, MissionType.Synthesize, GetDailyTarget(MissionType.Synthesize), GetDailyReward(MissionType.Synthesize));
-        AddMission(dailyMissions.missions, MissionType.Kill, GetDailyTarget(MissionType.Kill) * 2, GetDailyReward(MissionType.Kill) * 2);
+        // 2 easy + 1 hard (Web 동일)
+        var easy = Shuffle(easyTemplates);
+        var hard = Shuffle(hardTemplates);
+        foreach (var t in easy.Take(2).Concat(hard.Take(1)))
+        {
+            AddMissionFromTemplate(dailyMissions.missions, t);
+        }
         
         dailyMissions.lastReset = DateTime.UtcNow.Ticks;
         _gameState.DailyMissions = dailyMissions;
@@ -133,10 +189,22 @@ public class DailyMissionSystem : MonoBehaviour
         var dailyMissions = _gameState.DailyMissions;
         dailyMissions.weeklyMissions.Clear();
         
-        // 3개 미션 생성 (일일의 5배 난이도)
-        AddMission(dailyMissions.weeklyMissions, MissionType.Kill, GetDailyTarget(MissionType.Kill) * 5, GetWeeklyReward(MissionType.Kill));
-        AddMission(dailyMissions.weeklyMissions, MissionType.ClearStage, GetDailyTarget(MissionType.ClearStage) * 5, GetWeeklyReward(MissionType.ClearStage));
-        AddMission(dailyMissions.weeklyMissions, MissionType.CollectGold, GetDailyTarget(MissionType.CollectGold) * 5, GetWeeklyReward(MissionType.CollectGold));
+        // 2 easy + 1 hard, 주간 보정 (Web 동일)
+        var easy = Shuffle(easyTemplates);
+        var hard = Shuffle(hardTemplates);
+        foreach (var t in easy.Take(2).Concat(hard.Take(1)))
+        {
+            var weeklyTemplate = new MissionTemplate
+            {
+                type = t.type,
+                target = t.target * 5,
+                statPoints = t.statPoints * 8,
+                gems = t.gems * 8,
+                name = t.name + " (주간)",
+                description = t.description
+            };
+            AddMissionFromTemplate(dailyMissions.weeklyMissions, weeklyTemplate);
+        }
         
         dailyMissions.weeklyLastReset = DateTime.UtcNow.Ticks;
         _gameState.DailyMissions = dailyMissions;
@@ -155,6 +223,22 @@ public class DailyMissionSystem : MonoBehaviour
             completed = false,
             claimed = false,
             reward = reward.ToString()
+        });
+    }
+
+    private void AddMissionFromTemplate(List<MissionData> missionList, MissionTemplate t)
+    {
+        missionList.Add(new MissionData
+        {
+            id = $"{t.type}_{Guid.NewGuid().ToString().Substring(0, 8)}",
+            type = t.type.ToString(),
+            target = t.target,
+            progress = 0,
+            completed = false,
+            claimed = false,
+            reward = "0",
+            rewardStatPoints = t.statPoints,
+            rewardGems = t.gems
         });
     }
 
@@ -308,20 +392,21 @@ public class DailyMissionSystem : MonoBehaviour
                 return false;
             }
             
-            // 보상 지급
-            long reward = GetDailyReward((MissionType)Enum.Parse(typeof(MissionType), mission.type));
+            // 보상 지급 (Web 동일: statPoints + gems)
             var player = _gameState.Player;
-            player.gold += reward;
+            player.statPoints += mission.rewardStatPoints;
+            player.gems += mission.rewardGems;
             _gameState.Player = player;
             
             mission.claimed = true;
             dailyMissions.missions[index] = mission;
             _gameState.DailyMissions = dailyMissions;
             
-            _logger.Info($"일일 미션 보상 청구: 골드 +{reward}");
+            _logger.Info($"일일 미션 보상 청구: 스탯 +{mission.rewardStatPoints}pt, 보석 +{mission.rewardGems}");
             
             _eventBus.Emit(GameEvents.DAILY_MISSION_CLAIMED);
-            _eventBus.Emit(GameEvents.GOLD_CHANGED);
+            _eventBus.Emit(GameEvents.GEM_CHANGED);
+            _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
             
             return true;
         }
@@ -337,24 +422,21 @@ public class DailyMissionSystem : MonoBehaviour
                 return false;
             }
             
-            // 주간 보상 지급 (보석 + 골드)
-            long goldReward = GetWeeklyReward((MissionType)Enum.Parse(typeof(MissionType), mission.type));
-            int gemReward = 16; // 기본 보석 16개
-            
+            // 주간 보상 지급 (Web 동일: statPoints + gems)
             var player = _gameState.Player;
-            player.gold += goldReward;
-            player.gems += gemReward;
+            player.statPoints += mission.rewardStatPoints;
+            player.gems += mission.rewardGems;
             _gameState.Player = player;
             
             mission.claimed = true;
             dailyMissions.weeklyMissions[index] = mission;
             _gameState.DailyMissions = dailyMissions;
             
-            _logger.Info($"주간 미션 보상 청구: 골드 +{goldReward}, 보석 +{gemReward}");
+            _logger.Info($"주간 미션 보상 청구: 스탯 +{mission.rewardStatPoints}pt, 보석 +{mission.rewardGems}");
             
             _eventBus.Emit(GameEvents.WEEKLY_MISSION_CLAIMED);
-            _eventBus.Emit(GameEvents.GOLD_CHANGED);
             _eventBus.Emit(GameEvents.GEM_CHANGED);
+            _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
             
             return true;
         }

@@ -348,4 +348,96 @@ public class RebirthSystem : MonoBehaviour
                gemUpgrades.dropRateLevel +
                gemUpgrades.statBonusLevel;
     }
+
+    /// <summary>
+    /// 환생 업그레이드 통합 효과 계산 (Web getCombinedEffects)
+    /// </summary>
+    public RebirthEffects GetCombinedEffects()
+    {
+        var effects = new RebirthEffects();
+        var upgrades = _gameState.Rebirth.upgrades.ToDictionary();
+
+        foreach (var kvp in upgrades)
+        {
+            int level = kvp.Value;
+            if (level <= 0) continue;
+
+            switch (kvp.Key)
+            {
+                case "dailyMissionBonus":
+                    effects.missionBonus += level * 10;
+                    break;
+                case "goldDouble":
+                    effects.goldMultiplier *= (1 + level * 0.1f);
+                    break;
+                case "dropRateIncrease":
+                    effects.dropRateMultiplier *= (1 + level * 0.1f);
+                    break;
+                case "expDouble":
+                    effects.expMultiplier *= (1 + level * 0.1f);
+                    break;
+                case "offlineBonus":
+                    effects.offlineMultiplier *= (1 + level * 0.1f);
+                    break;
+                case "bossGoldBonus":
+                    effects.bossGoldMultiplier *= (1 + level * 0.1f);
+                    break;
+                case "synthesisMaster":
+                    effects.synthesisBonusChance += level * 0.1f;
+                    break;
+                case "stageSkip":
+                    effects.stageSkipChance += level * 0.01f;
+                    break;
+                case "upgradeDiscount":
+                    effects.upgradeDiscount += level * 0.02f;
+                    break;
+                case "expTriple":
+                    effects.expMultiplier *= (1 + level * 0.1f);
+                    break;
+                case "goldTriple":
+                    effects.goldMultiplier *= (1 + level * 0.1f);
+                    break;
+            }
+        }
+
+        return effects;
+    }
+
+    /// <summary>
+    /// 숨겨진 업그레이드 해금 가능 여부 (Web: 모든 일반 업그레이드 최대 레벨)
+    /// </summary>
+    public bool IsHiddenUpgradeUnlocked()
+    {
+        var upgrades = _gameState.Rebirth.upgrades;
+        string[] nonHidden = { "dailyMissionBonus", "goldDouble", "dropRateIncrease",
+            "expDouble", "offlineBonus", "bossGoldBonus", "synthesisMaster", "stageSkip", "upgradeDiscount" };
+        int[] maxLevels = { 10, 10, 10, 10, 10, 10, 10, 10, 10 };
+
+        for (int i = 0; i < nonHidden.Length; i++)
+        {
+            if (!upgrades.ContainsKey(nonHidden[i]) || upgrades[nonHidden[i]] < maxLevels[i])
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 환생 업그레이드 구매 (Web PurchaseRebirthUpgrade)
+    /// </summary>
+    public bool PurchaseRebirthUpgrade(string key)
+    {
+        var rebirth = _gameState.Rebirth;
+        if (!rebirth.upgrades.ContainsKey(key)) return false;
+
+        int level = rebirth.upgrades[key];
+        int cost = (key == "expTriple" || key == "goldTriple") ? 2 : 1;
+        if (rebirth.bonusPoints < cost) return false;
+
+        rebirth.bonusPoints -= cost;
+        rebirth.upgrades[key] = level + 1;
+        _gameState.Rebirth = rebirth;
+
+        _eventBus.Emit(GameEvents.REBIRTH_PERFORMED);
+        return true;
+    }
 }

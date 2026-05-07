@@ -86,7 +86,7 @@ public class TutorialSystem : MonoBehaviour
         if (_eventBus == null) return;
 
         // 몬스터 처치
-        _eventBus.On(GameEvents.MONSTER_KILLED, () => CheckCondition("kill_count"));
+        _eventBus.On(GameEvents.MONSTER_KILL, () => CheckCondition("kill_count"));
 
         // 레벨업
         _eventBus.On(GameEvents.PLAYER_LEVEL_UP, () => CheckCondition("level"));
@@ -95,7 +95,7 @@ public class TutorialSystem : MonoBehaviour
         _eventBus.On(GameEvents.ITEM_SYNTHESIZED, () => CheckCondition("synthesize"));
 
         // 보스 처치 (스테이지가 10의 배수에서 승리)
-        _eventBus.On(GameEvents.STAGE_CLEARED, () =>
+        _eventBus.On(GameEvents.STAGE_CLEAR, () =>
         {
             if (_gameState.Stage.currentStage % 10 == 0)
                 CheckCondition("boss_defeat");
@@ -141,7 +141,7 @@ public class TutorialSystem : MonoBehaviour
         switch (conditionType)
         {
             case "kill_count":
-                return _gameState.Stats.kills;
+                return _gameState.Stats.totalKills;
             case "level":
                 return _gameState.Player.level;
             case "boss_defeat":
@@ -250,7 +250,7 @@ public class TutorialSystem : MonoBehaviour
 
         // UI 숨김
         UIManager.Instance?.HideTutorial();
-        CombatLogManager.Instance?.AddLog(CombatLogManager.LogType.System, "튜토리얼이 완료되었습니다!");
+        CombatLogManager.Instance?.AddLog("튜토리얼이 완료되었습니다!");
 
         _logger.Info("튜토리얼 완료");
     }

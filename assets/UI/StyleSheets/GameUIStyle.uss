@@ -16,6 +16,11 @@
     --color-gold: #fbbf24;
 }
 
+/* 기본 텍스트 색상 (Web 버전과 동일) */
+Label {
+    color: var(--color-text-primary);
+}
+
 /* 로딩 화면 */
 .loading-screen {
     position: absolute;
@@ -165,13 +170,25 @@
 }
 
 .auto-repeat-btn {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     background-color: var(--color-bg-tertiary);
     border-radius: 12px;
-    font-size: 36px;
+    font-size: 42px;
     justify-content: center;
     align-items: center;
+    border-width: 2px;
+    border-color: transparent;
+}
+
+.auto-repeat-btn:hover {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-accent);
+}
+
+.auto-repeat-btn.active {
+    background-color: var(--color-accent-dark);
+    border-color: var(--color-accent);
 }
 
 .right-info {
@@ -396,8 +413,8 @@
 
 .slot-label {
     color: var(--color-text-secondary);
-    font-size: 18;
-    margin-bottom: 5;
+    font-size: 18px;
+    margin-bottom: 5px;
     -unity-text-align: middle-center;
 }
 
@@ -427,7 +444,7 @@
 
 .bonus-stat {
     color: var(--color-text-secondary);
-    font-size: 16;
+    font-size: 16px;
     -unity-text-align: middle-center;
 }
 
@@ -797,6 +814,7 @@
 .offline-content {
     flex-direction: column;
     gap: 30px;
+    padding: 50px;
 }
 
 .offline-time {
@@ -807,10 +825,15 @@
 
 .offline-rewards {
     flex-direction: column;
-    gap: 10px;
-    padding: 30px;
+    gap: 15px;
+    padding: 40px;
     background-color: var(--color-bg-tertiary);
     border-radius: 12px;
+}
+
+.offline-rewards Label {
+    font-size: 32px;
+    color: var(--color-text-primary);
 }
 
 .offline-equipment {
@@ -860,7 +883,7 @@
 }
 
 .stats-section-title {
-    font-size: 24;
+    font-size: 24px;
     -unity-font-style: bold;
     color: var(--color-accent);
     padding: 10px 16px;

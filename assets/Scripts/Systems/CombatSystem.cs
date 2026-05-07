@@ -378,32 +378,22 @@ public class CombatSystem : MonoBehaviour
                 // 승리 후 2초 대기 후 다음 스테이지로
                 if (_phaseTimer >= 2f && !_victoryNextStageCalled)
                 {
-                    _victoryNextStageCalled = true;
-                    // Debug.Log($"[VICTORY] 2초 경과! 다음 스테이지로. phaseTimer={_phaseTimer}, stage={_gameState.Stage.currentStage}");
-                    
+                                        _victoryNextStageCalled = true;
+
                     // 플레이어 HP 회복
                     _gameState.Player.currentHP = _gameState.GetTotalHealth();
-                    
-                    // 스테이지 증가
-                    int currentStage = _gameState.Stage.currentStage;
-                    int nextStage = currentStage + 1;
-                    var stageData = _gameState.Stage;
-                    stageData.currentStage = nextStage;
-                    stageData.maxStage = Mathf.Max(stageData.maxStage, nextStage);
-                    _gameState.Stage = stageData;
-                    // Debug.Log($"[VICTORY] 스테이지 {currentStage} -> {nextStage}");
-                    
-                    // 새 전투 데이터 초기화 (MonsterData는 MOVING 50%에서 스폰되므로 여기서는 0 HP로)
+
+                    // 킬 카운트 증가 및 스테이지 진행 체크 (Web killMonster/advanceStage)
+                    AdvanceKillCounter();
+
+                    // 새 전투 데이터 초기화
                     var combatPhase = _gameState.CombatPhase;
                     combatPhase.phase = 0;
                     combatPhase.timer = 0;
                     combatPhase.monsterState = new MonsterData();
                     _gameState.CombatPhase = combatPhase;
-                    
-                    // 스테이지 진입 이벤트
+
                     _eventBus.Emit(GameEvents.STAGE_ENTERED);
-                    
-                    // 직접 MOVING으로 전환
                     ChangePhase(CombatPhase.MOVING);
                     // Debug.Log($"[VICTORY] 전환 후 currentPhase={_currentPhase}");
                 }
@@ -485,6 +475,63 @@ public class CombatSystem : MonoBehaviour
     /// 자동 반복 모드 여부
     /// </summary>
     public bool IsAutoRepeatMode() => _autoRepeatMode;
+
+    /// <summary>
+    /// 킬 카운트 증가 및 스테이지 진행 체크 (Web killMonster/advanceStage)
+    /// 임계값: 보스 스테이지 = 1킬, 일반 = 10킬
+    /// </summary>
+    private void AdvanceKillCounter()
+    {
+        var stageData = _gameState.Stage;
+        int currentStage = stageData.currentStage;
+
+        stageData.killsInStage++;
+        _gameState.Stage = stageData;
+
+        bool isBossStage = (currentStage % 10 == 0);
+        int clearCondition = isBossStage ? 1 : 10;
+
+        if (stageData.killsInStage >= clearCondition)
+        {
+            AdvanceToNextStage();
+        }
+    }
+
+    /// <summary>
+    /// 다음 스테이지로 진행 (Web advanceStage)
+    /// killsInStage 리셋, 보스 첫 클리어 보석 지급
+    /// </summary>
+    private void AdvanceToNextStage()
+    {
+        var stageData = _gameState.Stage;
+        int previousStage = stageData.currentStage;
+        bool wasBossStage = (previousStage % 10 == 0);
+
+        stageData.killsInStage = 0;
+        stageData.currentStage++;
+        stageData.maxStage = Mathf.Max(stageData.maxStage, stageData.currentStage);
+        _gameState.Stage = stageData;
+
+        var stats = _gameState.Stats;
+
+        if (wasBossStage && !stats.HasClearedBossStage(previousStage))
+        {
+            stats.AddClearedBossStage(previousStage);
+            int bossLevel = previousStage / 10;
+            int gemReward = _gameState.CalculateBossGemReward(bossLevel);
+
+            if (gemReward > 0)
+            {
+                var playerData = _gameState.Player;
+                playerData.gems += gemReward;
+                _gameState.Player = playerData;
+                _eventBus.Emit(GameEvents.GEM_CHANGED);
+                _logger.Info($"보스 스테이지 {previousStage}층 첫 클리어! 보석 +{gemReward}");
+            }
+        }
+
+        _logger.Info($"스테이지 진행: {previousStage} → {stageData.currentStage} (killsInStage 리셋)");
+    }
 
     private void StartCombatLoop()
     {
@@ -1026,35 +1073,24 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     private void ProcessDefeat()
     {
-        // 자동 반복 모드라면 HP만 회복
-        if (_autoRepeatMode)
-        {
-            var player = _gameState.Player;
-            player.currentHP = _gameState.GetTotalHealth();
-            _gameState.Player = player;
-            _logger.Info("패배 - 자동 반복 모드로 재전투");
-        }
-        else
-        {
-            // 수동 모드 - 이전 스테이지로 돌아가기
-            var stage = _gameState.Stage;
-            stage.currentStage = Mathf.Max(1, stage.currentStage - 1);
-            _gameState.Stage = stage;
-            
-            var player = _gameState.Player;
-            player.currentHP = _gameState.GetTotalHealth();
-            _gameState.Player = player;
-            
-            _logger.Info($"패배 - 스테이지 {_gameState.Stage.currentStage}로 후퇴");
-        }
-        
+        var stage = _gameState.Stage;
+        stage.currentStage = Mathf.Max(1, stage.currentStage - 1);
+        stage.killsInStage = 0;
+
+        // 자동 반복 모드 활성화 (Web revivePlayer)
+        stage.autoRepeat = true;
+        _autoRepeatMode = true;
+        _gameState.Stage = stage;
+
+        var player = _gameState.Player;
+        player.currentHP = _gameState.GetTotalHealth();
+        _gameState.Player = player;
+
         _eventBus.Emit(GameEvents.COMBAT_DEFEAT);
+        _logger.Info($"패배 - 스테이지 {stage.currentStage}로 후퇴 (자동 반복 활성화)");
     }
 
-    /// <summary>
-    /// 경험치 보상 계산 (DropTable로 위임, 버프 적용)
-    /// </summary>
-    private long CalculateExpReward()
+private long CalculateExpReward()
     {
         if (_dropTable == null)
             _dropTable = new DropTable();

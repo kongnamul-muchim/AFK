@@ -62,10 +62,12 @@ public class MissionBuffsData
 public struct MissionData
 {
     public string id;
-    public string type;       // MissionType.ToString() - "Kill", "ClearStage", etc.
-    public int target;        // 목표 수량
-    public int progress;      // 현재 진행량
-    public bool completed;    // 완료 여부
-    public bool claimed;      // 보상 청구 여부
-    public string reward;     // 보상 (골드 수량)
+    public string type;
+    public int target;
+    public int progress;
+    public bool completed;
+    public bool claimed;
+    public string reward;              // 보상 골드 (legacy)
+    public int rewardStatPoints;       // 보상 스탯 포인트 (Web 동일)
+    public int rewardGems;             // 보상 보석 (Web 동일)
 }

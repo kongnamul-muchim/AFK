@@ -379,6 +379,14 @@ public class InventoryUIClass : MonoBehaviour
             iconLabel.style.fontSize = 40;
             slot.Add(iconLabel);
             
+            // 아이템 이름 (Web 버전과 동일)
+            var nameLabel = new Label(itemName);
+            nameLabel.style.fontSize = 14;
+            nameLabel.style.color = new Color(0.7f, 0.7f, 0.7f);
+            nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            nameLabel.style.whiteSpace = WhiteSpace.Normal;
+            slot.Add(nameLabel);
+            
             // 수량
             var countLabel = new Label($"{count}");
             countLabel.style.fontSize = 16;
@@ -415,10 +423,30 @@ public class InventoryUIClass : MonoBehaviour
             slot.RegisterCallback<ContextClickEvent>(evt => OnItemRightClicked(itemId, itemGrade, evt));
             
             // 툴팁 이벤트 (PointerEnter/Leave가 더 안정적)
+            // 아이템 스탯 파싱 (CSV에서 가져온 stats JSON)
+            int atkBonus = 0, defBonus = 0, hpBonus = 0;
+            if (item.ContainsKey("attackBonus"))
+            {
+                atkBonus = System.Convert.ToInt32(item["attackBonus"]);
+                defBonus = System.Convert.ToInt32(item["defenseBonus"]);
+                hpBonus = item.ContainsKey("hpBonus") ? System.Convert.ToInt32(item["hpBonus"]) : System.Convert.ToInt32(item["healthBonus"]);
+            }
+            else if (item.ContainsKey("stats"))
+            {
+                var statsStr = item["stats"]?.ToString();
+                if (!string.IsNullOrEmpty(statsStr))
+                {
+                    var parsed = JsonUtility.FromJson<ItemStatsJson>(statsStr);
+                    atkBonus = parsed.attackBonus;
+                    defBonus = parsed.defenseBonus;
+                    hpBonus = parsed.hpBonus;
+                }
+            }
+            
             slot.RegisterCallback<PointerEnterEvent>(evt =>
             {
                 int grade = GetRarityGrade(rarity);
-                TooltipManager.Instance?.ShowItemTooltip(itemName, grade, evt.position);
+                TooltipManager.Instance?.ShowItemTooltip(itemName, grade, evt.position, atkBonus, defBonus, hpBonus);
             });
             slot.RegisterCallback<PointerLeaveEvent>(evt =>
             {

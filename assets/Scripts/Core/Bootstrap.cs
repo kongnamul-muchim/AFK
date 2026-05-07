@@ -55,6 +55,7 @@ public class Bootstrap : MonoBehaviour
         audioManager.SubscribeToGameEvents(eventBus);
 
         // 2. 저장된 게임 로드 또는 새 게임 시작
+        bool isNewGame = false;
         if (saveManager.SaveExists())
         {
             GameState loadedState = saveManager.Load();
@@ -71,6 +72,7 @@ public class Bootstrap : MonoBehaviour
                 gameState.Initialize();
                 GiveStarterItems(gameState);
                 GameLogger.Warn("게임 로드 실패, 새 게임 시작");
+                isNewGame = true;
             }
         }
         else
@@ -79,6 +81,7 @@ public class Bootstrap : MonoBehaviour
             gameState.Initialize();
             GiveStarterItems(gameState);
             GameLogger.Info("새 게임 시작");
+            isNewGame = true;
         }
 
         // 3. 자동 저장 시작
@@ -96,8 +99,15 @@ public class Bootstrap : MonoBehaviour
         // 5. 초기 이벤트 발생
         eventBus.Emit(GameEvents.GAME_LOADED);
 
-        // 6. 첫 스테이지 진입 (전투 시작)
-        StageSystem.Instance.EnterStage(1);
+        // 6. 스테이지 진입 (새 게임이면 1, 불러오기면 저장된 스테이지)
+        if (isNewGame)
+        {
+            StageSystem.Instance.EnterStage(1);
+        }
+        else
+        {
+            StageSystem.Instance.EnterStage(GameState.Instance.stage.currentStage);
+        }
 
         GameLogger.Info("게임 부트스트랩 완료");
     }
@@ -212,7 +222,7 @@ public class Bootstrap : MonoBehaviour
                 {
                     item.attackBonus = parsed.attackBonus;
                     item.defenseBonus = parsed.defenseBonus;
-                    item.healthBonus = parsed.healthBonus;
+                    item.healthBonus = parsed.hpBonus;
                 }
             }
 

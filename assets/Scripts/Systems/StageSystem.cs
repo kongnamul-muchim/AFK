@@ -179,4 +179,43 @@ public class StageSystem : MonoBehaviour
     {
         return _gameState.Stage.maxStage;
     }
+
+    /// <summary>
+    /// 자동 반복 모드 진입 - 10스테이지 하락 (Web enterAutoRepeat)
+    /// </summary>
+    public void EnterAutoRepeat()
+    {
+        int currentStage = _gameState.Stage.currentStage;
+        int repeatStage = Mathf.Max(1, currentStage - 10);
+
+        var stageData = _gameState.Stage;
+        stageData.autoRepeat = true;
+        stageData.currentStage = repeatStage;
+        stageData.killsInStage = 0;
+        _gameState.Stage = stageData;
+
+        _logger.Info($"자동 반복 모드 진입 - {currentStage}층 → {repeatStage}층에서 다시 시작");
+        EnterStage(repeatStage);
+    }
+
+    /// <summary>
+    /// 자동 반복 모드 해제
+    /// </summary>
+    public void ExitAutoRepeat()
+    {
+        var stageData = _gameState.Stage;
+        stageData.autoRepeat = false;
+        _gameState.Stage = stageData;
+        _logger.Debug("자동 반복 모드 해제");
+    }
+
+    /// <summary>
+    /// 재도전 가능 여부 (Web canRetry)
+    /// 플레이어 레벨 >= 보스 스테이지 / 2
+    /// </summary>
+    public bool CanRetry()
+    {
+        int bossStage = (_gameState.Stage.currentStage / 10) * 10;
+        return _gameState.Player.level >= bossStage / 2;
+    }
 }

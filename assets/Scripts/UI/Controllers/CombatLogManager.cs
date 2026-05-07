@@ -167,7 +167,7 @@ public class CombatLogManager : MonoBehaviour
         foreach (var log in _logHistory)
         {
             var label = new Label(log);
-            label.style.fontSize = 14;
+            label.style.fontSize = 28;
             label.style.unityTextAlign = TextAnchor.MiddleLeft;
             _logScrollView.Add(label);
         }

@@ -483,6 +483,6 @@ public class AudioManager : MonoBehaviour
         eventBus.On(GameEvents.PLAYER_LEVEL_UP, () => PlaySoundById("levelup"));
 
         // 몬스터 처치
-        eventBus.On(GameEvents.MONSTER_KILLED, () => PlaySoundById("monsterHit"));
+        eventBus.On(GameEvents.MONSTER_KILL, () => PlaySoundById("monsterHit"));
     }
 }

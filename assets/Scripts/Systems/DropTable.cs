@@ -117,7 +117,7 @@ public class DropTable
         {
             item.attackBonus = parsed.attackBonus;
             item.defenseBonus = parsed.defenseBonus;
-            item.healthBonus = parsed.healthBonus;
+            item.healthBonus = parsed.hpBonus;
         }
     }
 

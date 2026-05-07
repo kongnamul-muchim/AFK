@@ -372,6 +372,15 @@ public class UIManager : MonoBehaviour
                 OfflineRewardSystem.Instance.ClaimRewards();
                 HideModal(_offlineRewardModal);
             };
+
+        // ★★★ 확인 버튼 핸들러 (Web 버전과 동일)
+        var claimRewardBtn = _root.Q<Button>("ClaimRewardBtn");
+        if (claimRewardBtn != null)
+            claimRewardBtn.clicked += () =>
+            {
+                OfflineRewardSystem.Instance.ClaimRewards();
+                HideModal(_offlineRewardModal);
+            };
         
         var closeStatisticsBtn = _root.Q<Button>("CloseStatisticsBtn");
         if (closeStatisticsBtn != null)
@@ -412,7 +421,12 @@ public class UIManager : MonoBehaviour
         UpdateStage(_gameState.Stage.currentStage);
 
         if (_autoRepeatBtn != null)
-            _autoRepeatBtn.text = _gameState.Stage.autoRepeat ? "자동 ON" : "자동 OFF";
+        {
+            if (_gameState.Stage.autoRepeat)
+                _autoRepeatBtn.AddToClassList("active");
+            else
+                _autoRepeatBtn.RemoveFromClassList("active");
+        }
         
         // Debug.Log("UI 업데이트 완료");
     }
@@ -714,11 +728,26 @@ public class UIManager : MonoBehaviour
     
     private void OnAutoRepeatClicked()
     {
-        if (CombatSystem.Instance == null) return;
-        bool newMode = !CombatSystem.Instance.IsAutoRepeatMode();
-        CombatSystem.Instance.SetAutoRepeatMode(newMode);
+        if (_gameState == null) return;
+        
+        // Web 버전과 동일: GameState 직접 토글 (CombatSystem에 의존하지 않음)
+        var stage = _gameState.Stage;
+        stage.autoRepeat = !stage.autoRepeat;
+        _gameState.Stage = stage;
+        
+        // CombatSystem에 전파 (가능한 경우)
+        if (CombatSystem.Instance != null)
+            CombatSystem.Instance.SetAutoRepeatMode(stage.autoRepeat);
+        
         if (_autoRepeatBtn != null)
-            _autoRepeatBtn.text = newMode ? "자동 ON" : "자동 OFF";
+        {
+            if (stage.autoRepeat)
+                _autoRepeatBtn.AddToClassList("active");
+            else
+                _autoRepeatBtn.RemoveFromClassList("active");
+        }
+            
+        _logger.Info($"자동 반복 모드: {stage.autoRepeat}");
     }
     
     private void OnStatisticsClicked()
@@ -736,28 +765,19 @@ public class UIManager : MonoBehaviour
     
     private void OnInventoryClicked()
     {
-        Debug.Log($"인벤토리! _inventoryUI is null: {_inventoryUI == null}");
-        if (_inventoryUI == null)
-            // Debug.LogError("InventoryUI is null!");
-        _inventoryUI?.RefreshInventoryGrid(); // 서브 InventoryUI로 위임
+        _inventoryUI?.RefreshInventoryGrid();
         ShowModal(_inventoryModal);
     }
     
     private void OnUpgradeClicked()
     {
-        Debug.Log($"업그레이드! _upgradeUI is null: {_upgradeUI == null}");
-        if (_upgradeUI == null)
-            // Debug.LogError("UpgradeUI is null!");
-        _upgradeUI?.RefreshUpgradeGrid(); // 서브 UpgradeUI로 위임
+        _upgradeUI?.RefreshUpgradeGrid();
         ShowModal(_upgradeModal);
     }
     
     private void OnDailyMissionsClicked()
     {
-        Debug.Log($"미션! _missionsUI is null: {_missionsUI == null}");
-        if (_missionsUI == null)
-            // Debug.LogError("MissionsUI is null!");
-        _missionsUI?.RefreshMissionsGrid(); // 서브 MissionsUI로 위임
+        _missionsUI?.RefreshMissionsGrid();
         ShowModal(_dailyMissionsModal);
     }
     
@@ -770,16 +790,15 @@ public class UIManager : MonoBehaviour
     // 통계 정보 업데이트
     private void UpdateStatisticsDisplay()
     {
-        // TODO: 실제 통계 데이터로 업데이트
         var statsLevelValue = _root.Q<Label>("StatsLevelValue");
         var statsAtkValue = _root.Q<Label>("StatsAtkValue");
         var statsDefValue = _root.Q<Label>("StatsDefValue");
         var statsHPValue = _root.Q<Label>("StatsHPValue");
         
-        if (statsLevelValue != null) statsLevelValue.text = "1";
-        if (statsAtkValue != null) statsAtkValue.text = "10";
-        if (statsDefValue != null) statsDefValue.text = "5";
-        if (statsHPValue != null) statsHPValue.text = "100";
+        if (statsLevelValue != null) statsLevelValue.text = _gameState.Player.level.ToString();
+        if (statsAtkValue != null) statsAtkValue.text = _gameState.GetTotalAttack().ToString();
+        if (statsDefValue != null) statsDefValue.text = _gameState.GetTotalDefense().ToString();
+        if (statsHPValue != null) statsHPValue.text = _gameState.Player.currentHP.ToString();
     }
     
     // ========== 인벤토리 UI 관련 (Infinity Scroll) ==========

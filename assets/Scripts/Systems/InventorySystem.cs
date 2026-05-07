@@ -250,13 +250,11 @@ public class InventorySystem : MonoBehaviour
         // ★★★ 디버그 로그: 슬롯 결정 확인
         Debug.Log($"[EQUIP] GetSlotFromItemType(\"{item.Value.type}\") = {slot}");
 
-        // 기존 장비 해제
+        // 기존 장비 해제 (Web 버전과 동일: 아이템을 소모하지 않고 복사)
         UnequipItem(slot);
 
-        // 인벤토리에서 제거 (수량 1 감소)
-        RemoveItem(itemId, grade, 1);
-
-        // 장비 슬롯에 추가
+        // 장비 슬롯에 추가 (CSV stats 사용, Web 버전과 동일)
+        var csvStats = GetItemStatsFromCSV(itemId);
         EquipmentData equipment = new EquipmentData
         {
             id = itemId,
@@ -264,9 +262,9 @@ public class InventorySystem : MonoBehaviour
             grade = grade,
             rarity = item.Value.rarity,  // 희귀도 저장
             slot = (int)slot,
-            attackBonus = CalculateEquipmentBonus(grade, "attack"),
-            defenseBonus = CalculateEquipmentBonus(grade, "defense"),
-            healthBonus = CalculateEquipmentBonus(grade, "health")
+            attackBonus = csvStats?.attackBonus ?? CalculateEquipmentBonus(grade, "attack"),
+            defenseBonus = csvStats?.defenseBonus ?? CalculateEquipmentBonus(grade, "defense"),
+            healthBonus = csvStats?.hpBonus ?? CalculateEquipmentBonus(grade, "health")
         };
 
         var inventory = _gameState.Inventory;
@@ -409,6 +407,27 @@ public class InventorySystem : MonoBehaviour
     }
 
     /// <summary>
+    /// CSV items.csv에서 아이템 stats 로드 (Web 버전과 동일)
+    /// </summary>
+    private ItemStatsJson GetItemStatsFromCSV(string itemId)
+    {
+        var items = DataLoader.Load("items");
+        foreach (var row in items)
+        {
+            if (row.TryGetValue("id", out var idObj) && idObj?.ToString() == itemId)
+            {
+                if (row.TryGetValue("stats", out var statsObj) && statsObj != null)
+                {
+                    string statsJson = statsObj.ToString();
+                    return JsonUtility.FromJson<ItemStatsJson>(statsJson);
+                }
+                break;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 장비 보너스 계산 (public: UI에서 비교용)
     /// </summary>
     public float CalculateEquipmentBonus(int grade, string statType)
@@ -423,7 +442,7 @@ public class InventorySystem : MonoBehaviour
             case "defense":
                 return baseValue * gradeMultiplier * 1.5f;
             case "health":
-                return baseValue * gradeMultiplier * 10f;
+                return baseValue * gradeMultiplier * 2f;
             default:
                 return 0f;
         }
@@ -868,7 +887,6 @@ public class InventorySystem : MonoBehaviour
 
         return totalSynthesized;
     }
-}
 
     /// <summary>
     /// 타입별 최대 등급 조회 (public: UI용)
@@ -882,11 +900,12 @@ public class InventorySystem : MonoBehaviour
     /// 합성 가능 아이템 정보
     /// </summary>
     public struct SynthesizableItemInfo
-{
-    public string itemId;
-    public string name;
-    public int count;
-    public int grade;
-    public int rarity;
-    public int possibleSyntheses;
+    {
+        public string itemId;
+        public string name;
+        public int count;
+        public int grade;
+        public int rarity;
+        public int possibleSyntheses;
+    }
 }
