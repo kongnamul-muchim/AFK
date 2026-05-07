@@ -47,6 +47,13 @@ public class Bootstrap : MonoBehaviour
 
         GameLogger.DebugLog("DIContainer에 서비스 등록 완료");
 
+        // 1.5 오디오 데이터베이스 초기화 (CSV 기반)
+        AudioDatabase.Initialize();
+
+        // 오디오 이벤트 구독
+        var audioManager = AudioManager.Instance;
+        audioManager.SubscribeToGameEvents(eventBus);
+
         // 2. 저장된 게임 로드 또는 새 게임 시작
         if (saveManager.SaveExists())
         {
@@ -76,6 +83,9 @@ public class Bootstrap : MonoBehaviour
 
         // 3. 자동 저장 시작
         saveManager.StartAutoSave(5f);
+
+        // 3.5 튜토리얼 시스템 초기화
+        TutorialSystem.Instance.Initialize(gameState, eventBus, Container.Resolve<IGameLogger>());
 
         // 4. 일일/주간 미션 생성 (저장 데이터가 없으면 신규 생성)
         if (GameState.Instance.dailyMissions.missions.Count == 0)

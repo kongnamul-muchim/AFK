@@ -315,19 +315,32 @@ public class UIManager : MonoBehaviour
         
         // 메뉴 버튼 - 서브 UI 컴포넌트 연결
         if (_inventoryBtn != null)
-            _inventoryBtn.clicked += OnInventoryClicked;
-        
+            _inventoryBtn.clicked += () => { AudioManager.Instance?.PlayButtonClick(); OnInventoryClicked(); };
         if (_upgradeBtn != null)
-            _upgradeBtn.clicked += OnUpgradeClicked;
-        
+            _upgradeBtn.clicked += () => { AudioManager.Instance?.PlayButtonClick(); OnUpgradeClicked(); };
         if (_dailyMissionsBtn != null)
-            _dailyMissionsBtn.clicked += OnDailyMissionsClicked;
-        
+            _dailyMissionsBtn.clicked += () => { AudioManager.Instance?.PlayButtonClick(); OnDailyMissionsClicked(); };
         if (_gemShopBtn != null)
-            _gemShopBtn.clicked += OnGemShopClicked;
+            _gemShopBtn.clicked += () => { AudioManager.Instance?.PlayButtonClick(); OnGemShopClicked(); };
         
         // 모달 닫기 버튼 설정
         SetupModalCloseButtons();
+
+        // 설정 슬라이더 이벤트
+        SetupSettingsSliders();
+
+        // 데이터 내보내기/가져오기/초기화 버튼
+        SetupDataButtons();
+
+        // 튜토리얼 "다음" 버튼
+        var tutorialNextBtn = _root.Q<Button>("TutorialNext");
+        if (tutorialNextBtn != null)
+        {
+            tutorialNextBtn.clicked += () =>
+            {
+                HideTutorial();
+            };
+        }
     }
     
     private void SetupModalCloseButtons()
@@ -412,7 +425,7 @@ public class UIManager : MonoBehaviour
             {
                 if (_sfxVolumeValue != null)
                     _sfxVolumeValue.text = $"{evt.newValue:F0}%";
-                // 실제 볼륨 조절은 AudioManager에서 처리
+                AudioManager.Instance?.SetSFXVolume(evt.newValue / 100f);
             });
         }
         
@@ -422,8 +435,126 @@ public class UIManager : MonoBehaviour
             {
                 if (_bgmVolumeValue != null)
                     _bgmVolumeValue.text = $"{evt.newValue:F0}%";
-                // 실제 BGM 볼륨 조절은 AudioManager에서 처리
+                AudioManager.Instance?.SetBGMVolume(evt.newValue / 100f);
             });
+        }
+    }
+
+    /// <summary>
+    /// 데이터 내보내기/가져오기/초기화 버튼 설정
+    /// </summary>
+    private void SetupDataButtons()
+    {
+        var exportBtn = _root.Q<Button>("ExportDataBtn");
+        if (exportBtn != null)
+        {
+            exportBtn.clicked += OnExportDataClicked;
+        }
+
+        var importBtn = _root.Q<Button>("ImportDataBtn");
+        if (importBtn != null)
+        {
+            importBtn.clicked += OnImportDataClicked;
+        }
+
+        var resetBtn = _root.Q<Button>("ResetDataBtn");
+        if (resetBtn != null)
+        {
+            resetBtn.clicked += OnResetDataClicked;
+        }
+    }
+
+    /// <summary>
+    /// 데이터 내보내기 (JSON 파일로 저장)
+    /// </summary>
+    private void OnExportDataClicked()
+    {
+        // 현재 게임 상태 저장 후 내보내기
+        SaveManager.Instance?.Save(GameState.Instance);
+        string json = SaveManager.Instance?.ExportSave();
+        if (string.IsNullOrEmpty(json))
+        {
+            _logger?.Warn("내보낼 데이터가 없습니다.");
+            return;
+        }
+
+        // 클립보드에 JSON 복사
+        GUIUtility.systemCopyBuffer = json;
+        _logger?.Info("게임 데이터가 클립보드에 복사되었습니다.");
+
+        // 파일 저장 다이얼로그 (Unity Editor 전용)
+#if UNITY_EDITOR
+        string path = UnityEditor.EditorUtility.SaveFilePanel(
+            "데이터 내보내기",
+            Application.dataPath,
+            "afk_save_backup.json",
+            "json"
+        );
+        if (!string.IsNullOrEmpty(path))
+        {
+            System.IO.File.WriteAllText(path, json);
+            _logger?.Info($"데이터 내보내기 완료: {path}");
+        }
+#endif
+    }
+
+    /// <summary>
+    /// 데이터 가져오기 (JSON 파일에서 로드)
+    /// </summary>
+    private void OnImportDataClicked()
+    {
+        string json = null;
+
+#if UNITY_EDITOR
+        string path = UnityEditor.EditorUtility.OpenFilePanel(
+            "데이터 가져오기",
+            Application.dataPath,
+            "json"
+        );
+        
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        if (!System.IO.File.Exists(path))
+        {
+            _logger?.Warn("파일을 찾을 수 없습니다.");
+            return;
+        }
+
+        json = System.IO.File.ReadAllText(path);
+#else
+        // WebGL/모바일: 클립보드에서 가져오기
+        json = GUIUtility.systemCopyBuffer;
+        if (string.IsNullOrEmpty(json))
+        {
+            _logger?.Warn("클립보드에 데이터가 없습니다.");
+            return;
+        }
+#endif
+
+        if (!string.IsNullOrEmpty(json))
+        {
+            SaveManager.Instance?.ImportSave(json);
+            _logger?.Info("데이터 가져오기 성공! 게임을 다시 시작합니다.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
+    }
+
+    /// <summary>
+    /// 데이터 초기화
+    /// </summary>
+    private void OnResetDataClicked()
+    {
+        _logger?.Warn("데이터 초기화 버튼 클릭됨");
+        // 실제 초기화는 확인 후 진행
+        // 간단한 구현: 저장 파일 삭제 후 게임 재시작
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.DeleteSave();
+            _logger?.Info("데이터가 초기화되었습니다. 게임을 다시 시작합니다.");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
     }
     

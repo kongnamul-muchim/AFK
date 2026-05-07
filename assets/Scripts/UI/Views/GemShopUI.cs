@@ -144,6 +144,7 @@ public class GemShopUIClass : MonoBehaviour
     private VisualElement CreateShopItem(ShopItemDefinition item)
     {
         var container = new VisualElement();
+        container.AddToClassList("shop-card");
         container.style.flexDirection = FlexDirection.Row;
         container.style.alignItems = Align.Center;
         container.style.paddingLeft = 15;

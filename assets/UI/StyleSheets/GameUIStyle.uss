@@ -1012,3 +1012,84 @@
     -unity-font-style: bold;
     font-size: 40px;
 }
+
+/* ========== 공통 UI 개선 (Phase 4) ========== */
+
+/* 카드 호버 효과 */
+.upgrade-card:hover,
+.mission-card:hover,
+.inventory-card:hover,
+.shop-card:hover {
+    background-color: #1e1e3a;
+    transition: background-color 0.2s;
+}
+
+/* 버튼 호버/클릭 효과 */
+.menu-btn:hover,
+.tab-btn:hover,
+.data-btn:hover,
+.confirm-btn:hover,
+.batch-synthesize-btn:hover {
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.menu-btn:active,
+.tab-btn:active,
+.batch-synthesize-btn:active {
+    opacity: 0.7;
+    scale: 0.97;
+}
+
+/* 구매 버튼 호버 */
+.buy-btn:hover {
+    opacity: 0.85;
+    transition: opacity 0.15s;
+}
+
+.buy-btn:active {
+    opacity: 0.7;
+    scale: 0.95;
+}
+
+/* 스크롤바 스타일링 */
+.inventory-scroll::-webkit-scrollbar,
+.upgrade-list::-webkit-scrollbar,
+.missions-list::-webkit-scrollbar,
+.gem-shop-grid::-webkit-scrollbar,
+.statistics-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.inventory-scroll::-webkit-scrollbar-thumb,
+.upgrade-list::-webkit-scrollbar-thumb,
+.missions-list::-webkit-scrollbar-thumb,
+.gem-shop-grid::-webkit-scrollbar-thumb,
+.statistics-content::-webkit-scrollbar-thumb {
+    background-color: var(--color-bg-tertiary);
+    border-radius: 3px;
+}
+
+.inventory-scroll::-webkit-scrollbar-track,
+.upgrade-list::-webkit-scrollbar-track,
+.missions-list::-webkit-scrollbar-track,
+.gem-shop-grid::-webkit-scrollbar-track,
+.statistics-content::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+/* 상태 표시줄 애니메이션 */
+.hp-bar-fill,
+.exp-bar-fill {
+    transition: width 0.3s;
+}
+
+/* 모달 등장 애니메이션 */
+.modal {
+    transition: opacity 0.2s;
+}
+
+/* 툴팁 그림자 효과 */
+.item-tooltip {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}

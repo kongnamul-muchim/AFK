@@ -421,12 +421,11 @@ public class AudioManager : MonoBehaviour
     // ========== 편의 메서드 ==========
     
     /// <summary>
-    /// 공격 사운드 재생
+    /// 공격 사운드 재생 (CSV 정의 기반)
     /// </summary>
     public void PlayAttackSound()
     {
-        // 실제로는 AudioDefinitionSO에서 클립을 가져와야 함
-        _logger.Debug("공격 사운드");
+        PlaySoundById("attack");
     }
     
     /// <summary>
@@ -434,7 +433,7 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     public void PlayHitSound()
     {
-        _logger.Debug("피격 사운드");
+        PlaySoundById("playerHit");
     }
     
     /// <summary>
@@ -442,7 +441,7 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     public void PlayVictorySound()
     {
-        _logger.Debug("승리 사운드");
+        PlaySoundById("victory");
     }
     
     /// <summary>
@@ -450,6 +449,40 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     public void PlayButtonClick()
     {
-        _logger.Debug("버튼 클릭 사운드");
+        PlaySoundById("levelup"); // UI용 사운드 ID
+    }
+
+    /// <summary>
+    /// 사운드 ID로 사운드 재생 (AudioDatabase 조회)
+    /// </summary>
+    public void PlaySoundById(string soundId)
+    {
+        var clip = AudioDatabase.GetClip(soundId);
+        if (clip != null)
+        {
+            PlaySFX(clip);
+        }
+        else
+        {
+            _logger.Debug($"[사운드 - 미등록] {soundId}");
+        }
+    }
+
+    /// <summary>
+    /// 게임 이벤트에 사운드 연결 (EventBus 구독)
+    /// </summary>
+    public void SubscribeToGameEvents(IEventBus eventBus)
+    {
+        if (eventBus == null) return;
+
+        // 아이템 획득
+        eventBus.On(GameEvents.ITEM_ACQUIRED, () => PlaySoundById("getItem"));
+        eventBus.On(GameEvents.ITEM_SYNTHESIZED, () => PlaySoundById("synthesize"));
+
+        // 레벨업
+        eventBus.On(GameEvents.PLAYER_LEVEL_UP, () => PlaySoundById("levelup"));
+
+        // 몬스터 처치
+        eventBus.On(GameEvents.MONSTER_KILLED, () => PlaySoundById("monsterHit"));
     }
 }

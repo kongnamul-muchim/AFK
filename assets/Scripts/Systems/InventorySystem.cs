@@ -870,10 +870,18 @@ public class InventorySystem : MonoBehaviour
     }
 }
 
-/// <summary>
-/// 합성 가능 아이템 정보
-/// </summary>
-public struct SynthesizableItemInfo
+    /// <summary>
+    /// 타입별 최대 등급 조회 (public: UI용)
+    /// </summary>
+    public int CalculateMaxGradeByType(string itemType)
+    {
+        return GetMaxGradeByType(itemType);
+    }
+
+    /// <summary>
+    /// 합성 가능 아이템 정보
+    /// </summary>
+    public struct SynthesizableItemInfo
 {
     public string itemId;
     public string name;

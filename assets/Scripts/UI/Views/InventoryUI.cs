@@ -324,6 +324,7 @@ public class InventoryUIClass : MonoBehaviour
     private VisualElement CreateItemSlot(Dictionary<string, object> item)
     {
         var slot = new VisualElement();
+        slot.AddToClassList("inventory-card");
         slot.style.flexDirection = FlexDirection.Column;
         slot.style.alignItems = Align.Center;
         slot.style.justifyContent = Justify.Center;
@@ -388,12 +389,12 @@ public class InventoryUIClass : MonoBehaviour
             countLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             slot.Add(countLabel);
 
-            // 합성 가능 표시 (count >= 5)
+            // 합성 가능 표시 (count >= 5 && 최대 등급 미만)
             int itemGrade = System.Convert.ToInt32(item["grade"]);
-            if (count >= GameConfig.SynthesisRequiredCount)
+            string itemType = item["type"].ToString();
+            int maxGrade = InventorySystem.Instance.CalculateMaxGradeByType(_currentTab);
+            if (count >= GameConfig.SynthesisRequiredCount && itemGrade < maxGrade)
             {
-                int maxGradeByType = InventorySystem.Instance.GetSynthesizableItemsByType(_currentTab).Count > 0
-                    ? itemGrade : itemGrade + 1;
                 var synthBadge = new Label("합성");
                 synthBadge.style.fontSize = 11;
                 synthBadge.style.backgroundColor = new Color(0.1f, 0.8f, 0.2f, 0.8f);

@@ -259,6 +259,14 @@ public class CombatSystem : MonoBehaviour
         
         _logger.Debug($"전투 페이즈 변경: {oldPhase} → {newPhase}");
         
+        // 페이즈 변경 사운드
+        if (newPhase == CombatPhase.COMBAT)
+            AudioManager.Instance?.PlayAttackSound();
+        else if (newPhase == CombatPhase.VICTORY)
+            AudioManager.Instance?.PlayVictorySound();
+        else if (newPhase == CombatPhase.DEFEATED)
+            AudioManager.Instance?.PlayHitSound();
+        
         // 페이즈 변경 이벤트 발생
         _eventBus.Emit(GameEvents.COMBAT_PHASE_CHANGED);
         

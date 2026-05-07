@@ -698,6 +698,7 @@ public class UpgradeUIClass : MonoBehaviour
     private VisualElement CreateUpgradeCard(string name, string level, string stats, int cost, string costType, bool canBuy, bool isMaxLevel, Action onClick)
     {
         var container = new VisualElement();
+        container.AddToClassList("upgrade-card");
         container.style.flexDirection = FlexDirection.Column;
         container.style.paddingLeft = 15;
         container.style.paddingRight = 15;
@@ -752,6 +753,7 @@ public class UpgradeUIClass : MonoBehaviour
         if (!isMaxLevel && onClick != null)
         {
             var buyBtn = new Button(onClick);
+            buyBtn.AddToClassList("buy-btn");
             buyBtn.text = "구매";
             buyBtn.style.fontSize = 32;
             buyBtn.style.paddingLeft = 30;
@@ -779,6 +781,7 @@ public class UpgradeUIClass : MonoBehaviour
     private VisualElement CreateGemUpgradeCard(string name, string level, string stats, int cost, bool canBuy, bool isMaxLevel, Action onClick)
     {
         var container = new VisualElement();
+        container.AddToClassList("upgrade-card");
         container.style.flexDirection = FlexDirection.Column;
         container.style.paddingLeft = 15;
         container.style.paddingRight = 15;

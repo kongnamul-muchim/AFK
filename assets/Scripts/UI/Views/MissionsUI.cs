@@ -265,6 +265,7 @@ public class MissionsUIClass : MonoBehaviour
     private VisualElement CreateMissionCard(MissionDisplayData mission)
     {
         var container = new VisualElement();
+        container.AddToClassList("mission-card");
         container.style.flexDirection = FlexDirection.Column;
         container.style.paddingLeft = 15;
         container.style.paddingRight = 15;

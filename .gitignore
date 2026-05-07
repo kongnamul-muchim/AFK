@@ -30,3 +30,7 @@ openspec/changes/
 
 # ========== Stray Files ==========
 nul
+
+# Unity Crash Recovery
+[Aa]ssets/_Recovery/
+[Aa]ssets/_Recovery.meta
