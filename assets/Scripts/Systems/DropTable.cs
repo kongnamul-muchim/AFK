@@ -96,8 +96,8 @@ public class DropTable
             id = selectedItem["id"].ToString(),
             name = selectedItem["name"].ToString(),
             grade = selectedGrade,
-            rarity = selectedGradeIndex, // 0:common, 1:rare, 2:epic, 3:legendary, 4:mythic
-            type = selectedType,
+            rarity = selectedGradeIndex,
+            type = selectedItem["type"].ToString(),  // ← CSV의 실제 type 사용
             count = 1
         };
         
@@ -110,63 +110,14 @@ public class DropTable
         return itemData;
     }
 
-    /// <summary>
-    /// stats JSON 파싱 (Bootstrap.cs의 로직 참고)
-    /// </summary>
     private void ParseStats(string statsStr, ref ItemData item)
     {
-        // {"attackBonus":2} 형태
-        // 간단한 substring 파싱
-        try
+        var parsed = JsonUtility.FromJson<ItemStatsJson>(statsStr);
+        if (parsed != null)
         {
-            // attackBonus 파싱
-            int atkStart = statsStr.IndexOf("attackBonus");
-            if (atkStart >= 0)
-            {
-                int colon = statsStr.IndexOf(":", atkStart);
-                int commaOrEnd = statsStr.IndexOf(",", atkStart);
-                if (commaOrEnd < 0) commaOrEnd = statsStr.IndexOf("}", atkStart);
-                if (colon >= 0 && commaOrEnd > colon)
-                {
-                    string atkStr = statsStr.Substring(colon + 1, commaOrEnd - colon - 1).Trim();
-                    if (int.TryParse(atkStr, out var atk))
-                        item.attackBonus = atk;
-                }
-            }
-            
-            // defenseBonus 파싱
-            int defStart = statsStr.IndexOf("defenseBonus");
-            if (defStart >= 0)
-            {
-                int colon = statsStr.IndexOf(":", defStart);
-                int commaOrEnd = statsStr.IndexOf(",", defStart);
-                if (commaOrEnd < 0) commaOrEnd = statsStr.IndexOf("}", defStart);
-                if (colon >= 0 && commaOrEnd > colon)
-                {
-                    string defStr = statsStr.Substring(colon + 1, commaOrEnd - colon - 1).Trim();
-                    if (int.TryParse(defStr, out var def))
-                        item.defenseBonus = def;
-                }
-            }
-            
-            // hpBonus 파싱
-            int hpStart = statsStr.IndexOf("hpBonus");
-            if (hpStart >= 0)
-            {
-                int colon = statsStr.IndexOf(":", hpStart);
-                int commaOrEnd = statsStr.IndexOf(",", hpStart);
-                if (commaOrEnd < 0) commaOrEnd = statsStr.IndexOf("}", hpStart);
-                if (colon >= 0 && commaOrEnd > colon)
-                {
-                    string hpStr = statsStr.Substring(colon + 1, commaOrEnd - colon - 1).Trim();
-                    if (int.TryParse(hpStr, out var hp))
-                        item.healthBonus = hp;
-                }
-            }
-        }
-        catch (System.Exception)
-        {
-            // 파싱 실패 시 기본값 0
+            item.attackBonus = parsed.attackBonus;
+            item.defenseBonus = parsed.defenseBonus;
+            item.healthBonus = parsed.healthBonus;
         }
     }
 

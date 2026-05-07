@@ -26,18 +26,18 @@ public class GemShopUIClass : MonoBehaviour
         {
             InjectDependencies();
             DefineShopItems();
-            Debug.Log("GemShopUIClass.Awake() - DI 성공");
+            // Debug.Log("GemShopUIClass.Awake() - DI 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"GemShopUIClass.Awake() - DI 실패: {e.Message}");
+            // Debug.LogError($"GemShopUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
     
     private void InjectDependencies()
     {
-        var serviceLocator = ServiceLocator.Instance;
-        _gameState = serviceLocator.Get<IGameState>();
+        if (Bootstrap.Container == null) return;
+        _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
     
     private void DefineShopItems()
@@ -135,7 +135,7 @@ public class GemShopUIClass : MonoBehaviour
             _shopContainer.Add(card);
         }
         
-        Debug.Log($"상점 그리드 업데이트: {_shopItems.Count}개 아이템");
+        // Debug.Log($"상점 그리드 업데이트: {_shopItems.Count}개 아이템");
     }
     
     /// <summary>
@@ -258,7 +258,7 @@ public class GemShopUIClass : MonoBehaviour
         }
         
         // 보석 변경 이벤트 발생
-        var eventBus = ServiceLocator.Instance.Get<IEventBus>();
+        var eventBus = Bootstrap.Container?.Resolve<IEventBus>() ?? EventBus.Instance;
         eventBus?.Emit(GameEvents.GEM_CHANGED);
         
         UpdateDisplay();

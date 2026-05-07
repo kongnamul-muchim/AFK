@@ -140,6 +140,7 @@
             <!-- 일괄합성 버튼 -->
             <ui:VisualElement name="BatchSynthesizeBar" class="batch-synthesize-bar">
                 <ui:Button name="BatchSynthesizeBtn" text="일괄 합성" class="batch-synthesize-btn" />
+                <ui:Label name="SynthesisResultLabel" text="" class="synthesis-result-label" style="display: none;" />
             </ui:VisualElement>
             
             <!-- 아이템 리스트 (카드 그리드) - ScrollView 사용 (스크롤바 숨김) -->

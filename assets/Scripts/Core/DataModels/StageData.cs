@@ -14,6 +14,7 @@ public struct StageData
     public void Reset()
     {
         currentStage = 1;
+        maxStage = 1;
         autoRepeat = false;
     }
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -29,24 +30,32 @@ public class InventoryUIClass : MonoBehaviour
     private VisualElement _armorSlot;
     private VisualElement _accessorySlot;
     private VisualElement _bootsSlot;
+    
+    // 비교 툴팁 상태
+    private string _pendingCompareItemId = null;
+    private int _pendingCompareGrade = 0;
+
+    // 합성 버튼
+    private Button _synthesizeAllButton;
+    private Label _synthesisResultLabel;
 
     private void Awake()
     {
         try
         {
             InjectDependencies();
-            Debug.Log("InventoryUIClass.Awake() - DI 성공");
+            // Debug.Log("InventoryUIClass.Awake() - DI 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"InventoryUIClass.Awake() - DI 실패: {e.Message}");
+            // Debug.LogError($"InventoryUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
     
     private void InjectDependencies()
     {
-        var serviceLocator = ServiceLocator.Instance;
-        _gameState = serviceLocator.Get<IGameState>();
+        if (Bootstrap.Container == null) return;
+        _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
     
     public void Initialize(VisualElement root)
@@ -71,11 +80,11 @@ public class InventoryUIClass : MonoBehaviour
             _armorSlot = allSlots[1];
             _accessorySlot = allSlots[2];
             _bootsSlot = allSlots[3];
-            Debug.Log($"장비 슬롯 발견: weapon={_weaponSlot != null}, armor={_armorSlot != null}, accessory={_accessorySlot != null}, boots={_bootsSlot != null}");
+            // Debug.Log($"장비 슬롯 발견: weapon={_weaponSlot != null}, armor={_armorSlot != null}, accessory={_accessorySlot != null}, boots={_bootsSlot != null}");
         }
         else
         {
-            Debug.LogWarning($"장비 슬롯 부족: {allSlots.Count}개 (4개 기대)");
+            // Debug.LogWarning($"장비 슬롯 부족: {allSlots.Count}개 (4개 기대)");
         }
         
         // ScrollView 설정
@@ -85,7 +94,25 @@ public class InventoryUIClass : MonoBehaviour
             _scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
         }
         
+        // 합성 버튼 찾기
+        _synthesizeAllButton = _root.Q<Button>("BatchSynthesizeBtn");
+        if (_synthesizeAllButton != null)
+        {
+            _synthesizeAllButton.clicked += OnSynthesizeAllClicked;
+        }
+
+        // 합성 결과 레이블
+        _synthesisResultLabel = _root.Q<Label>("SynthesisResultLabel");
+        if (_synthesisResultLabel != null)
+        {
+            _synthesisResultLabel.text = "";
+            _synthesisResultLabel.style.display = DisplayStyle.None;
+        }
+
         SetupTabs();
+        
+        if (_tabWeapon != null)
+            OnTabClicked("weapon", _tabWeapon);
     }
     
     private void SetupTabs()
@@ -131,7 +158,7 @@ public class InventoryUIClass : MonoBehaviour
         UpdateSingleEquipmentSlot(_weaponSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Weapon), "⚔️", "무기");
         UpdateSingleEquipmentSlot(_armorSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Armor), "🛡️", "방어구");
         UpdateSingleEquipmentSlot(_accessorySlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Accessory), "💍", "액세서리");
-        UpdateSingleEquipmentSlot(_bootsSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Accessory + 1), "👢", "부츠");
+        UpdateSingleEquipmentSlot(_bootsSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Boots), "👢", "부츠");
     }
     
     /// <summary>
@@ -162,26 +189,26 @@ public class InventoryUIClass : MonoBehaviour
             nameLabel.style.marginTop = 5;
             slot.Add(nameLabel);
             
-            // 등급 표시 (색상)
-            string[] gradeNames = GetGradeNames();
-            Color gradeColor = GetGradeColor(eq.grade);
-            var gradeLabel = new Label(gradeNames[Mathf.Min(eq.grade, gradeNames.Length - 1)]);
+            // 희귀도 표시 (색상) - rarity (0-4) 사용
+            string[] rarityNames = GetGradeNames();  // 일반/고급/희귀/영웅/전설
+            Color rarityColor = GetGradeColor(eq.rarity);  // rarity 기반 색상
+            var gradeLabel = new Label(rarityNames[Mathf.Min(eq.rarity, rarityNames.Length - 1)]);
             gradeLabel.style.fontSize = 14;
-            gradeLabel.style.color = gradeColor;
+            gradeLabel.style.color = rarityColor;
             gradeLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             slot.Add(gradeLabel);
             
             // 슬롯 스타일 - 장착됨 상태
-            slot.style.borderLeftColor = gradeColor;
-            slot.style.borderRightColor = gradeColor;
-            slot.style.borderTopColor = gradeColor;
-            slot.style.borderBottomColor = gradeColor;
+            slot.style.borderLeftColor = rarityColor;
+            slot.style.borderRightColor = rarityColor;
+            slot.style.borderTopColor = rarityColor;
+            slot.style.borderBottomColor = rarityColor;
             slot.style.borderLeftWidth = 3;
             slot.style.borderRightWidth = 3;
             slot.style.borderTopWidth = 3;
             slot.style.borderBottomWidth = 3;
             
-            Debug.Log($"장비 슬롯 업데이트: {slotName} = {eq.name} (Grade {eq.grade})");
+            // Debug.Log($"장비 슬롯 업데이트: {slotName} = {eq.name} (Grade {eq.grade})");
         }
         else
         {
@@ -251,7 +278,7 @@ public class InventoryUIClass : MonoBehaviour
         // 장비 슬롯 업데이트 (장착된 아이템 표시)
         UpdateEquipmentSlots();
         
-        Debug.Log($"인벤토리 그리드 업데이트: {groupedItems.Count}개 그룹 ({_currentTab})");
+        // Debug.Log($"인벤토리 그리드 업데이트: {groupedItems.Count}개 그룹 ({_currentTab})");
     }
     
     /// <summary>
@@ -360,9 +387,31 @@ public class InventoryUIClass : MonoBehaviour
             countLabel.style.right = 4;
             countLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             slot.Add(countLabel);
+
+            // 합성 가능 표시 (count >= 5)
+            int itemGrade = System.Convert.ToInt32(item["grade"]);
+            if (count >= GameConfig.SynthesisRequiredCount)
+            {
+                int maxGradeByType = InventorySystem.Instance.GetSynthesizableItemsByType(_currentTab).Count > 0
+                    ? itemGrade : itemGrade + 1;
+                var synthBadge = new Label("합성");
+                synthBadge.style.fontSize = 11;
+                synthBadge.style.backgroundColor = new Color(0.1f, 0.8f, 0.2f, 0.8f);
+                synthBadge.style.color = Color.white;
+                synthBadge.style.position = Position.Absolute;
+                synthBadge.style.top = 2;
+                synthBadge.style.left = 2;
+                synthBadge.style.paddingLeft = 4;
+                synthBadge.style.paddingRight = 4;
+                synthBadge.style.paddingTop = 2;
+                synthBadge.style.paddingBottom = 2;
+                synthBadge.style.borderTopLeftRadius = 4;
+                synthBadge.style.borderBottomRightRadius = 4;
+                slot.Add(synthBadge);
+            }
             
             slot.RegisterCallback<ClickEvent>(evt => OnItemClicked(itemId));
-            slot.RegisterCallback<ContextClickEvent>(evt => OnItemRightClicked(itemId, evt));
+            slot.RegisterCallback<ContextClickEvent>(evt => OnItemRightClicked(itemId, itemGrade, evt));
             
             // 툴팁 이벤트 (PointerEnter/Leave가 더 안정적)
             slot.RegisterCallback<PointerEnterEvent>(evt =>
@@ -500,33 +549,172 @@ public class InventoryUIClass : MonoBehaviour
     }
     
     /// <summary>
-    /// 아이템 클릭 이벤트 (장착)
+    /// 아이템 클릭 이벤트 (1click=비교, 2click=장착)
     /// </summary>
     private void OnItemClicked(string itemId)
     {
-        Debug.Log($"아이템 클릭: {itemId}");
-        
         // 아이템 정보 가져오기
         var item = _allItemsData.FirstOrDefault(i => i["id"].ToString() == itemId);
         if (item == null) return;
         
         int grade = System.Convert.ToInt32(item["grade"]);
+        string itemType = item["type"].ToString();
+        int rarity = GetRarityGrade(item["rarity"].ToString());
         
-        // InventorySystem으로 장비 장착
-        bool success = InventorySystem.Instance.EquipItem(itemId, grade);
-        if (success)
+        Debug.Log($"[TOOLTIP-DBG] 아이템 클릭: id={itemId}, grade={grade}, pending={_pendingCompareItemId}");
+        
+        // 같은 아이템 두 번째 클릭이면 장착 실행
+        if (_pendingCompareItemId == itemId && _pendingCompareGrade == grade)
         {
-            Debug.Log($"아이템 장착 성공: {itemId}");
-            RefreshInventoryGrid(); // UI 새로고침
+            Debug.Log($"[TOOLTIP-DBG] 같은 아이템 재클릭 → 장착 실행");
+            // 같은 아이템 재클릭 → 장착 실행
+            bool success = InventorySystem.Instance.EquipItem(itemId, grade);
+            if (success)
+            {
+                ClearPendingComparison();
+                RefreshInventoryGrid(); // UI 새로고침
+            }
+            return;
         }
+        
+        // 첫 번째 클릭이거나 다른 아이템 → 비교 툴팁 표시
+        Debug.Log($"[TOOLTIP-DBG] 비교 툴팁 표시 시도");
+        ShowItemComparison(itemId, grade, itemType, rarity);
+    }
+    
+    /// <summary>
+    /// 아이템 비교 툴팁 표시
+    /// </summary>
+    private void ShowItemComparison(string itemId, int grade, string itemType, int rarity)
+    {
+        Debug.Log($"[TOOLTIP-DBG] ShowItemComparison 시작: id={itemId}, grade={grade}, type={itemType}, rarity={rarity}");
+        
+        // 아이템 데이터 가져오기
+        var item = _allItemsData.FirstOrDefault(i => i["id"].ToString() == itemId);
+        if (item == null) return;
+        
+        // 새 아이템 스탯 계산
+        float newAttack = InventorySystem.Instance.CalculateEquipmentBonus(grade, "attack");
+        float newDefense = InventorySystem.Instance.CalculateEquipmentBonus(grade, "defense");
+        float newHealth = InventorySystem.Instance.CalculateEquipmentBonus(grade, "health");
+        
+        Debug.Log($"[TOOLTIP-DBG] 새 스탯: atk={newAttack}, def={newDefense}, hp={newHealth}");
+        
+        // 현재 장비 스탯 가져오기
+        float currentAttack = 0, currentDefense = 0, currentHealth = 0;
+        var equipment = _gameState.Inventory.equipment;
+        
+        EquipmentSlot targetSlot = InventorySystem.Instance.GetSlotFromItemType(itemType);
+        var currentEquip = equipment.FirstOrDefault(e => e.slot == (int)targetSlot);
+        
+        if (currentEquip.id != null)  // 슬롯에 장비가 있을 때
+        {
+            currentAttack = currentEquip.attackBonus;
+            currentDefense = currentEquip.defenseBonus;
+            currentHealth = currentEquip.healthBonus;
+            Debug.Log($"[TOOLTIP-DBG] 현재 장비 있음: atk={currentAttack}, def={currentDefense}, hp={currentHealth}");
+        }
+        else
+        {
+            Debug.Log($"[TOOLTIP-DBG] 현재 장비 없음 (빈 슬롯)");
+        }
+        
+        // 대기 중인 비교 상태 저장
+        _pendingCompareItemId = itemId;
+        _pendingCompareGrade = grade;
+        
+        Debug.Log($"[TOOLTIP-DBG] TooltipManager.Instance={(TooltipManager.Instance != null ? "있음" : "null")}");
+        
+        // 비교 툴팁 표시 (화면 중앙 근처)
+        TooltipManager.Instance?.ShowComparisonTooltip(
+            item["name"].ToString(),
+            rarity,
+            itemType,
+            newAttack, newDefense, newHealth,
+            currentAttack, currentDefense, currentHealth,
+            new Vector2(300, 200)  // 중앙 위치
+        );
+        
+        Debug.Log($"[TOOLTIP-DBG] ShowComparisonTooltip 호출 완료");
+    }
+    
+    /// <summary>
+    /// 대기 중인 비교 상태 초기화
+    /// </summary>
+    private void ClearPendingComparison()
+    {
+        _pendingCompareItemId = null;
+        _pendingCompareGrade = 0;
+        TooltipManager.Instance?.HideItemTooltip();
     }
     
     /// <summary>
     /// 아이템 우클릭 이벤트 (합성)
     /// </summary>
-    private void OnItemRightClicked(string itemId, ContextClickEvent evt)
+    private void OnItemRightClicked(string itemId, int itemGrade, ContextClickEvent evt)
     {
         evt.StopPropagation();
-        Debug.Log($"아이템 우클릭 (합성): {itemId}");
+
+        // 보유 아이템 확인
+        var ownedItem = _gameState.Inventory.items.FirstOrDefault(i => i.id == itemId && i.grade == itemGrade);
+        if (ownedItem.id == null || ownedItem.count < GameConfig.SynthesisRequiredCount)
+        {
+            string itemName = ownedItem.id != null ? ownedItem.name : itemId;
+            int currentCount = ownedItem.id != null ? ownedItem.count : 0;
+            ShowSynthesisResult($"{itemName} - 수량 부족 ({currentCount}/{GameConfig.SynthesisRequiredCount})", false);
+            return;
+        }
+
+        bool success = InventorySystem.Instance.Synthesize(itemId, itemGrade);
+        if (success)
+        {
+            ShowSynthesisResult($"합성 성공! {ownedItem.name} → ", true);
+            RefreshInventoryGrid();
+        }
+        else
+        {
+            ShowSynthesisResult("합성 실패 (최대 등급)", false);
+        }
+    }
+
+    /// <summary>
+    /// 일괄 합성 버튼 클릭
+    /// </summary>
+    private void OnSynthesizeAllClicked()
+    {
+        int count = InventorySystem.Instance.SynthesizeAllByType(_currentTab);
+        if (count > 0)
+        {
+            ShowSynthesisResult($"일괄 합성 완료! ({count}회)", true);
+            RefreshInventoryGrid();
+        }
+        else
+        {
+            ShowSynthesisResult("합성 가능한 아이템 없음", false);
+        }
+    }
+
+    /// <summary>
+    /// 합성 결과 메시지 표시
+    /// </summary>
+    private void ShowSynthesisResult(string message, bool success)
+    {
+        if (_synthesisResultLabel == null) return;
+
+        _synthesisResultLabel.text = message;
+        _synthesisResultLabel.style.color = success ? new Color(0.2f, 1f, 0.2f) : new Color(1f, 0.3f, 0.3f);
+        _synthesisResultLabel.style.display = DisplayStyle.Flex;
+
+        // 3초 후 자동 숨김
+        StartCoroutine(HideSynthesisResultAfterDelay(3f));
+    }
+
+    private System.Collections.IEnumerator HideSynthesisResultAfterDelay(float delay)
+    {
+        yield return new UnityEngine.WaitForSeconds(delay);
+        if (_synthesisResultLabel != null)
+        {
+            _synthesisResultLabel.style.display = DisplayStyle.None;
+        }
     }
 }

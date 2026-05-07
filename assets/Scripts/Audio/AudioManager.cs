@@ -34,10 +34,11 @@ public class AudioManager : MonoBehaviour
     
     private void InjectDependencies()
     {
+        if (Bootstrap.Container == null) return;
         if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<IGameLogger>();
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
     }
 
     // ========== 오디오 소스 풀 ==========

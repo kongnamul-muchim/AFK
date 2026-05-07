@@ -12,30 +12,7 @@ public class GameState : MonoBehaviour, IGameState
     /// <summary>
     /// 이벤트 버스 참조
     /// </summary>
-    private IEventBus EventBus => ServiceLocator.Instance.Get<IEventBus>();
-    
-    /// <summary>
-    /// 이벤트 버스 (다른 시스템과의 통신용) - 프로퍼티 미사용 시 지연 초기화
-    /// </summary>
-    private IEventBus eventBus;
-    
-    /// <summary>
-    /// 이벤트 버스 게터 (지연 초기화)
-    /// </summary>
-    private IEventBus EventBusGetter
-    {
-        get
-        {
-            if (eventBus == null)
-                eventBus = ServiceLocator.Instance.Get<IEventBus>();
-            return eventBus;
-        }
-    }
-    
-    /// <summary>
-    /// 이벤트 버스 직접 접근용 (null 체크 포함)
-    /// </summary>
-    private IEventBus eventBusInstance => EventBusGetter;
+    private IEventBus _eventBusCache;
     private static GameState _instance;
     
     /// <summary>
@@ -157,13 +134,20 @@ public class GameState : MonoBehaviour, IGameState
 
     /// <summary>
     /// 환생 시 초기화 (일부 데이터는 유지)
+    /// Web GameState.performRebirth() 기준:
+    /// - 유지: discoveredItems, goldUpgrades, stats, gemUpgrades
+    /// - 초기화: player, stage, combatPhase, inventory(발견제외), dailyMissions
     /// </summary>
     public void ResetForRebirth()
     {
+        // 발견된 아이템 목록 백업 (유지)
+        var discoveredBackup = inventory.discoveredItems;
+        
         player.ResetForRebirth();
         stage.Reset();
         combatPhase.Reset();
         inventory.Reset();
+        inventory.discoveredItems = discoveredBackup; // 발견 아이템 유지
         dailyMissions.Reset();
         
         // stats와 gemUpgrades는 유지
@@ -201,7 +185,8 @@ public class GameState : MonoBehaviour, IGameState
         bool leveledUp = player.AddExperience(amount);
         
         // 경험치 변경 이벤트 (UI 업데이트용)
-        eventBusInstance.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        if (Bootstrap.Container != null)
+            Bootstrap.Container.Resolve<IEventBus>().Emit(GameEvents.PLAYER_STAT_CHANGED);
         
         if (leveledUp)
         {
@@ -210,7 +195,8 @@ public class GameState : MonoBehaviour, IGameState
             player.currentHP = player.maxHP; // HP 완전 회복
             
             // 레벨업 이벤트
-            eventBusInstance.Emit(GameEvents.PLAYER_LEVEL_UP);
+            if (Bootstrap.Container != null)
+                Bootstrap.Container.Resolve<IEventBus>().Emit(GameEvents.PLAYER_LEVEL_UP);
             Debug.Log($"[GameState] 레벨업! Lv.{player.level}");
         }
         

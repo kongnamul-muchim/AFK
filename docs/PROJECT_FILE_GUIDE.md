@@ -51,6 +51,7 @@ C:\Users\admin\AFK\
 ```
 Assets/Scripts/
 ├── Core/                        # 핵심 시스템
+│   └── DI/                      # DI 컨테이너 (순수 C#)
 ├── Systems/                     # 게임 시스템
 ├── UI/
 │   ├── Controllers/             # UI 컨트롤러
@@ -316,8 +317,14 @@ SOLID 원칙과 DI를 준수하는 코드 구조입니다.
 | `Assets/Scripts/Core/Interfaces/IEventBus.cs` | EventBus 인터페이스 |
 | `Assets/Scripts/Core/Interfaces/ISaveManager.cs` | SaveManager 인터페이스 |
 | `Assets/Scripts/Core/Interfaces/ILogger.cs` | 로거 인터페이스 |
-| `Assets/Scripts/Core/Interfaces/ServiceLocator.cs` | 서비스 로케이터 |
+| `Assets/Scripts/Core/DI/IDIContainer.cs` | DI 컨테이너 (ServiceLocator 대체) |
 | `Assets/Scripts/Core/Interfaces/GameLoggerAdapter.cs` | 로거 어댑터 |
+
+### DI 컨테이너 (`Assets/Scripts/Core/DI/`)
+| 파일 | 설명 |
+|------|------|
+| `IDIContainer.cs` | DI 컨테이너 인터페이스 + ServiceLifetime |
+| `DIContainer.cs` | DI 컨테이너 구현체 (순수 C#) |
 
 ### DI/솔리드 적용 예시
 | 파일 | 설명 |
@@ -344,7 +351,9 @@ SOLID 원칙과 DI를 준수하는 코드 구조입니다.
 ### Unity 스크립트
 ```
 Assets/Scripts/
-├── Core/           → 핵심 시스템 (GameState, EventBus 등)
+├── Core/
+│   ├── DI/            → DI 컨테이너 (IDIContainer, DIContainer)
+│   └── ...            → GameState, EventBus 등
 ├── Systems/        → 게임 시스템 (Combat, Stage 등)
 ├── UI/
 │   ├── Controllers/   → 컨트롤러

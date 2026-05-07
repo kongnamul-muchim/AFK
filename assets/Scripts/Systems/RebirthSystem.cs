@@ -37,12 +37,14 @@ public class RebirthSystem : MonoBehaviour
     /// </summary>
     private void InjectDependencies()
     {
+        if (Bootstrap.Container == null) return;
+
         if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
         if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<IGameLogger>();
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
     }
 
     private void Awake()
@@ -78,9 +80,8 @@ public class RebirthSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 환생 수행
+    /// 환생 수행 (Web GameState.performRebirth() 기준)
     /// </summary>
-    /// <returns>성공 여부</returns>
     public bool PerformRebirth()
     {
         if (!CanRebirth())
@@ -90,16 +91,16 @@ public class RebirthSystem : MonoBehaviour
         
         _logger.Info($"환생 시작 - {_gameState.Rebirth.rebirthCount + 1}번째 환생");
         
-        // 환생 보너스 계산
-        float rebirthBonus = CalculateRebirthBonus();
+        int bonusPoints = GetBonusPointsPreview();
         
-        // 데이터 초기화
+        // 데이터 초기화 (GameState.ResetForRebirth에서 처리)
+        // 발견된 아이템, 골드 업그레이드, stats, gemUpgrades는 유지됨
         _gameState.ResetForRebirth();
         
-        // 환생 카운트 증가
+        // 환생 카운트 증가 및 보너스 포인트 추가
         var rebirth = _gameState.Rebirth;
         rebirth.rebirthCount++;
-        rebirth.bonusPoints = Mathf.RoundToInt(rebirthBonus);
+        rebirth.bonusPoints += bonusPoints;
         _gameState.Rebirth = rebirth;
         
         // 통계 업데이트
@@ -107,13 +108,7 @@ public class RebirthSystem : MonoBehaviour
         stats.totalRebirths++;
         _gameState.Stats = stats;
         
-        // 골드 일부 유지
-        long retainedGold = (long)(_gameState.Player.gold * GameConfig.RebirthGoldRetention);
-        var player = _gameState.Player;
-        player.gold = retainedGold;
-        _gameState.Player = player;
-        
-        _logger.Info($"환생 완료 - 보너스: {rebirthBonus:P1}, 유지 골드: {retainedGold}");
+        _logger.Info($"환생 완료 - 보너스 포인트: {bonusPoints}");
         
         // 이벤트 발생
         _eventBus.Emit(GameEvents.REBIRTH_PERFORMED);
@@ -124,17 +119,19 @@ public class RebirthSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 환생 보너스 계산
+    /// 환생 시 얻을 보너스 포인트 미리보기 (Web 버전과 동일한 계산식)
     /// </summary>
-    private float CalculateRebirthBonus()
+    public int GetBonusPointsPreview()
     {
-        // 기본 보너스 (환생당 10%)
-        float baseBonus = _gameState.Rebirth.rebirthCount * GameConfig.RebirthStatBonus;
+        int playerLevel = _gameState.Player.level;
+        int minLevel = GameConfig.MinRebirthLevel;
+        int bonusLevel = Mathf.Max(0, playerLevel - minLevel + 1);
+        int basePoints = Mathf.FloorToInt(bonusLevel * (1 + bonusLevel * 0.1f));
         
-        // 보석 업그레이드 보너스
-        float gemBonus = _gameState.GemUpgrades.rebirthBonusLevel * 0.05f; // 레벨당 5%
+        int gemBonusLevel = _gameState.GemUpgrades.rebirthBonusLevel;
+        basePoints += Mathf.Min(gemBonusLevel, 10);
         
-        return baseBonus + gemBonus;
+        return basePoints;
     }
 
     /// <summary>

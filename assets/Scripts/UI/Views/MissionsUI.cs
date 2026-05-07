@@ -31,18 +31,18 @@ public class MissionsUIClass : MonoBehaviour
         try
         {
             InjectDependencies();
-            Debug.Log("MissionUIClass.Awake() - DI 성공");
+            // Debug.Log("MissionUIClass.Awake() - DI 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"MissionUIClass.Awake() - DI 실패: {e.Message}");
+            // Debug.LogError($"MissionUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
     
     private void InjectDependencies()
     {
-        var serviceLocator = ServiceLocator.Instance;
-        _gameState = serviceLocator.Get<IGameState>();
+        if (Bootstrap.Container == null) return;
+        _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
     
     public void Initialize(VisualElement root)
@@ -67,6 +67,8 @@ public class MissionsUIClass : MonoBehaviour
         _missionsResetTimer = _root.Q<Label>("MissionsResetTimer");
         
         SetupTabs();
+        if (_missionsTabDaily != null)
+            OnTabClicked("daily", _missionsTabDaily);
         StartTimer();
     }
     
@@ -190,104 +192,67 @@ public class MissionsUIClass : MonoBehaviour
             _missionContainer.Add(item);
         }
         
-        Debug.Log($"미션 그리드 업데이트: {missions.Count}개 ({_currentTab})");
+        // Debug.Log($"미션 그리드 업데이트: {missions.Count}개 ({_currentTab})");
     }
     
-    /// <summary>
-    /// 현재 탭의 미션 목록 가져오기
-    /// </summary>
-    private List<MissionData> GetMissions()
+    private List<MissionDisplayData> GetMissions()
     {
-        var missions = new List<MissionData>();
+        var missions = new List<MissionDisplayData>();
+        var dailyMissions = _gameState.DailyMissions;
         
-        if (_currentTab == "daily")
+        System.Func<string, string> getMissionName = (type) => type switch
         {
-            // 일일 미션 (하드코딩 - 실제 시스템 연동 시 변경)
-            missions.Add(new MissionData
-            {
-                id = "daily_1",
-                name = "몬스터 10마리 처치",
-                description = "스테이지에서 몬스터를 10마리 처치하세요",
-                progress = _gameState.Stats.totalKills,
-                target = 10,
-                completed = _gameState.Stats.totalKills >= 10,
-                claimed = false,
-                reward = new MissionReward { statPoints = 5, gems = 2 }
-            });
-            
-            missions.Add(new MissionData
-            {
-                id = "daily_2",
-                name = "골드 1000 획득",
-                description = "골드를 1000개 획득하세요",
-                progress = 0, // TODO: 총 획득 골드 추적
-                target = 1000,
-                completed = false,
-                claimed = false,
-                reward = new MissionReward { statPoints = 3, gems = 1 }
-            });
-            
-            missions.Add(new MissionData
-            {
-                id = "daily_3",
-                name = "스테이지 5클리어",
-                description = "스테이지를 5개 클리어하세요",
-                progress = _gameState.Stage.currentStage - 1,
-                target = 5,
-                completed = (_gameState.Stage.currentStage - 1) >= 5,
-                claimed = false,
-                reward = new MissionReward { statPoints = 10, gems = 5 }
-            });
-            
-            missions.Add(new MissionData
-            {
-                id = "daily_4",
-                name = "인벤토리 확장",
-                description = "인벤토리 슬롯을 1개 확장하세요",
-                progress = 0,
-                target = 1,
-                completed = false,
-                claimed = false,
-                reward = new MissionReward { statPoints = 2, gems = 3 }
-            });
-        }
-        else
+            "Kill" => "몬스터 처치",
+            "ClearStage" => "스테이지 클리어",
+            "CollectGold" => "골드 획득",
+            "Synthesize" => "아이템 합성",
+            "Rebirth" => "환생",
+            _ => "미션"
+        };
+        
+        System.Func<string, int, string> getMissionDesc = (type, target) => type switch
         {
-            // 주간 미션
-            missions.Add(new MissionData
+            "Kill" => $"몬스터 {target}마리 처치",
+            "ClearStage" => $"스테이지 {target}개 클리어",
+            "CollectGold" => $"골드 {target} 획득",
+            "Synthesize" => $"아이템 {target}회 합성",
+            "Rebirth" => $"환생 {target}회",
+            _ => "미션 진행"
+        };
+        
+        var sourceList = _currentTab == "daily" ? dailyMissions.missions : dailyMissions.weeklyMissions;
+        
+        // 보상 금액을 DailyMissionSystem에서 계산
+        System.Func<string, long> getDailyReward = (type) =>
+        {
+            var stage = Mathf.Max(1, _gameState.Stage.maxStage);
+            return type switch
             {
-                id = "weekly_1",
-                name = "몬스터 100마리 처치",
-                description = "일주일 동안 몬스터를 100마리 처치하세요",
-                progress = _gameState.Stats.totalKills,
-                target = 100,
-                completed = _gameState.Stats.totalKills >= 100,
-                claimed = false,
-                reward = new MissionReward { statPoints = 50, gems = 20 }
-            });
+                "Kill" => 100 + stage * 10,
+                "ClearStage" => 200 + stage * 20,
+                "CollectGold" => 50 + stage * 5,
+                "Synthesize" => 150,
+                "Rebirth" => 500,
+                _ => 100
+            };
+        };
+        
+        foreach (var sysMission in sourceList)
+        {
+            long rewardValue = _currentTab == "daily"
+                ? getDailyReward(sysMission.type)
+                : getDailyReward(sysMission.type) * 8;
             
-            missions.Add(new MissionData
+            missions.Add(new MissionDisplayData
             {
-                id = "weekly_2",
-                name = "보스 5마리 처치",
-                description = "일주일 동안 보스를 5마리 처치하세요",
-                progress = _gameState.Stats.totalBossKills,
-                target = 5,
-                completed = _gameState.Stats.totalBossKills >= 5,
-                claimed = false,
-                reward = new MissionReward { statPoints = 30, gems = 15 }
-            });
-            
-            missions.Add(new MissionData
-            {
-                id = "weekly_3",
-                name = "레벨 10업",
-                description = "일주일 동안 레벨을 10개 올리세요",
-                progress = _gameState.Player.level - 1,
-                target = 10,
-                completed = (_gameState.Player.level - 1) >= 10,
-                claimed = false,
-                reward = new MissionReward { statPoints = 20, gems = 10 }
+                id = sysMission.id,
+                name = getMissionName(sysMission.type),
+                description = getMissionDesc(sysMission.type, sysMission.target),
+                progress = sysMission.progress,
+                target = sysMission.target,
+                completed = sysMission.completed,
+                claimed = sysMission.claimed,
+                reward = new MissionDisplayReward { statPoints = (int)(rewardValue / 100), gems = _currentTab == "weekly" ? 16 : 0 }
             });
         }
         
@@ -297,7 +262,7 @@ public class MissionsUIClass : MonoBehaviour
     /// <summary>
     /// 미션 카드 생성
     /// </summary>
-    private VisualElement CreateMissionCard(MissionData mission)
+    private VisualElement CreateMissionCard(MissionDisplayData mission)
     {
         var container = new VisualElement();
         container.style.flexDirection = FlexDirection.Column;
@@ -480,7 +445,7 @@ public class MissionsUIClass : MonoBehaviour
         
         _gameState.DailyMissions = dailyMissions;
         
-        Debug.Log($"미션 보상 청구: {missionId} - ⭐5pt, 💎{(isWeekly ? 18 : 2)}");
+        // Debug.Log($"미션 보상 청구: {missionId} - ⭐5pt, 💎{(isWeekly ? 18 : 2)}");
         
         UpdateDisplay();
         RefreshMissionsGrid();
@@ -495,9 +460,9 @@ public class MissionsUIClass : MonoBehaviour
         }
     }
     
-    // ==================== 데이터 클래스 ====================
+    // ==================== UI 표시용 데이터 클래스 ====================
     
-    private class MissionData
+    private class MissionDisplayData
     {
         public string id;
         public string name;
@@ -506,10 +471,10 @@ public class MissionsUIClass : MonoBehaviour
         public int target;
         public bool completed;
         public bool claimed;
-        public MissionReward reward;
+        public MissionDisplayReward reward;
     }
     
-    private class MissionReward
+    private class MissionDisplayReward
     {
         public int statPoints;
         public int gems;

@@ -99,23 +99,29 @@ public class PlayerData
     }
 
     /// <summary>
-    /// 환생 시 초기화 (일부 데이터 유지)
-    /// rebirthCount 증가, 기본 스탯 초기화, 골드 일부 손실
+    /// 환생 시 초기화 (Web GameState.performRebirth 기준)
+    /// 레벨/경험치/스탯 초기화, 골드는 0, 골드 업그레이드는 유지
     /// </summary>
     public void ResetForRebirth()
     {
         level = 1;
         experience = 0;
         currentHP = maxHP;
-        gold = 0; // 환생 시 골드 초기화
-        // GameConfig 값 사용 (Web 버전과 일치)
+        gold = 0;
         attack = GameConfig.BasePlayerAttack;
         defense = GameConfig.BasePlayerDefense;
         health = GameConfig.BasePlayerHP * 2;
-        rebirthCount++;
         statPoints = 0;
         
-        // 업그레이드는 유지 (환생 보너스로 활용)
+        // 스탯 업그레이드 초기화 (골드 업그레이드는 유지)
+        statUpgrades = new SerializableDictionary<string, int>();
+        statUpgrades.Add("attack", 0);
+        statUpgrades.Add("defense", 0);
+        statUpgrades.Add("hp", 0);
+        statUpgrades.Add("hpRegen", 0);
+        statUpgrades.Add("attackSpeed", 0);
+        statUpgrades.Add("critChance", 0);
+        statUpgrades.Add("critDamage", 0);
     }
 
     /// <summary>

@@ -58,7 +58,7 @@ public class ItemDropEffectManager : MonoBehaviour
     private void OnItemAcquired()
     {
         // 간단한 이펙트만 표시 (실제로는 더 복잡한 애니메이션 가능)
-        Debug.Log("[ItemDropEffect] 아이템 획득!");
+        // Debug.Log("[ItemDropEffect] 아이템 획득!");
     }
     
     /// <summary>

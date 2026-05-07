@@ -67,7 +67,7 @@ public class CombatLogManager : MonoBehaviour
         }
         
         // 이벤트 버스 연결 (이벤트 구독)
-        _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+        _eventBus = Bootstrap.Container?.Resolve<IEventBus>() ?? EventBus.Instance;
         if (_eventBus != null)
         {
             _eventBus.On(GameEvents.GOLD_CHANGED, OnGoldChanged);
@@ -80,11 +80,9 @@ public class CombatLogManager : MonoBehaviour
     
     private void OnGoldChanged()
     {
-        var state = ServiceLocator.Instance.Get<IGameState>();
-        if (state != null)
-        {
-            AddLog($"골드: {state.Player.gold}", LogType.Gold);
-        }
+        if (Bootstrap.Container == null) return;
+        var state = Bootstrap.Container.Resolve<IGameState>();
+        AddLog($"골드: {state.Player.gold}", LogType.Gold);
     }
     
     private void OnItemAcquired()
@@ -99,20 +97,16 @@ public class CombatLogManager : MonoBehaviour
     
     private void OnPlayerLevelUp()
     {
-        var state = ServiceLocator.Instance.Get<IGameState>();
-        if (state != null)
-        {
-            AddLog($"레벨업! Lv.{state.Player.level}", LogType.Info);
-        }
+        if (Bootstrap.Container == null) return;
+        var state = Bootstrap.Container.Resolve<IGameState>();
+        AddLog($"레벨업! Lv.{state.Player.level}", LogType.Info);
     }
     
     private void OnGemChanged()
     {
-        var state = ServiceLocator.Instance.Get<IGameState>();
-        if (state != null)
-        {
-            AddLog($"보석: {state.Player.gems}", LogType.Item);
-        }
+        if (Bootstrap.Container == null) return;
+        var state = Bootstrap.Container.Resolve<IGameState>();
+        AddLog($"보석: {state.Player.gems}", LogType.Item);
     }
     
     private void OnDestroy()

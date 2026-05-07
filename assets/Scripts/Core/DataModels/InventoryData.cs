@@ -48,7 +48,8 @@ public struct EquipmentData
 {
     public string id;
     public string name;
-    public int grade;
+    public int grade;      // 티어 등급 (1-5: Bronze/Iron/Steel/Gold/Mythril)
+    public int rarity;    // 희귀도 (0-4: common/rare/epic/legendary/mythic)
     public int slot;
     public float attackBonus;
     public float defenseBonus;

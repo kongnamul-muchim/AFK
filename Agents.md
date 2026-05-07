@@ -184,15 +184,78 @@ public class OrderService {
 }
 ```
 
-#### 5.2.3 DI 컨테이너 활용
-- **등록**: 모든 의존성은 DI 컨테이너에 등록
-- **수명 주기**: 적절한 수명 주기(Transient, Scoped, Singleton) 선택
-- **해결**: 서비스 로케이터 대신 DI 컨테이너를 통한 해결
+#### 5.2.3 DI 컨테이너 아키텍처
 
-#### 5.2.4 DI 예외 사항
-- **제어 프레임워크**: ASP.NET Core의 컨트롤러 등 프레임워크가 관리하는 경우
+**위치**: `Assets/Scripts/Core/DI/`
+- `IDIContainer.cs` — DI 컨테이너 인터페이스 + ServiceLifetime 열거형
+- `DIContainer.cs` — DI 컨테이너 구현체 (순수 C#, MonoBehaviour 아님)
+
+#### 5.2.4 IDIContainer 인터페이스 (메서드 목록)
+
+| 메서드 | 설명 |
+|--------|------|
+| `Register<TInterface, TImpl>(lifetime)` | 인터페이스 → 구현체 매핑 등록 |
+| `Register<TImpl>(lifetime)` | 구현체 직접 등록 (인터페이스 없음) |
+| `RegisterInstance<T>(instance, lifetime)` | 인스턴스 직접 등록 (주로 Singleton) |
+| `Resolve<T>()` | 등록된 서비스 해결 (생성자 주입 자동 처리) |
+| `CreateScope()` | Scoped 생명주기용 자식 컨테이너 생성 |
+| `IsRegistered<T>()` | 특정 타입 등록 여부 확인 |
+
+#### 5.2.5 서비스 생명주기 (ServiceLifetime)
+
+| 생명주기 | 동작 | 사용 예 |
+|---------|------|---------|
+| `Transient` | 요청할 때마다 **새 인스턴스** 생성 | 상태가 없는 경량 서비스 |
+| `Scoped` | 같은 스코프 내에서 **인스턴스 공유** | 요청 단위로 공유해야 하는 서비스 |
+| `Singleton` | 전역에서 **하나의 인스턴스**만 사용 | GameState, EventBus, SaveManager 등 |
+
+#### 5.2.6 DI 구현 패턴
+
+**① 순수 C# 클래스 — 생성자 주입 (권장)**
+```csharp
+public class SomeService : ISomeService
+{
+    private readonly IGameState _gameState;
+    
+    public SomeService(IGameState gameState)
+    {
+        _gameState = gameState;
+    }
+}
+```
+→ DIContainer.Resolve<T>()가 생성자 파라미터를 자동 해결
+
+**② MonoBehaviour 클래스 — RegisterInstance + Bootstrap에서 전달**
+```csharp
+// Bootstrap.cs
+var container = new DIContainer();
+var combatSystem = FindObjectOfType<CombatSystem>();
+combatSystem.Inject(container.Resolve<IGameState>());
+container.RegisterInstance<ICombatSystem>(combatSystem, ServiceLifetime.Singleton);
+```
+
+**③ Bootstrap 등록 예시**
+```csharp
+private void InitializeDI()
+{
+    _container = new DIContainer();
+    
+    // Singleton — 전역 공유 서비스
+    _container.RegisterInstance<IGameState>(GameState.Instance, ServiceLifetime.Singleton);
+    _container.RegisterInstance<IEventBus>(EventBus.Instance, ServiceLifetime.Singleton);
+    _container.RegisterInstance<ISaveManager>(SaveManager.Instance, ServiceLifetime.Singleton);
+    
+    // Transient — 매번 새 인스턴스
+    _container.Register<IMonsterFactory, MonsterFactory>(ServiceLifetime.Transient);
+    _container.Register<IDropTable, DropTable>(ServiceLifetime.Transient);
+}
+```
+
+#### 5.2.7 DI 예외 사항
+- **MonoBehaviour**: 생성자 주입 불가 → Awake()/Start()에서 수동 주입 또는 Adapter 패턴
 - **DTO/ViewModel**: 데이터 전송 객체는 DI 불필요
 - **정적 유틸리티**: 순수 정적 메서드는 DI 대상 아님
+- **ServiceLocator**: 사용 금지 (DIContainer로 대체)
 
 ### 5.3 코드 리뷰 체크리스트
 

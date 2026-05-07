@@ -55,12 +55,14 @@ public class DailyMissionSystem : MonoBehaviour
     /// </summary>
     private void InjectDependencies()
     {
+        if (Bootstrap.Container == null) return;
+
         if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
         if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<IGameLogger>();
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
     }
 
     private void Awake()

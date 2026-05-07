@@ -1,21 +1,21 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using AFK.Core.DI;
 
 /// <summary>
 /// 게임 초기화를 담당하는 클래스
-/// 게임 시작 시 모든 싱글톤 인스턴스를 초기화하고 저장된 게임을 로드하거나 새 게임을 시작합니다.
+/// 게임 시작 시 DI 컨테이너를 초기화하고 서비스를 등록합니다.
 /// </summary>
+[DefaultExecutionOrder(-100)]
 public class Bootstrap : MonoBehaviour
 {
-    /// <summary>
-    /// 부트스트랩이 이미 실행되었는지 확인하는 플래그
-    /// </summary>
+    public static IDIContainer Container { get; private set; }
+
     private static bool _isInitialized = false;
 
     private void Awake()
     {
-        // 중복 초기화 방지
         if (_isInitialized)
         {
             Destroy(gameObject);
@@ -28,35 +28,24 @@ public class Bootstrap : MonoBehaviour
         InitializeGame();
     }
 
-    /// <summary>
-    /// 게임 초기화 수행
-    /// </summary>
     private void InitializeGame()
     {
         GameLogger.Info("게임 부트스트랩 시작...");
 
-        // 0. ServiceLocator 초기화 및 서비스 등록 (DIP 준수)
-        var serviceLocator = ServiceLocator.Instance;
-        
-        // GameState를 IGameState로 등록
-        var gameState = GameState.Instance;
-        serviceLocator.RegisterSingleton<IGameState, GameState>(gameState);
-        
-        // EventBus를 IEventBus로 등록
-        var eventBus = EventBus.Instance;
-        serviceLocator.RegisterSingleton<IEventBus, EventBus>(eventBus);
-        
-        // SaveManager를 ISaveManager로 등록
-        var saveManager = SaveManager.Instance;
-        serviceLocator.RegisterSingleton<ISaveManager, SaveManager>(saveManager);
-        
-        // Logger 등록
-        serviceLocator.RegisterSingleton<IGameLogger, GameLoggerAdapter>(new GameLoggerAdapter());
-        
-        GameLogger.DebugLog("ServiceLocator에 서비스 등록 완료");
+        Container = new DIContainer();
 
-        // 1. 싱글톤 인스턴스들 초기화 순서 보장
-        GameLogger.DebugLog("싱글톤 인스턴스 초기화 완료");
+        var gameState = GameState.Instance;
+        Container.RegisterInstance<IGameState>(gameState, ServiceLifetime.Singleton);
+
+        var eventBus = EventBus.Instance;
+        Container.RegisterInstance<IEventBus>(eventBus, ServiceLifetime.Singleton);
+
+        var saveManager = SaveManager.Instance;
+        Container.RegisterInstance<ISaveManager>(saveManager, ServiceLifetime.Singleton);
+
+        Container.RegisterInstance<IGameLogger>(new GameLoggerAdapter(), ServiceLifetime.Singleton);
+
+        GameLogger.DebugLog("DIContainer에 서비스 등록 완료");
 
         // 2. 저장된 게임 로드 또는 새 게임 시작
         if (saveManager.SaveExists())
@@ -88,10 +77,16 @@ public class Bootstrap : MonoBehaviour
         // 3. 자동 저장 시작
         saveManager.StartAutoSave(5f);
 
-        // 4. 초기 이벤트 발생
+        // 4. 일일/주간 미션 생성 (저장 데이터가 없으면 신규 생성)
+        if (GameState.Instance.dailyMissions.missions.Count == 0)
+            DailyMissionSystem.Instance.GenerateDailyMissions();
+        if (GameState.Instance.dailyMissions.weeklyMissions.Count == 0)
+            DailyMissionSystem.Instance.GenerateWeeklyMissions();
+
+        // 5. 초기 이벤트 발생
         eventBus.Emit(GameEvents.GAME_LOADED);
 
-        // 5. 첫 스테이지 진입 (전투 시작)
+        // 6. 첫 스테이지 진입 (전투 시작)
         StageSystem.Instance.EnterStage(1);
 
         GameLogger.Info("게임 부트스트랩 완료");
@@ -199,30 +194,15 @@ public class Bootstrap : MonoBehaviour
                 healthBonus = 0
             };
 
-            // stats JSON 파싱 (간단히)
+            // stats JSON 파싱
             if (row.TryGetValue("stats", out var statsObj) && statsObj != null)
             {
-                var statsStr = statsObj.ToString();
-                if (statsStr.Contains("attackBonus"))
+                var parsed = JsonUtility.FromJson<ItemStatsJson>(statsObj.ToString());
+                if (parsed != null)
                 {
-                    var start = statsStr.IndexOf(":") + 1;
-                    var end = statsStr.IndexOf("}", start);
-                    if (int.TryParse(statsStr.Substring(start, end - start).Trim(), out var atk))
-                        item.attackBonus = atk;
-                }
-                if (statsStr.Contains("defenseBonus"))
-                {
-                    var start = statsStr.IndexOf(":") + 1;
-                    var end = statsStr.IndexOf("}", start);
-                    if (int.TryParse(statsStr.Substring(start, end - start).Trim(), out var def))
-                        item.defenseBonus = def;
-                }
-                if (statsStr.Contains("healthBonus"))
-                {
-                    var start = statsStr.IndexOf(":") + 1;
-                    var end = statsStr.IndexOf("}", start);
-                    if (int.TryParse(statsStr.Substring(start, end - start).Trim(), out var hp))
-                        item.healthBonus = hp;
+                    item.attackBonus = parsed.attackBonus;
+                    item.defenseBonus = parsed.defenseBonus;
+                    item.healthBonus = parsed.healthBonus;
                 }
             }
 

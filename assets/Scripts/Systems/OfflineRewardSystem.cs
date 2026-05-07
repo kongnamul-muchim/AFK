@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 /// <summary>
@@ -39,16 +40,15 @@ public class OfflineRewardSystem : MonoBehaviour
     /// </summary>
     private void InjectDependencies()
     {
-        if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
-        if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
-        if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<IGameLogger>();
-    }
+        if (Bootstrap.Container == null) return;
 
-    /// <summary>마지막 저장 시간</summary>
-    private DateTime _lastSaveTime;
+        if (_gameState == null)
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
+        if (_eventBus == null)
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
+        if (_logger == null)
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
+    }
 
     private void Awake()
     {
@@ -60,28 +60,17 @@ public class OfflineRewardSystem : MonoBehaviour
         _instance = this;
         DontDestroyOnLoad(gameObject);
         
-        // 의존성 주입
         InjectDependencies();
     }
 
-    private void OnEnable()
+    private DateTime GetSaveFileLastWriteTime()
     {
-        // 의존성 주입 확인
-        InjectDependencies();
-        
-        // 게임 로드 시 마지막 저장 시간 업데이트
-        _eventBus.On(GameEvents.GAME_LOADED, OnGameLoaded);
-    }
-
-    private void OnDisable()
-    {
-        _eventBus.Off(GameEvents.GAME_LOADED, OnGameLoaded);
-    }
-
-    private void OnGameLoaded()
-    {
-        // 마지막 저장 시간을 현재 시간으로 업데이트
-        _lastSaveTime = DateTime.UtcNow;
+        string savePath = Path.Combine(Application.persistentDataPath, "savegame.json");
+        if (File.Exists(savePath))
+        {
+            return File.GetLastWriteTimeUtc(savePath);
+        }
+        return DateTime.UtcNow;
     }
 
     // ========== 오프라인 시간 계산 ==========
@@ -92,17 +81,23 @@ public class OfflineRewardSystem : MonoBehaviour
     /// <returns>경과 시간 (초)</returns>
     public float CalculateOfflineTime()
     {
-        DateTime now = DateTime.UtcNow;
-        TimeSpan elapsed = now - _lastSaveTime;
+        string savePath = Path.Combine(Application.persistentDataPath, "savegame.json");
+        Debug.Log($"[OfflineTime] savePath={savePath}, exists={File.Exists(savePath)}");
         
-        // 최대 24시간 제한
+        DateTime now = DateTime.UtcNow;
+        DateTime lastWrite = GetSaveFileLastWriteTime();
+        Debug.Log($"[OfflineTime] now={now:O}, lastWrite={lastWrite:O}");
+        
+        TimeSpan elapsed = now - lastWrite;
+        Debug.Log($"[OfflineTime] elapsed={elapsed.TotalHours} hours");
+        
         float hours = (float)elapsed.TotalHours;
         if (hours > GameConfig.MaxOfflineTime)
-        {
             hours = GameConfig.MaxOfflineTime;
-        }
+        if (hours < 0f)
+            hours = 0f;
         
-        return hours * 3600f; // 시간 → 초 변환
+        return hours * 3600f;
     }
 
     /// <summary>

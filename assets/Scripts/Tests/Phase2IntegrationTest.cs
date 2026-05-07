@@ -22,7 +22,6 @@ public class Phase2IntegrationTest : MonoBehaviour
     private DailyMissionSystem _missionSystem;
     private RebirthSystem _rebirthSystem;
     private OfflineRewardSystem _offlineSystem;
-    private TutorialSystem _tutorialSystem;
     private StatsTracker _statsTracker;
     
     private TestResults _results = new TestResults();
@@ -33,9 +32,9 @@ public class Phase2IntegrationTest : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         
         // 의존성 가져오기
-        _gameState = ServiceLocator.Instance.Get<IGameState>();
-        _eventBus = ServiceLocator.Instance.Get<IEventBus>();
-        _logger = ServiceLocator.Instance.Get<IGameLogger>();
+        _gameState = Bootstrap.Container.Resolve<IGameState>();
+        _eventBus = Bootstrap.Container.Resolve<IEventBus>();
+        _logger = Bootstrap.Container.Resolve<IGameLogger>();
         
         // 시스템 인스턴스 가져오기
         _combatSystem = CombatSystem.Instance;
@@ -44,7 +43,6 @@ public class Phase2IntegrationTest : MonoBehaviour
         _missionSystem = DailyMissionSystem.Instance;
         _rebirthSystem = RebirthSystem.Instance;
         _offlineSystem = OfflineRewardSystem.Instance;
-        _tutorialSystem = TutorialSystem.Instance;
         _statsTracker = StatsTracker.Instance;
     }
     

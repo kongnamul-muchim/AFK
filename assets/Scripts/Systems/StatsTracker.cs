@@ -36,10 +36,12 @@ public class StatsTracker : MonoBehaviour
     /// </summary>
     private void InjectDependencies()
     {
+        if (Bootstrap.Container == null) return;
+
         if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
         if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
     }
 
     private void Awake()
@@ -84,18 +86,14 @@ public class StatsTracker : MonoBehaviour
     
     private void OnMonsterKill()
     {
-        var stats = _gameState.Stats;
-        stats.totalKills++;
-        _gameState.Stats = stats;
+        // CombatSystem.ProcessVictory에서 이미 stats.totalKills를 증가시킴
+        // 중복 방지를 위해 여기서는 STATS_CHANGED 이벤트만 발생
         _eventBus.Emit(GameEvents.STATS_CHANGED);
     }
 
     private void OnBossKill()
     {
-        var stats = _gameState.Stats;
-        stats.totalBossKills++;
-        stats.totalKills++;
-        _gameState.Stats = stats;
+        // CombatSystem.ProcessVictory에서 이미 stats.totalBossKills를 증가시킴
         _eventBus.Emit(GameEvents.STATS_CHANGED);
     }
 

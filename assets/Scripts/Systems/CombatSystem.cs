@@ -88,14 +88,15 @@ public class CombatSystem : MonoBehaviour
     /// </summary>
     private void InjectDependencies()
     {
+        if (Bootstrap.Container == null) return;
+
         if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
         if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<IGameLogger>();
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
         
-        // DailyMissionSystem 참조 설정 (버프 시스템용)
         if (_dailyMissionSystem == null)
             _dailyMissionSystem = DailyMissionSystem.Instance;
     }
@@ -292,7 +293,7 @@ public class CombatSystem : MonoBehaviour
                 
             case CombatPhase.COMBAT:
                 // 전투 시작 - 공격 애니메이션 상태 초기화
-                Debug.Log($"[DEBUG] OnEnterPhase(COMBAT) - StartCombatLoop 호출");
+                // Debug.Log($"[DEBUG] OnEnterPhase(COMBAT) - StartCombatLoop 호출");
                 playerAnimState = PlayerAnimState.idle;
                 attackCurrentFrame = 0;
                 _attackAnimStartTime = 0f;
@@ -370,7 +371,7 @@ public class CombatSystem : MonoBehaviour
                 if (_phaseTimer >= 2f && !_victoryNextStageCalled)
                 {
                     _victoryNextStageCalled = true;
-                    Debug.Log($"[VICTORY] 2초 경과! 다음 스테이지로. phaseTimer={_phaseTimer}, stage={_gameState.Stage.currentStage}");
+                    // Debug.Log($"[VICTORY] 2초 경과! 다음 스테이지로. phaseTimer={_phaseTimer}, stage={_gameState.Stage.currentStage}");
                     
                     // 플레이어 HP 회복
                     _gameState.Player.currentHP = _gameState.GetTotalHealth();
@@ -382,7 +383,7 @@ public class CombatSystem : MonoBehaviour
                     stageData.currentStage = nextStage;
                     stageData.maxStage = Mathf.Max(stageData.maxStage, nextStage);
                     _gameState.Stage = stageData;
-                    Debug.Log($"[VICTORY] 스테이지 {currentStage} -> {nextStage}");
+                    // Debug.Log($"[VICTORY] 스테이지 {currentStage} -> {nextStage}");
                     
                     // 새 전투 데이터 초기화 (MonsterData는 MOVING 50%에서 스폰되므로 여기서는 0 HP로)
                     var combatPhase = _gameState.CombatPhase;
@@ -391,10 +392,12 @@ public class CombatSystem : MonoBehaviour
                     combatPhase.monsterState = new MonsterData();
                     _gameState.CombatPhase = combatPhase;
                     
+                    // 스테이지 진입 이벤트
+                    _eventBus.Emit(GameEvents.STAGE_ENTERED);
+                    
                     // 직접 MOVING으로 전환
-                    Debug.Log("[VICTORY] MOVING으로 전환");
                     ChangePhase(CombatPhase.MOVING);
-                    Debug.Log($"[VICTORY] 전환 후 currentPhase={_currentPhase}");
+                    // Debug.Log($"[VICTORY] 전환 후 currentPhase={_currentPhase}");
                 }
                 break;
                 
@@ -497,7 +500,7 @@ public class CombatSystem : MonoBehaviour
     {
         WaitForSeconds wait = new WaitForSeconds(COMBAT_TICK);
         
-        Debug.Log("[CombatLoop] Combat started!");
+        // Debug.Log("[CombatLoop] Combat started!");
         
         while (_currentPhase == CombatPhase.COMBAT)
         {
@@ -529,7 +532,7 @@ public class CombatSystem : MonoBehaviour
             CheckCombatResult();
         }
         
-        Debug.Log("[CombatLoop] Combat ended!");
+        // Debug.Log("[CombatLoop] Combat ended!");
     }
     
     /// <summary>
@@ -548,7 +551,7 @@ public class CombatSystem : MonoBehaviour
         attackCurrentFrame = Mathf.Min(currentFrame, ATTACK_FRAMES - 1);
         
         // DEBUG
-        Debug.Log($"[AttackAnim] frame={currentFrame}, elapsed={elapsedMs}, damageDealt={_damageDealt}");
+        // Debug.Log($"[AttackAnim] frame={currentFrame}, elapsed={elapsedMs}, damageDealt={_damageDealt}");
         
         // 애니메이션 완료 확인 (3프레임 끝)
         if (currentFrame >= ATTACK_FRAMES)
@@ -601,7 +604,7 @@ public class CombatSystem : MonoBehaviour
         _damageDealt = false;
         _recoilDealt = false;
         
-        Debug.Log($"[AttackAnim] 공격 시작! timer={_combatTimer}, lastAttack={_lastAttackTime}, speed={_playerAttackSpeed}");
+        // Debug.Log($"[AttackAnim] 공격 시작! timer={_combatTimer}, lastAttack={_lastAttackTime}, speed={_playerAttackSpeed}");
         
         // UIGameRenderer에 애니메이션 시작 알림
         UIGameRenderer.Instance?.OnPlayerAttackStart();
@@ -807,7 +810,7 @@ public class CombatSystem : MonoBehaviour
         player.currentHP = Mathf.Max(0f, player.currentHP - recoilDamage);
         _gameState.Player = player;
         
-        Debug.Log($"[ConsumeHP] 데미지={recoilDamage}, HP={player.currentHP}/{_gameState.GetTotalHealth()}");
+        // Debug.Log($"[ConsumeHP] 데미지={recoilDamage}, HP={player.currentHP}/{_gameState.GetTotalHealth()}");
         
         _logger.Debug($"공격 반동 데미지: {recoilDamage:F1}, 플레이어 HP: {player.currentHP:F1}/{_gameState.GetTotalHealth():F1}");
         
@@ -819,48 +822,6 @@ public class CombatSystem : MonoBehaviour
         {
             player.currentHP = 0;
             _gameState.Player = player;
-            ChangePhase(CombatPhase.DEFEATED);
-        }
-    }
-
-    /// <summary>
-    /// 몬스터 공격
-    /// </summary>
-    private void MonsterAttack()
-    {
-        // 플레이어 총 방어력
-        float playerDefense = _gameState.GetTotalDefense();
-        
-        // 데미지 계산 (몬스터 → 플레이어)
-        float damage = CalculateDamage(
-            _gameState.CombatPhase.monsterState.attack,
-            playerDefense,
-            0f, // 몬스터 치명확률
-            GameConfig.MonsterCritDamage // 몬스터 치명피해
-        );
-        
-        // 플레이어 HP 감소
-        var player = _gameState.Player;
-        player.currentHP -= damage;
-        _gameState.Player = player;
-        
-        _logger.Debug($"몬스터 공격 - 데미지: {damage:F1}, 플레이어 HP: {player.currentHP:F1}/{_gameState.GetTotalHealth():F1}");
-        
-        // HP 변경 이벤트 발생 (UI 업데이트를 위해)
-        _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
-        // 몬스터 공격 애니메이션 (UIGameRenderer)
-        UIGameRenderer.Instance?.OnMonsterAttack();
-        // 플레이어 피격 애니메이션
-        playerAnimState = PlayerAnimState.hit;
-        UIGameRenderer.Instance?.OnPlayerHit();
-        
-        // 플레이어 사망 확인
-        if (player.currentHP <= 0)
-        {
-            player.currentHP = 0;
-            _gameState.Player = player;
-            SetPlayerDead();
             ChangePhase(CombatPhase.DEFEATED);
         }
     }
@@ -1007,6 +968,9 @@ public class CombatSystem : MonoBehaviour
             stage2.clearedStages = clearedStages;
             _gameState.Stage = stage2;
         }
+        
+        // 스테이지 클리어 이벤트
+        _eventBus.Emit(GameEvents.STAGE_CLEAR);
         
         // 보스 스테이지 첫 클리어 보석 보상 (Web 버전과 동일)
         int currentStage = _gameState.Stage.currentStage;

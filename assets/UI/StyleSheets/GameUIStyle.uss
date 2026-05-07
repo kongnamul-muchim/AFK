@@ -522,6 +522,15 @@
     font-size: 30px;
 }
 
+.synthesis-result-label {
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    padding: 10px;
+    margin-left: 10px;
+    white-space: normal;
+}
+
 /* 인벤토리 스크롤 영역 - Web 버전과 동일하게 */
 .inventory-scroll {
     flex: 1;

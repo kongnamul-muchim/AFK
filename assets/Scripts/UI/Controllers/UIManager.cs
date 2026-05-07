@@ -89,16 +89,26 @@ public class UIManager : MonoBehaviour
     
     private void OnEnable()
     {
-        // 게임 로딩 완료 이벤트 구독
         EventBus.Instance.On(GameEvents.GAME_LOADED, OnGameLoaded);
+        EventBus.Instance.On(GameEvents.STAGE_ENTERED, OnStageEntered);
+        EventBus.Instance.On(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
+        EventBus.Instance.On(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
+        EventBus.Instance.On(GameEvents.GOLD_CHANGED, OnGoldChanged);
     }
     
     private void OnDisable()
     {
         EventBus.Instance.Off(GameEvents.GAME_LOADED, OnGameLoaded);
+        EventBus.Instance.Off(GameEvents.STAGE_ENTERED, OnStageEntered);
         EventBus.Instance.Off(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
         EventBus.Instance.Off(GameEvents.PLAYER_LEVEL_UP, OnPlayerLevelUp);
         EventBus.Instance.Off(GameEvents.GOLD_CHANGED, OnGoldChanged);
+    }
+    
+    private void OnStageEntered()
+    {
+        if (_gameState == null) return;
+        UpdateStage(_gameState.Stage.currentStage);
     }
     
     /// <summary>
@@ -107,7 +117,7 @@ public class UIManager : MonoBehaviour
     private void OnPlayerStatChanged()
     {
         if (_gameState == null) return;
-        Debug.Log($"[UIManager] 스탯 업데이트! HP={_gameState.Player.currentHP}/{_gameState.GetTotalHealth()}, Lv={_gameState.Player.level}, SP={_gameState.Player.statPoints}");
+        // Debug.Log($"[UIManager] 스탯 업데이트! HP={_gameState.Player.currentHP}/{_gameState.GetTotalHealth()}, Lv={_gameState.Player.level}, SP={_gameState.Player.statPoints}");
         UpdatePlayerLevel(_gameState.Player.level);
         UpdateHP(_gameState.Player.currentHP, _gameState.GetTotalHealth());
         UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
@@ -129,7 +139,7 @@ public class UIManager : MonoBehaviour
     private void OnPlayerLevelUp()
     {
         if (_gameState == null) return;
-        Debug.Log($"[UIManager] 레벨업! Lv.{_gameState.Player.level}");
+        // Debug.Log($"[UIManager] 레벨업! Lv.{_gameState.Player.level}");
         // 레벨업 알림 표시 (웹 버전과 동일하게)
         UpdatePlayerLevel(_gameState.Player.level);
     }
@@ -139,7 +149,7 @@ public class UIManager : MonoBehaviour
         _uiDocument = GetComponent<UIDocument>();
         if (_uiDocument == null)
         {
-            Debug.LogError("UIDocument 컴포넌트가 없습니다!");
+            // Debug.LogError("UIDocument 컴포넌트가 없습니다!");
             return;
         }
         
@@ -164,18 +174,19 @@ public class UIManager : MonoBehaviour
             Invoke(nameof(TransitionToGame), 0.5f);
         }
         
-        Debug.Log("UIManager 초기화 완료!");
+        // Debug.Log("UIManager 초기화 완료!");
     }
     
     /// <summary>
-    /// DI 설정 (ServiceLocator 사용)
+    /// DI 설정 (DIContainer 사용)
     /// </summary>
     private void InitializeDI()
     {
-        var serviceLocator = ServiceLocator.Instance;
-        _gameState = serviceLocator.Get<IGameState>();
-        _eventBus = serviceLocator.Get<IEventBus>();
-        _logger = serviceLocator.Get<IGameLogger>();
+        if (Bootstrap.Container == null) return;
+
+        _gameState = Bootstrap.Container.Resolve<IGameState>();
+        _eventBus = Bootstrap.Container.Resolve<IEventBus>();
+        _logger = Bootstrap.Container.Resolve<IGameLogger>();
         
         // 플레이어 스탯 변경 이벤트 구독 (DI 완료 후)
         EventBus.Instance.On(GameEvents.PLAYER_STAT_CHANGED, OnPlayerStatChanged);
@@ -194,28 +205,28 @@ public class UIManager : MonoBehaviour
         var inventoryUIGo = new GameObject("InventoryUI");
         inventoryUIGo.transform.SetParent(transform);
         _inventoryUI = inventoryUIGo.AddComponent<InventoryUIClass>();
-        Debug.Log($"InventoryUI 생성됨: {_inventoryUI != null}");
+        // Debug.Log($"InventoryUI 생성됨: {_inventoryUI != null}");
         _inventoryUI.Initialize(_root);
         
         // UpgradeUI 초기화
         var upgradeUIGo = new GameObject("UpgradeUI");
         upgradeUIGo.transform.SetParent(transform);
         _upgradeUI = upgradeUIGo.AddComponent<UpgradeUIClass>();
-        Debug.Log($"UpgradeUI 생성됨: {_upgradeUI != null}");
+        // Debug.Log($"UpgradeUI 생성됨: {_upgradeUI != null}");
         _upgradeUI.Initialize(_root);
         
         // MissionsUI 초기화
         var missionsUIGo = new GameObject("MissionsUI");
         missionsUIGo.transform.SetParent(transform);
         _missionsUI = missionsUIGo.AddComponent<MissionsUIClass>();
-        Debug.Log($"MissionsUI 생성됨: {_missionsUI != null}");
+        // Debug.Log($"MissionsUI 생성됨: {_missionsUI != null}");
         _missionsUI.Initialize(_root);
         
         // GemShopUI 초기화
         var gemShopUIGo = new GameObject("GemShopUI");
         gemShopUIGo.transform.SetParent(transform);
         _gemShopUI = gemShopUIGo.AddComponent<GemShopUIClass>();
-        Debug.Log($"GemShopUI 생성됨: {_gemShopUI != null}");
+        // Debug.Log($"GemShopUI 생성됨: {_gemShopUI != null}");
         _gemShopUI.Initialize(_root);
         
         // ModalManager 초기화
@@ -343,7 +354,11 @@ public class UIManager : MonoBehaviour
         
         var closeOfflineBtn = _root.Q<Button>("CloseOfflineBtn");
         if (closeOfflineBtn != null)
-            closeOfflineBtn.clicked += () => HideModal(_offlineRewardModal);
+            closeOfflineBtn.clicked += () =>
+            {
+                OfflineRewardSystem.Instance.ClaimRewards();
+                HideModal(_offlineRewardModal);
+            };
         
         var closeStatisticsBtn = _root.Q<Button>("CloseStatisticsBtn");
         if (closeStatisticsBtn != null)
@@ -359,7 +374,7 @@ public class UIManager : MonoBehaviour
     private void OnGameLoaded()
     {
         // 게임 로딩 완료 - 게임 화면으로 전환
-        Debug.Log("게임 로딩 완료 - 게임 화면으로 전환");
+        // Debug.Log("게임 로딩 완료 - 게임 화면으로 전환");
         
         // 튜토리얼 여부 확인 (레벨 1, 경험치 0)
         Invoke(nameof(TransitionToGame), 0.5f);
@@ -369,7 +384,7 @@ public class UIManager : MonoBehaviour
     {
         HideLoadingScreen();
         UpdateAllUI();
-        Debug.Log("게임 화면으로 전환 완료");
+        CheckOfflineRewards();
     }
     
     // 전체 UI 업데이트
@@ -377,16 +392,16 @@ public class UIManager : MonoBehaviour
     {
         if (_gameState == null) return;
         
-        // 플레이어 정보 업데이트
         UpdatePlayerLevel(_gameState.Player.level);
         UpdateHP(_gameState.Player.currentHP, _gameState.Player.maxHP);
         UpdateGold((int)_gameState.Player.gold);
         UpdateEXP(_gameState.Player.experience, _gameState.GetExpToNextLevel());
-        
-        // 스테이지 정보 업데이트
         UpdateStage(_gameState.Stage.currentStage);
+
+        if (_autoRepeatBtn != null)
+            _autoRepeatBtn.text = _gameState.Stage.autoRepeat ? "자동 ON" : "자동 OFF";
         
-        Debug.Log("UI 업데이트 완료");
+        // Debug.Log("UI 업데이트 완료");
     }
     
     private void SetupSettingsSliders()
@@ -537,7 +552,7 @@ public class UIManager : MonoBehaviour
     }
     
     // 오프라인 보상 표시
-    public void ShowOfflineReward(float hours, int kills, int gold, int exp)
+    public void ShowOfflineReward(float hours, int itemCount, int gold, int exp)
     {
         var offlineTime = _root.Q<Label>("OfflineTime");
         var offlineKills = _root.Q<Label>("OfflineKills");
@@ -545,40 +560,46 @@ public class UIManager : MonoBehaviour
         var offlineExp = _root.Q<Label>("OfflineExp");
         
         if (offlineTime != null)
-            offlineTime.text = $"오프라인 시간: {hours:F1} 시간";
+            offlineTime.text = $"접속하지 않은 시간: {hours:F1} 시간";
         if (offlineKills != null)
-            offlineKills.text = $"처치한 몬스터: {kills}마리";
+            offlineKills.text = itemCount > 0 ? $"획득한 아이템: {itemCount}개" : "획득한 아이템: 없음";
         if (offlineGold != null)
             offlineGold.text = $"획득한 골드: {gold:N0}";
         if (offlineExp != null)
             offlineExp.text = $"획득한 경험치: {exp:N0}";
         
+        Debug.Log($"[Offline] ShowOfflineReward called - hours={hours:F2}, gold={gold}, exp={exp}");
         ShowModal(_offlineRewardModal);
+        if (_offlineRewardModal != null)
+            _offlineRewardModal.BringToFront();
     }
     
     // 이벤트 핸들러
     private void OnLoadingRetryClicked()
     {
-        Debug.Log("로딩 재시작");
+        // Debug.Log("로딩 재시작");
         // 로딩 재시작 로직
     }
     
     private void OnAutoRepeatClicked()
     {
-        Debug.Log("자동 반복 모드 토글!");
-        // 자동 반복 모드 토글 로직
+        if (CombatSystem.Instance == null) return;
+        bool newMode = !CombatSystem.Instance.IsAutoRepeatMode();
+        CombatSystem.Instance.SetAutoRepeatMode(newMode);
+        if (_autoRepeatBtn != null)
+            _autoRepeatBtn.text = newMode ? "자동 ON" : "자동 OFF";
     }
     
     private void OnStatisticsClicked()
     {
-        Debug.Log("통계 표시!");
+        // Debug.Log("통계 표시!");
         ShowModal(_statisticsModal);
         UpdateStatisticsDisplay();
     }
     
     private void OnSettingsClicked()
     {
-        Debug.Log("설정!");
+        // Debug.Log("설정!");
         ShowModal(_settingsModal);
     }
     
@@ -586,7 +607,7 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log($"인벤토리! _inventoryUI is null: {_inventoryUI == null}");
         if (_inventoryUI == null)
-            Debug.LogError("InventoryUI is null!");
+            // Debug.LogError("InventoryUI is null!");
         _inventoryUI?.RefreshInventoryGrid(); // 서브 InventoryUI로 위임
         ShowModal(_inventoryModal);
     }
@@ -595,7 +616,7 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log($"업그레이드! _upgradeUI is null: {_upgradeUI == null}");
         if (_upgradeUI == null)
-            Debug.LogError("UpgradeUI is null!");
+            // Debug.LogError("UpgradeUI is null!");
         _upgradeUI?.RefreshUpgradeGrid(); // 서브 UpgradeUI로 위임
         ShowModal(_upgradeModal);
     }
@@ -604,14 +625,14 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log($"미션! _missionsUI is null: {_missionsUI == null}");
         if (_missionsUI == null)
-            Debug.LogError("MissionsUI is null!");
+            // Debug.LogError("MissionsUI is null!");
         _missionsUI?.RefreshMissionsGrid(); // 서브 MissionsUI로 위임
         ShowModal(_dailyMissionsModal);
     }
     
     private void OnGemShopClicked()
     {
-        Debug.Log("젬 상점!");
+        // Debug.Log("젬 상점!");
         ShowModal(_gemShopModal);
     }
     
@@ -757,8 +778,30 @@ public class UIManager : MonoBehaviour
     
     private void CheckOfflineRewards()
     {
-        // 오프라인 보상 시스템 확인
-        // 오프라인 시간이 있으면 오프라인 보상 모달 표시
+        var offlineSystem = OfflineRewardSystem.Instance;
+        if (offlineSystem == null) { Debug.Log("[Offline] OfflineRewardSystem.Instance is null"); return; }
+
+        float offlineSeconds = offlineSystem.CalculateOfflineTime();
+        Debug.Log($"[Offline] offlineSeconds={offlineSeconds}");
+
+        if (offlineSeconds <= 0) { Debug.Log("[Offline] offlineSeconds <= 0, returning"); return; }
+
+        var rewards = offlineSystem.CalculateRewards(offlineSeconds);
+        Debug.Log($"[Offline] rewards: gold={rewards.gold}, exp={rewards.experience}, items={rewards.items?.Length}");
+
+        if (offlineSeconds < 60f)
+        {
+            Debug.Log($"[Offline] offline too short ({offlineSeconds}s < 60s), returning");
+            return;
+        }
+
+        int itemCount = rewards.items != null ? rewards.items.Length : 0;
+        ShowOfflineReward(
+            offlineSeconds / 3600f,
+            itemCount,
+            (int)rewards.gold,
+            (int)rewards.experience
+        );
     }
     
     // ========== 유틸리티 ==========

@@ -118,16 +118,12 @@ public class UIGameRenderer : MonoBehaviour
     private void OnEnable()
     {
         // 의존성 주입 (ServiceLocator 초기화 확인)
-        if (ServiceLocator.Instance == null)
-        {
-            Debug.LogWarning("[UIGameRenderer] ServiceLocator가 아직 초기화되지 않았습니다. Bootstrap을 기다립니다.");
-            return;
-        }
+        if (Bootstrap.Container == null) return;
         
-        if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
-        if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+        if (_gameState == null && Bootstrap.Container != null)
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
+        if (_eventBus == null && Bootstrap.Container != null)
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
         
         // 이벤트 구독
         _eventBus.On(GameEvents.COMBAT_PHASE_CHANGED, OnPhaseChanged);
@@ -176,12 +172,12 @@ public class UIGameRenderer : MonoBehaviour
     {
         if (gameView == null)
         {
-            Debug.LogError("[UIGameRenderer] gameView가 null입니다!");
+            // Debug.LogError("[UIGameRenderer] gameView가 null입니다!");
             return;
         }
         
         _gameView = gameView;
-        Debug.Log("[UIGameRenderer] 초기화 시작");
+        // Debug.Log("[UIGameRenderer] 초기화 시작");
         CreateRenderElements();
     }
     
@@ -189,11 +185,11 @@ public class UIGameRenderer : MonoBehaviour
     {
         if (_gameView == null)
         {
-            Debug.LogError("[UIGameRenderer] _gameView가 null입니다!");
+            // Debug.LogError("[UIGameRenderer] _gameView가 null입니다!");
             return;
         }
         
-        Debug.Log("[UIGameRenderer] 렌더 요소 생성 중...");
+        // Debug.Log("[UIGameRenderer] 렌더 요소 생성 중...");
         
         // GameView의 크기를 픽셀 단위로 계산
         float viewWidth = _gameView.resolvedStyle.width;
@@ -206,7 +202,7 @@ public class UIGameRenderer : MonoBehaviour
         // 플레이어는 더 크게, 몬스터는 더 작게 (스프라이트 픽셀 수 차이 반영)
         float playerSpriteSize = viewHeight * 0.825f; // 플레이어: 82.5% (1.5배)
         float monsterSpriteSize = viewHeight * 0.35f; // 몬스터: 35%
-        Debug.Log($"[UIGameRenderer] GameView 크기: {viewWidth}x{viewHeight}, 플레이어: {playerSpriteSize}, 몬스터: {monsterSpriteSize}");
+        // Debug.Log($"[UIGameRenderer] GameView 크기: {viewWidth}x{viewHeight}, 플레이어: {playerSpriteSize}, 몬스터: {monsterSpriteSize}");
         
         // 배경
         _backgroundElement = new VisualElement();
@@ -218,7 +214,7 @@ public class UIGameRenderer : MonoBehaviour
         _backgroundElement.style.bottom = 0;
         _backgroundElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
         _gameView.Add(_backgroundElement);
-        Debug.Log("[UIGameRenderer] 배경 요소 추가 완료");
+        // Debug.Log("[UIGameRenderer] 배경 요소 추가 완료");
         
         // 플레이어 (왼쪽) - 더 크게
         _playerElement = new VisualElement();
@@ -230,7 +226,7 @@ public class UIGameRenderer : MonoBehaviour
         _playerElement.style.height = playerSpriteSize;
         _playerElement.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
         _gameView.Add(_playerElement);
-        Debug.Log("[UIGameRenderer] 플레이어 요소 추가 완료");
+        // Debug.Log("[UIGameRenderer] 플레이어 요소 추가 완료");
         
         // 몬스터 (오른쪽) - 더 작게, 왼쪽을 바라보게 반전
         _monsterElement = new VisualElement();
@@ -244,7 +240,7 @@ public class UIGameRenderer : MonoBehaviour
         // 좌우 반전 (왼쪽을 바라보게) - scale(-1, 1, 1)
         _monsterElement.transform.scale = new Vector3(-1, 1, 1);
         _gameView.Add(_monsterElement);
-        Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
+        // Debug.Log("[UIGameRenderer] 몬스터 요소 추가 완료");
         
         // 몬스터 HP 바 생성 (Web 버전과 동일)
         CreateMonsterHPBar();
@@ -253,13 +249,13 @@ public class UIGameRenderer : MonoBehaviour
         CreateDamageTextContainer();
         
         // 초기 텍스처 로드
-        Debug.Log("[UIGameRenderer] 초기 텍스처 로드 시도...");
+        // Debug.Log("[UIGameRenderer] 초기 텍스처 로드 시도...");
         LoadPlayerFrame(0);
         LoadMonsterFrame(0);
         
         // 초기 배경 설정
         SetBackground(BG_NORMAL_PATH);
-        Debug.Log("[UIGameRenderer] 초기 배경 설정 완료");
+        // Debug.Log("[UIGameRenderer] 초기 배경 설정 완료");
     }
     
     /// <summary>
@@ -303,7 +299,7 @@ public class UIGameRenderer : MonoBehaviour
         _monsterNameLabel.text = "";
         _gameView.Add(_monsterNameLabel);
         
-        Debug.Log("[UIGameRenderer] 몬스터 HP 바 생성 완료");
+        // Debug.Log("[UIGameRenderer] 몬스터 HP 바 생성 완료");
     }
     
     /// <summary>
@@ -320,7 +316,7 @@ public class UIGameRenderer : MonoBehaviour
         _damageTextContainer.style.bottom = 0;
         _gameView.Add(_damageTextContainer);
         
-        Debug.Log("[UIGameRenderer] 데미지 텍스트 컨테이너 생성 완료");
+        // Debug.Log("[UIGameRenderer] 데미지 텍스트 컨테이너 생성 완료");
     }
     
     /// <summary>
@@ -568,7 +564,7 @@ public class UIGameRenderer : MonoBehaviour
         {
             _playerElement.style.backgroundImage = texture;
             _playerElement.style.display = DisplayStyle.Flex;
-            Debug.Log($"[UIGameRenderer] 플레이어 프레임 {frame} 로드 완료");
+            // Debug.Log($"[UIGameRenderer] 플레이어 프레임 {frame} 로드 완료");
         }
     }
     
@@ -583,7 +579,7 @@ public class UIGameRenderer : MonoBehaviour
         {
             _monsterElement.style.backgroundImage = texture;
             _monsterElement.style.display = DisplayStyle.Flex;
-            Debug.Log($"[UIGameRenderer] 몬스터 프레임 {frame} 로드 완료");
+            // Debug.Log($"[UIGameRenderer] 몬스터 프레임 {frame} 로드 완료");
         }
     }
     
@@ -607,7 +603,7 @@ public class UIGameRenderer : MonoBehaviour
         if (_gameState == null) return;
         
         CombatPhase phase = CombatSystem.Instance.CurrentPhase;
-        Debug.Log($"[UIGameRenderer] 페이즈 변경: {phase}");
+        // Debug.Log($"[UIGameRenderer] 페이즈 변경: {phase}");
         
         switch (phase)
         {
@@ -639,7 +635,7 @@ public class UIGameRenderer : MonoBehaviour
                     _monsterElement.style.bottom = Length.Percent(12);
                     _monsterElement.style.display = DisplayStyle.Flex;
                 }
-                Debug.Log("[UIGameRenderer] MOVING - 플레이어/몬스터 표시");
+                // Debug.Log("[UIGameRenderer] MOVING - 플레이어/몬스터 표시");
                 break;
                 
             case CombatPhase.ENCOUNTERING:
@@ -653,7 +649,7 @@ public class UIGameRenderer : MonoBehaviour
                     _monsterElement.style.right = Length.Percent(12); // 최종 위치
                     _monsterElement.style.bottom = Length.Percent(12);
                 }
-                Debug.Log("[UIGameRenderer] ENCOUNTERING - 몬스터 등장");
+                // Debug.Log("[UIGameRenderer] ENCOUNTERING - 몬스터 등장");
                 break;
                 
             case CombatPhase.COMBAT:
@@ -667,7 +663,7 @@ public class UIGameRenderer : MonoBehaviour
                     _monsterElement.style.bottom = Length.Percent(12);
                 }
                 if (_playerElement != null) _playerElement.style.display = DisplayStyle.Flex;
-                Debug.Log("[UIGameRenderer] COMBAT - 전투 시작");
+                // Debug.Log("[UIGameRenderer] COMBAT - 전투 시작");
                 // 몬스터 HP 바 표시
                 if (_monsterHPBarContainer != null) _monsterHPBarContainer.style.display = DisplayStyle.Flex;
                 if (_monsterNameLabel != null) _monsterNameLabel.style.display = DisplayStyle.Flex;
@@ -681,14 +677,14 @@ public class UIGameRenderer : MonoBehaviour
                 _playerAnimState = PlayerAnimState.idle;
                 if (_monsterHPBarContainer != null) _monsterHPBarContainer.style.display = DisplayStyle.None;
                 if (_monsterNameLabel != null) _monsterNameLabel.style.display = DisplayStyle.None;
-                Debug.Log("[UIGameRenderer] VICTORY - 몬스터 죽음, 플레이어 idle");
+                // Debug.Log("[UIGameRenderer] VICTORY - 몬스터 죽음, 플레이어 idle");
                 break;
                 
             case CombatPhase.DEFEATED:
                 // 패배 - 플레이어 dead 애니메이션
                 _playerAnimState = PlayerAnimState.dead;
                 _playerDeadAnimComplete = false;
-                Debug.Log("[UIGameRenderer] DEFEATED - 플레이어 죽음");
+                // Debug.Log("[UIGameRenderer] DEFEATED - 플레이어 죽음");
                 break;
         }
     }
@@ -850,7 +846,7 @@ public class UIGameRenderer : MonoBehaviour
         
         _damageTexts.Add(info);
         
-        Debug.Log($"[UIGameRenderer] 데미지 텍스트: {(isCrit ? "CRIT! " : "")}{damage}");
+        // Debug.Log($"[UIGameRenderer] 데미지 텍스트: {(isCrit ? "CRIT! " : "")}{damage}");
     }
     
     /// <summary>

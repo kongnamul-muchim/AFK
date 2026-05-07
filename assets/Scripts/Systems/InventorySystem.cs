@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// 장비 슬롯 열거형
@@ -54,12 +55,14 @@ public class InventorySystem : MonoBehaviour
     /// </summary>
     private void InjectDependencies()
     {
+        if (Bootstrap.Container == null) return;
+
         if (_gameState == null)
-            _gameState = ServiceLocator.Instance.Get<IGameState>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
         if (_eventBus == null)
-            _eventBus = ServiceLocator.Instance.Get<IEventBus>();
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
         if (_logger == null)
-            _logger = ServiceLocator.Instance.Get<IGameLogger>();
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
     }
 
     private void Awake()
@@ -89,13 +92,13 @@ public class InventorySystem : MonoBehaviour
         int totalItems = _gameState.Inventory.items.Count + _gameState.Inventory.equipment.Count;
         if (totalItems >= GameConfig.MaxInventorySlots)
         {
-            _logger.Warn("인벤토리가 가득 찼습니다.");
+            // _logger.Warn($"[INVENTORY-FULL] 인벤토리 용량 초과! 현재: {totalItems}/{GameConfig.MaxInventorySlots}");
             return false;
         }
-        
+
         // 기존에 동일한 아이템이 있는지 확인
         ItemData? existingItem = FindItem(item.id, item.grade);
-        
+
         if (existingItem != null)
         {
             // 수량 증가
@@ -104,9 +107,10 @@ public class InventorySystem : MonoBehaviour
             if (index >= 0)
             {
                 ItemData existing = inventory.items[index];
+                int oldCount = existing.count;
                 existing.count += item.count;
                 inventory.items[index] = existing;
-                _logger.Debug($"아이템 수량 증가: {item.name} x{item.count}");
+                // _logger.Info($"[INVENTORY-STACK] {item.name} (Grade {item.grade}) 수량: {oldCount} → {existing.count}");
             }
             _gameState.Inventory = inventory;
         }
@@ -116,9 +120,8 @@ public class InventorySystem : MonoBehaviour
             var inv = _gameState.Inventory;
             inv.items.Add(item);
             _gameState.Inventory = inv;
-            _logger.Debug($"아이템 추가: {item.name}");
         }
-        
+
         // 발견 아이템 등록
         var inventory2 = _gameState.Inventory;
         if (!inventory2.discoveredItems.Contains(item.id))
@@ -129,10 +132,11 @@ public class InventorySystem : MonoBehaviour
             _gameState.Stats = stats;
             _gameState.Inventory = inventory2;
             _eventBus.Emit(GameEvents.ITEM_DISCOVERED);
+            // _logger.Info($"[INVENTORY-DISCOVER] 새로운 아이템 발견: {item.name} (Total: {stats.totalItemsDiscovered})");
         }
-        
+
         _eventBus.Emit(GameEvents.ITEM_ACQUIRED);
-        
+
         return true;
     }
 
@@ -150,7 +154,7 @@ public class InventorySystem : MonoBehaviour
         
         if (index < 0)
         {
-            _logger.Warn($"아이템을 찾을 수 없습니다: {itemId}");
+            // _logger.Warn($"아이템을 찾을 수 없습니다: {itemId}");
             return false;
         }
         
@@ -161,7 +165,7 @@ public class InventorySystem : MonoBehaviour
         {
             inventory.items.RemoveAt(index);
             _gameState.Inventory = inventory;
-            _logger.Warn($"아이템 카운트 0 이하: {itemId}, 제거만 수행");
+            // _logger.Warn($"아이템 카운트 0 이하: {itemId}, 제거만 수행");
             return false;
         }
         
@@ -177,7 +181,7 @@ public class InventorySystem : MonoBehaviour
         }
         
         _gameState.Inventory = inventory;
-        _logger.Debug($"아이템 제거: {item.name} x{quantity}");
+        // _logger.Debug($"아이템 제거: {item.name} x{quantity}");
         
         return true;
     }
@@ -229,48 +233,56 @@ public class InventorySystem : MonoBehaviour
     {
         // 아이템 찾기
         ItemData? item = FindItem(itemId, grade);
-        
+
         if (item == null)
         {
-            _logger.Warn($"장비할 아이템을 찾을 수 없습니다: {itemId}");
+            // _logger.Warn($"장비할 아이템을 찾을 수 없습니다: {itemId}");
             return false;
         }
-        
+
+        // ★★★ 디버그 로그: 아이템 정보 확인
+        Debug.Log($"[EQUIP] itemId={itemId}, name={item.Value.name}, type={item.Value.type}, grade={grade}");
+
         // 장비 슬롯 결정: item.type을 직접 사용 (Web 버전과 동일)
         // type: "weapon", "armor", "accessory", "boots" 등
         EquipmentSlot slot = GetSlotFromItemType(item.Value.type);
-        
+
+        // ★★★ 디버그 로그: 슬롯 결정 확인
+        Debug.Log($"[EQUIP] GetSlotFromItemType(\"{item.Value.type}\") = {slot}");
+
         // 기존 장비 해제
         UnequipItem(slot);
-        
+
         // 인벤토리에서 제거 (수량 1 감소)
         RemoveItem(itemId, grade, 1);
-        
+
         // 장비 슬롯에 추가
         EquipmentData equipment = new EquipmentData
         {
             id = itemId,
             name = item.Value.name,
             grade = grade,
+            rarity = item.Value.rarity,  // 희귀도 저장
             slot = (int)slot,
             attackBonus = CalculateEquipmentBonus(grade, "attack"),
             defenseBonus = CalculateEquipmentBonus(grade, "defense"),
             healthBonus = CalculateEquipmentBonus(grade, "health")
         };
-        
+
         var inventory = _gameState.Inventory;
         inventory.equipment.Add(equipment);
         _gameState.Inventory = inventory;
-        
-        _logger.Info($"장비 장착: {item.Value.name} ({slot})");
-        
+
+        // ★★★ 디버그 로그: 장착 완료
+        Debug.Log($"[EQUIP] 장착 완료: {item.Value.name} → 슬롯 {slot}");
+
         // 스탯 업데이트
         UpdateStatsBonus();
-        
+
         // 이벤트 발생
         _eventBus.Emit(GameEvents.ITEM_EQUIPPED);
         _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         return true;
     }
 
@@ -283,37 +295,75 @@ public class InventorySystem : MonoBehaviour
     {
         var inventory = _gameState.Inventory;
         int index = inventory.equipment.FindIndex(x => x.slot == (int)slot);
-        
+
         if (index < 0)
         {
+            // _logger.Warn($"[INVENTORY-UNEQUIP] 슬롯 {slot}에 장착된 장비 없음");
             return false; // 장착된 장비 없음
         }
-        
+
         EquipmentData equipment = inventory.equipment[index];
-        
+
+        // ★★★ 디버그 로그: 장비 해제
+        Debug.Log($"[UNEQUIP] 슬롯 {slot}에서 {equipment.name} 해제됨");
+
+        // type 복원 (slot에서 type으로 변환)
+        string itemType = GetItemTypeFromSlot(slot);
+        int rarity = GetRarityFromGrade(equipment.grade);
+
         // 인벤토리로 반환
         ItemData item = new ItemData
         {
             id = equipment.id,
             name = equipment.name,
             grade = equipment.grade,
-            count = 1
+            count = 1,
+            type = itemType,
+            rarity = rarity
         };
-        
+
         inventory.items.Add(item);
         inventory.equipment.RemoveAt(index);
         _gameState.Inventory = inventory;
-        
-        _logger.Debug($"장비 해제: {equipment.name} ({slot})");
-        
+
+        // _logger.Info($"[INVENTORY-UNEQUIP] {equipment.name} ({slot}) 해제됨, 인벤토리에 반환");
+
         // 스탯 업데이트
         UpdateStatsBonus();
-        
+
         // 이벤트 발생
         _eventBus.Emit(GameEvents.ITEM_UNEQUIPPED);
         _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         return true;
+    }
+
+    /// <summary>
+    /// 슬롯 타입으로 아이템 타입 변환
+    /// </summary>
+    private string GetItemTypeFromSlot(EquipmentSlot slot)
+    {
+        switch (slot)
+        {
+            case EquipmentSlot.Weapon: return "weapon";
+            case EquipmentSlot.Armor: return "armor";
+            case EquipmentSlot.Accessory: return "accessory";
+            case EquipmentSlot.Boots: return "boots";
+            default: return "unknown";
+        }
+    }
+
+    /// <summary>
+    /// 등급에서 희귀도로 변환
+    /// </summary>
+    private int GetRarityFromGrade(int grade)
+    {
+        // Grade 0-1: common, 2-3: rare, 4-5: epic, 6-8: legendary, 9+: mythic
+        if (grade >= 9) return 4; // mythic
+        if (grade >= 6) return 3; // legendary
+        if (grade >= 4) return 2; // epic
+        if (grade >= 2) return 1; // rare
+        return 0; // common
     }
 
     /// <summary>
@@ -327,29 +377,41 @@ public class InventorySystem : MonoBehaviour
     }
 
     /// <summary>
-    /// 아이템 타입으로 장비 슬롯 결정 (Web 버전과 동일)
+    /// 아이템 타입으로 장비 슬롯 결정 (public: UI에서 사용)
     /// </summary>
-    private EquipmentSlot GetSlotFromItemType(string itemType)
+    public EquipmentSlot GetSlotFromItemType(string itemType)
     {
         // item.type을 그대로 사용: "weapon", "armor", "accessory", "boots"
+        EquipmentSlot result;
         switch (itemType?.ToLower())
         {
             case "weapon":
-                return EquipmentSlot.Weapon;
+                result = EquipmentSlot.Weapon;
+                break;
             case "armor":
-                return EquipmentSlot.Armor;
+                result = EquipmentSlot.Armor;
+                break;
             case "boots":
-                return EquipmentSlot.Boots;
+                result = EquipmentSlot.Boots;
+                break;
             case "accessory":
+                result = EquipmentSlot.Accessory;
+                break;
             default:
-                return EquipmentSlot.Accessory;
+                // ★★★ 디버그 로그: 알 수 없는 타입
+                Debug.LogWarning($"[EQUIP-SLOT] 알 수 없는 itemType=\"{itemType}\", Accessory로 처리");
+                result = EquipmentSlot.Accessory;
+                break;
         }
+
+        Debug.Log($"[EQUIP-SLOT] GetSlotFromItemType(\"{itemType}\") = {result}");
+        return result;
     }
 
     /// <summary>
-    /// 장비 보너스 계산
+    /// 장비 보너스 계산 (public: UI에서 비교용)
     /// </summary>
-    private float CalculateEquipmentBonus(int grade, string statType)
+    public float CalculateEquipmentBonus(int grade, string statType)
     {
         float baseValue = 10f;
         float gradeMultiplier = 1f + grade * 0.5f;
@@ -386,7 +448,7 @@ public class InventorySystem : MonoBehaviour
         // 플레이어 기본 스탯에 보너스 추가 (GameState.GetTotalAttack 등에서 계산됨)
         // 여기서는 추가 보너스가 필요한 경우만 처리
         
-        _logger.Debug($"장비 보너스 업데이트: 공격력 +{totalAttackBonus}, 방어력 +{totalDefenseBonus}, 체력 +{totalHealthBonus}");
+        // _logger.Debug($"장비 보너스 업데이트: 공격력 +{totalAttackBonus}, 방어력 +{totalDefenseBonus}, 체력 +{totalHealthBonus}");
     }
 
     // ========== 합성 시스템 ==========
@@ -428,7 +490,7 @@ public class InventorySystem : MonoBehaviour
     {
         var itemsData = DataLoader.Load("items");
         
-        _logger.Debug($"[FindNextGradeItem] currentName=\"{currentName}\", type=\"{itemType}\", nextGrade={nextGrade}");
+        // _logger.Debug($"[FindNextGradeItem] currentName=\"{currentName}\", type=\"{itemType}\", nextGrade={nextGrade}");
         
         // 1. 같은 이름 + 다음 등급 먼저 찾기
         foreach (var row in itemsData)
@@ -440,7 +502,7 @@ public class InventorySystem : MonoBehaviour
                 {
                     if (name == currentName && grade == nextGrade)
                     {
-                        _logger.Debug($"[FindNextGradeItem] Found same name: {name} grade {grade} (id:{row["id"]})");
+                        // _logger.Debug($"[FindNextGradeItem] Found same name: {name} grade {grade} (id:{row["id"]})");
                         return new NextGradeItemResult
                         {
                             id = row["id"]?.ToString(),
@@ -454,7 +516,7 @@ public class InventorySystem : MonoBehaviour
             }
         }
         
-        _logger.Debug($"[FindNextGradeItem] No same name found, searching by type...");
+        // _logger.Debug($"[FindNextGradeItem] No same name found, searching by type...");
         
         // 2. 같은 타입 + 다음 등급 찾기 (베이스 아이템 전환)
         foreach (var row in itemsData)
@@ -466,7 +528,7 @@ public class InventorySystem : MonoBehaviour
                 {
                     if (type == itemType && grade == nextGrade)
                     {
-                        _logger.Debug($"[FindNextGradeItem] Found type match: {row["name"]} grade {grade} (id:{row["id"]})");
+                        // _logger.Debug($"[FindNextGradeItem] Found type match: {row["name"]} grade {grade} (id:{row["id"]})");
                         return new NextGradeItemResult
                         {
                             id = row["id"]?.ToString(),
@@ -507,7 +569,7 @@ public class InventorySystem : MonoBehaviour
             }
         }
         
-        _logger.Debug($"[GetMaxGradeByType] type={itemType}, maxGrade={maxGrade}");
+        // _logger.Debug($"[GetMaxGradeByType] type={itemType}, maxGrade={maxGrade}");
         return maxGrade;
     }
 
@@ -519,43 +581,47 @@ public class InventorySystem : MonoBehaviour
     /// <returns>성공 여부</returns>
     public bool Synthesize(string itemId, int grade)
     {
+        // _logger.Info($"[INVENTORY-SYNTH] 합성 시도: {itemId} (Grade {grade})");
+
         // 아이템 존재 확인
         ItemData? existingItem = FindItem(itemId, grade);
         if (existingItem == null)
         {
-            _logger.Warn($"합성 불가 - 아이템 없음: {itemId}");
+            // _logger.Warn($"[INVENTORY-SYNTH-FAIL] 아이템 없음: {itemId}");
             return false;
         }
-        
+
         // 필요한 수량 확인 (5개)
         if (!HasItem(itemId, grade, GameConfig.SynthesisRequiredCount))
         {
-            _logger.Warn($"합성 불가 - 아이템 수량 부족: {itemId} (필요: {GameConfig.SynthesisRequiredCount})");
+            int currentCount = existingItem.HasValue ? existingItem.Value.count : 0;
+            // _logger.Warn($"[INVENTORY-SYNTH-FAIL] 수량 부족: {itemId} (보유: {currentCount}, 필요: {GameConfig.SynthesisRequiredCount})");
             return false;
         }
-        
+
         // 최대 등급 확인 (CSV 기반)
         string itemType = existingItem.Value.type ?? "weapon";
         int maxGrade = GetMaxGradeByType(itemType);
-        
+        // _logger.Info($"[INVENTORY-SYNTH] 타입: {itemType}, 현재: {grade}, 최대: {maxGrade}");
+
         if (grade >= maxGrade)
         {
-            _logger.Warn($"최대 등급 도달: {itemId} (최대: {maxGrade})");
+            // _logger.Warn($"[INVENTORY-SYNTH-FAIL] 최대 등급 도달: {itemId} (현재: {grade}, 최대: {maxGrade})");
             return false;
         }
-        
+
         // 다음 등급 아이템 CSV에서 찾기
         string currentName = existingItem.Value.name;
         var nextItem = FindNextGradeItemFromCSV(currentName, itemType, grade + 1);
-        
+
         if (nextItem == null)
         {
-            _logger.Warn($"다음 등급 아이템을 찾을 수 없음: {currentName} grade {grade} -> {grade + 1}");
+            // _logger.Error($"[INVENTORY-SYNTH-FAIL] 다음 등급 아이템을 CSV에서 찾을 수 없음: {currentName} grade {grade} -> {grade + 1}");
             return false;
         }
-        
-        _logger.Debug($"Found next grade: {nextItem.name} grade {nextItem.grade} (max: {maxGrade})");
-        
+
+        // _logger.Info($"[INVENTORY-SYNTH] 다음 아이템 발견: {nextItem.name} (Grade {nextItem.grade}, Type: {nextItem.type})");
+
         // 아이템 제거 (5개)
         for (int i = 0; i < GameConfig.SynthesisRequiredCount; i++)
         {
@@ -577,23 +643,24 @@ public class InventorySystem : MonoBehaviour
         var inventory = _gameState.Inventory;
         inventory.items.Add(synthesizedItem);
         _gameState.Inventory = inventory;
-        
-        _logger.Info($"합성 성공: {synthesizedItem.name}");
-        
+
+        _logger.Info($"[INVENTORY-SYNTH-SUCCESS] 합성 성공: {synthesizedItem.name} (Grade {synthesizedItem.grade}, Type: {synthesizedItem.type})");
+
         // 발견 아이템 등록
         if (!inventory.discoveredItems.Contains(synthesizedItem.id))
         {
             inventory.discoveredItems.Add(synthesizedItem.id);
             _gameState.Inventory = inventory;
+            _logger.Info($"[INVENTORY-DISCOVER] 합성으로 새로운 아이템 발견: {synthesizedItem.name}");
         }
-        
+
         // 이벤트 발생
         _eventBus.Emit(GameEvents.ITEM_SYNTHESIZED);
         _eventBus.Emit(GameEvents.ITEM_ACQUIRED);
-        
+
         // 연쇄 합성 확인
         CheckChainSynthesis(nextItem.id, nextItem.grade);
-        
+
         return true;
     }
 
@@ -604,7 +671,7 @@ public class InventorySystem : MonoBehaviour
     {
         if (HasItem(itemId, grade, GameConfig.SynthesisRequiredCount))
         {
-            _logger.Debug($"연쇄 합성 감지: {itemId}");
+            // _logger.Info($"[INVENTORY-SYNTH-CHAIN] 연쇄 합성 감지: {itemId} (Grade {grade})");
             Synthesize(itemId, grade);
         }
     }
@@ -659,21 +726,26 @@ public class InventorySystem : MonoBehaviour
         
         if (synthesizedCount > 0)
         {
-            _logger.Info($"일괄 합성 완료: {synthesizedCount}회");
+            // _logger.Info($"일괄 합성 완료: {synthesizedCount}회");
         }
         
         return synthesizedCount;
     }
 
     /// <summary>
-    /// 아이템 최대 등급 가져오기
+    /// 아이템 최대 등급 가져오기 (하드코딩 → CSV 기반 동적 조회)
     /// </summary>
     private int GetMaxGrade(string itemId)
     {
-        // 무기: 15, 그 외: 10
-        if (itemId.Contains("sword") || itemId.Contains("weapon"))
-            return 15;
-        return 10;
+        // itemId에서 type 추출 시도
+        string itemType = "weapon";
+        if (itemId.Contains("armor")) itemType = "armor";
+        else if (itemId.Contains("boots")) itemType = "boots";
+        else if (itemId.Contains("accessory")) itemType = "accessory";
+
+        int maxGrade = GetMaxGradeByType(itemType);
+        // _logger.Info($"[INVENTORY-GETMAX] itemId={itemId}, type={itemType}, maxGrade={maxGrade}");
+        return maxGrade;
     }
 
     /// <summary>
@@ -735,4 +807,78 @@ public class InventorySystem : MonoBehaviour
     {
         return _gameState.Inventory.discoveredItems.Count;
     }
+
+    /// <summary>
+    /// 특정 타입의 합성 가능한 아이템 목록 반환 (Web 버전 getSynthesizableItemsByType)
+    /// </summary>
+    public List<SynthesizableItemInfo> GetSynthesizableItemsByType(string type)
+    {
+        var result = new List<SynthesizableItemInfo>();
+        int maxGrade = GetMaxGradeByType(type);
+
+        foreach (var item in _gameState.Inventory.items)
+        {
+            if (item.type == type && item.count >= GameConfig.SynthesisRequiredCount && item.grade < maxGrade)
+            {
+                result.Add(new SynthesizableItemInfo
+                {
+                    itemId = item.id,
+                    name = item.name,
+                    count = item.count,
+                    grade = item.grade,
+                    rarity = item.rarity,
+                    possibleSyntheses = item.count / GameConfig.SynthesisRequiredCount
+                });
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 특정 타입의 모든 아이템을 일괄 합성 (Web 버전 synthesizeAllByType)
+    /// </summary>
+    public int SynthesizeAllByType(string type)
+    {
+        int totalSynthesized = 0;
+        int maxIterations = 100;
+        int iteration = 0;
+
+        while (iteration < maxIterations)
+        {
+            var items = GetSynthesizableItemsByType(type);
+            if (items.Count == 0) break;
+
+            bool anySynthesized = false;
+            foreach (var item in items)
+            {
+                if (HasItem(item.itemId, item.grade, GameConfig.SynthesisRequiredCount))
+                {
+                    if (Synthesize(item.itemId, item.grade))
+                    {
+                        totalSynthesized++;
+                        anySynthesized = true;
+                    }
+                }
+            }
+
+            if (!anySynthesized) break;
+            iteration++;
+        }
+
+        return totalSynthesized;
+    }
+}
+
+/// <summary>
+/// 합성 가능 아이템 정보
+/// </summary>
+public struct SynthesizableItemInfo
+{
+    public string itemId;
+    public string name;
+    public int count;
+    public int grade;
+    public int rarity;
+    public int possibleSyntheses;
 }

@@ -41,18 +41,18 @@ public class UpgradeUIClass : MonoBehaviour
             InjectDependencies();
             DefineStats();
             DefineGemUpgrades();
-            Debug.Log("UpgradeUIClass.Awake() - DI 성공");
+            // Debug.Log("UpgradeUIClass.Awake() - DI 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"UpgradeUIClass.Awake() - DI 실패: {e.Message}");
+            // Debug.LogError($"UpgradeUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
     
     private void InjectDependencies()
     {
-        var serviceLocator = ServiceLocator.Instance;
-        _gameState = serviceLocator.Get<IGameState>();
+        if (Bootstrap.Container == null) return;
+        _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
     
     private void DefineStats()
@@ -410,7 +410,7 @@ public class UpgradeUIClass : MonoBehaviour
                 break;
         }
         
-        Debug.Log($"업그레이드 그리드 업데이트: {_currentTab}");
+        // Debug.Log($"업그레이드 그리드 업데이트: {_currentTab}");
     }
     
     private void PopulateGoldUpgrades()
@@ -534,10 +534,10 @@ public class UpgradeUIClass : MonoBehaviour
     
     private void PopulateRebirthUpgrades()
     {
-        // 환생 가능 여부 확인 (레벨 100 이상이면 가능)
+        // 환생 가능 여부 확인 (RebirthSystem 기준)
+        bool canRebirth = RebirthSystem.Instance != null && RebirthSystem.Instance.CanRebirth();
         var playerLevel = _gameState.Player.level;
-        var minLevel = 100;
-        var canRebirth = playerLevel >= minLevel;
+        var minLevel = RebirthSystem.Instance != null ? GameConfig.MinRebirthLevel : 50;
         var rebirthCount = _gameState.Rebirth.rebirthCount;
         
         // 환생 섹션
@@ -592,7 +592,7 @@ public class UpgradeUIClass : MonoBehaviour
         
         if (canRebirth)
         {
-            var bonusCount = CalculateRebirthBonus();
+            var bonusCount = RebirthSystem.Instance != null ? RebirthSystem.Instance.GetBonusPointsPreview() : 0;
             
             var title = new Label("🔄 환생 가능!");
             title.style.fontSize = 28;
@@ -1070,10 +1070,10 @@ public class UpgradeUIClass : MonoBehaviour
         _gameState.Player.gold -= cost;
         _gameState.Player.goldUpgrades[key] = level + 1;
         
-        Debug.Log($"골드 업그레이드 구매: {key} → Lv.{level + 1}");
+        // Debug.Log($"골드 업그레이드 구매: {key} → Lv.{level + 1}");
         
-        // 골드 변경 이벤트 발생 (HUD 업데이트를 위해)
         EventBus.Instance?.Emit(GameEvents.GOLD_CHANGED);
+        EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
         
         UpdateDisplay();
         RefreshUpgradeGrid();
@@ -1090,7 +1090,8 @@ public class UpgradeUIClass : MonoBehaviour
         _gameState.Player.statPoints -= cost;
         _gameState.Player.statUpgrades[key] = level + 1;
         
-        Debug.Log($"스탯 업그레이드 구매: {key} → Lv.{level + 1}");
+        EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
@@ -1105,7 +1106,9 @@ public class UpgradeUIClass : MonoBehaviour
         // 기존 GemUpgradeData 필드에 레벨 설정
         SetGemUpgradeLevel(key, 1);
         
-        Debug.Log($"보석 업그레이드 해금: {key} → Lv.1");
+        EventBus.Instance?.Emit(GameEvents.GEM_CHANGED);
+        EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
@@ -1119,7 +1122,9 @@ public class UpgradeUIClass : MonoBehaviour
         _gameState.Player.gems -= cost;
         SetGemUpgradeLevel(key, currentLevel + 1);
         
-        Debug.Log($"보석 업그레이드 레벨업: {key} → Lv.{currentLevel + 1}");
+        EventBus.Instance?.Emit(GameEvents.GEM_CHANGED);
+        EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
@@ -1143,17 +1148,10 @@ public class UpgradeUIClass : MonoBehaviour
     
     private void PerformRebirth()
     {
-        var playerLevel = _gameState.Player.level;
-        if (playerLevel < 100) return;
+        if (RebirthSystem.Instance == null || !RebirthSystem.Instance.CanRebirth()) return;
         
-        // 환생 처리
-        _gameState.Rebirth.rebirthCount++;
-        _gameState.Rebirth.bonusPoints += playerLevel / 10;
+        RebirthSystem.Instance.PerformRebirth();
         
-        // 플레이어 레벨 1로 리셋 (간단히)
-        _gameState.Player.level = 1;
-        
-        Debug.Log($"환생 완료! {playerLevel / 10} 보너스 포인트 획득");
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
@@ -1170,7 +1168,8 @@ public class UpgradeUIClass : MonoBehaviour
         _gameState.Rebirth.bonusPoints -= def.costPerLevel;
         _gameState.Rebirth.upgrades[key] = level + 1;
         
-        Debug.Log($"환생 업그레이드 구매: {key} → Lv.{level + 1}");
+        EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
+        
         UpdateDisplay();
         RefreshUpgradeGrid();
     }

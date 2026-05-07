@@ -28,17 +28,11 @@ namespace AFK.Core.Systems
         protected virtual void InjectDependencies()
         {
             if (_dependenciesInjected) return;
+            if (Bootstrap.Container == null) return;
             
-            var serviceLocator = ServiceLocator.Instance;
-            if (serviceLocator == null)
-            {
-                Debug.LogError($"[{GetType().Name}] ServiceLocator 인스턴스를 찾을 수 없습니다!");
-                return;
-            }
-            
-            _gameState = serviceLocator.Get<IGameState>();
-            _eventBus = serviceLocator.Get<IEventBus>();
-            _logger = serviceLocator.Get<IGameLogger>();
+            _gameState = Bootstrap.Container.Resolve<IGameState>();
+            _eventBus = Bootstrap.Container.Resolve<IEventBus>();
+            _logger = Bootstrap.Container.Resolve<IGameLogger>();
             
             _dependenciesInjected = true;
         }
