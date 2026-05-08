@@ -164,6 +164,9 @@ public class UIManager : MonoBehaviour
         }
         
         _root = _uiDocument.rootVisualElement;
+
+        // 한글 폰트 로드 및 적용 (WebGL 대응)
+        LoadKoreanFont();
         
         // DI 설정: ServiceLocator를 통한 의존성 주입
         InitializeDI();
@@ -187,6 +190,30 @@ public class UIManager : MonoBehaviour
         // Debug.Log("UIManager 초기화 완료!");
     }
     
+    /// <summary>
+    /// 한글 폰트 로드 및 UI에 적용 (WebGL에서 한글 표시를 위함)
+    /// </summary>
+    private void LoadKoreanFont()
+    {
+        try
+        {
+            var font = Resources.Load<Font>("Fonts/NotoSansKR-Regular");
+            if (font != null)
+            {
+                _root.style.unityFont = font;
+                GameLogger.Info("한글 폰트(NotoSansKR) 적용 완료");
+            }
+            else
+            {
+                GameLogger.Warn("한글 폰트(NotoSansKR)를 찾을 수 없음. Resources/Fonts/ 확인 필요");
+            }
+        }
+        catch (System.Exception e)
+        {
+            GameLogger.Error($"폰트 로드 중 오류: {e.Message}");
+        }
+    }
+
     /// <summary>
     /// DI 설정 (DIContainer 사용)
     /// </summary>

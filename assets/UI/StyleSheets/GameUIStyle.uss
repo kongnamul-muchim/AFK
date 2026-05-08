@@ -19,7 +19,7 @@
 /* 기본 텍스트 색상 및 한글 폰트 (WebGL 대응) */
 Label {
     color: var(--color-text-primary);
-    -unity-font: url("/Assets/Fonts/NotoSansKR-Regular.otf");
+    -unity-font: resource("Fonts/NotoSansKR-Regular");
 }
 
 /* 로딩 화면 */
