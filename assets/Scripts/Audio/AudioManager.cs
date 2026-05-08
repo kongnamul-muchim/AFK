@@ -310,8 +310,9 @@ public class AudioManager : MonoBehaviour
     /// <param name="duration">지속 시간 (ms)</param>
     public void Vibrate(int duration = 50)
     {
-        // 모바일 진동 (설정 확인)
+#if UNITY_ANDROID || UNITY_IOS
         Handheld.Vibrate();
+#endif
     }
     
     /// <summary>
@@ -320,10 +321,12 @@ public class AudioManager : MonoBehaviour
     /// <param name="pattern">진동/일시정지 패턴 (ms)</param>
     public void VibratePattern(int[] pattern)
     {
+#if UNITY_ANDROID || UNITY_IOS
         foreach (var duration in pattern)
         {
             Handheld.Vibrate();
         }
+#endif
     }
     
     // ========== 유틸리티 ==========
