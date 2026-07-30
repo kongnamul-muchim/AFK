@@ -214,7 +214,7 @@ class GameRenderer {
             // 폰트 설정
             const fontSize = text.isCrit ? 28 : 20;
             const fontWeight = text.isCrit ? 'bold' : 'normal';
-            this.ctx.font = `${fontWeight} ${fontSize}px Arial`;
+            this.ctx.font = `${fontWeight} ${fontSize}px 'Noto Sans KR', Arial, sans-serif`;
             this.ctx.textAlign = 'center';
             
             // 색상 (크리티컬이면 빨강, 아니면 흰색)

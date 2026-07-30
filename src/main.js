@@ -79,26 +79,26 @@ class Game {
             try {
                 await gameImageLoader.loadAll({
                     // 플레이어 프레임 (8 개)
-                    player_0: 'Assets/images/characters/player_spritesheet_0.png',
-                    player_1: 'Assets/images/characters/player_spritesheet_1.png',
-                    player_2: 'Assets/images/characters/player_spritesheet_2.png',
-                    player_3: 'Assets/images/characters/player_spritesheet_3.png',
-                    player_4: 'Assets/images/characters/player_spritesheet_4.png',
-                    player_5: 'Assets/images/characters/player_spritesheet_5.png',
-                    player_6: 'Assets/images/characters/player_spritesheet_6.png',
-                    player_7: 'Assets/images/characters/player_spritesheet_7.png',
+                    player_0: 'assets/images/characters/player_spritesheet_0.png',
+                    player_1: 'assets/images/characters/player_spritesheet_1.png',
+                    player_2: 'assets/images/characters/player_spritesheet_2.png',
+                    player_3: 'assets/images/characters/player_spritesheet_3.png',
+                    player_4: 'assets/images/characters/player_spritesheet_4.png',
+                    player_5: 'assets/images/characters/player_spritesheet_5.png',
+                    player_6: 'assets/images/characters/player_spritesheet_6.png',
+                    player_7: 'assets/images/characters/player_spritesheet_7.png',
                     // 몬스터 프레임 (8 개 - 순차적)
-                    monster_0: 'Assets/images/monsters/slime_spritesheet_0.png',
-                    monster_1: 'Assets/images/monsters/slime_spritesheet_1.png',
-                    monster_2: 'Assets/images/monsters/slime_spritesheet_2.png',
-                    monster_3: 'Assets/images/monsters/slime_spritesheet_3.png',
-                    monster_4: 'Assets/images/monsters/slime_spritesheet_4.png',
-                    monster_5: 'Assets/images/monsters/slime_spritesheet_5.png',
-                    monster_6: 'Assets/images/monsters/slime_spritesheet_6.png',
-                    monster_7: 'Assets/images/monsters/slime_spritesheet_7.png',
+                    monster_0: 'assets/images/monsters/slime_spritesheet_0.png',
+                    monster_1: 'assets/images/monsters/slime_spritesheet_1.png',
+                    monster_2: 'assets/images/monsters/slime_spritesheet_2.png',
+                    monster_3: 'assets/images/monsters/slime_spritesheet_3.png',
+                    monster_4: 'assets/images/monsters/slime_spritesheet_4.png',
+                    monster_5: 'assets/images/monsters/slime_spritesheet_5.png',
+                    monster_6: 'assets/images/monsters/slime_spritesheet_6.png',
+                    monster_7: 'assets/images/monsters/slime_spritesheet_7.png',
                     // 배경
-                    background_normal: 'Assets/images/backgrounds/background_normal.png',
-                    background_boss: 'Assets/images/backgrounds/background_boss.png'
+                    background_normal: 'assets/images/backgrounds/background_normal.png',
+                    background_boss: 'assets/images/backgrounds/background_boss.png'
                 });
                 gameLogger.info('Images loaded successfully');
             } catch (error) {
@@ -116,14 +116,17 @@ class Game {
                 this.gameState = new GameState();
                 this.gameState.fromJSON(savedData);
                 
-                // items.csv ID 체계 리팩토링(v2)으로 인한 세이브 데이터 하드리셋
+                // 오프라인 보상 시스템 미리 초기화 (저장 데이터 계산 필요)
+                this.offlineRewards = new OfflineRewards(this.gameState);
+                this.offlineRewards.init();
+                
                 // 기존 세이브 데이터의 아이템 ID가 새 체계와 호환되지 않음
                 // 단, 한 번만 실행 (플래그로 관리)
                 if (!this.gameState.inventoryResetDone) {
                     gameLogger.info('Performing hard reset of inventory due to ID system refactoring (v2)');
                     this.gameState.hardResetInventory();
                     this.gameState.inventoryResetDone = true;
-                    this.storageManager.save(); // 플래그 저장
+                    this.storageManager.save(this.gameState.toJSON()); // 플래그 저장
                 }
                 
                 // 오프라인 보상 계산 (UI 표시는 나중에)
@@ -149,6 +152,10 @@ class Game {
             // StorageManager 에 gameState 연동
             this.storageManager.init(this.gameState);
             
+            // 오프라인 보상 시스템 (savedData 체크 전에 필요할 수 있음)
+            this.offlineRewards = new OfflineRewards(this.gameState);
+            this.offlineRewards.init();
+            
             this.updateLoadingProgress(70, 'UI 초기화...');
 
             // UI 매니저 초기화
@@ -170,9 +177,6 @@ class Game {
             // 인벤토리 UI 초기화
             this.inventoryUI = new InventoryUI(this.gameState, this.inventorySystem);
             this.inventoryUI.init();
-            
-            this.offlineRewards = new OfflineRewards(this.gameState);
-            this.offlineRewards.init();
             
             this.tutorialSystem = new TutorialSystem(this.gameState);
             this.tutorialSystem.init();
@@ -221,6 +225,11 @@ class Game {
             // 로딩 화면 숨김
             this.loadingScreen.hide();
             document.getElementById('game-container').style.display = 'flex';
+            
+            // 캔버스 리사이즈 (컨테이너가 보여진 후에 올바른 크기 측정 가능)
+            if (this.renderer) {
+                this.renderer.resize();
+            }
             
             this.updateLoadingProgress(100, '완료!');
             
