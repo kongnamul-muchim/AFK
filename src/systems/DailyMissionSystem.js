@@ -8,8 +8,8 @@ import { gameLogger } from '../core/Logger.js';
 class DailyMissionSystem {
     constructor(gameState) {
         this.gameState = gameState;
-        
-        // 낮은 보상 미션 풀 (매일 2개 선택됨, 💎2 고정)
+
+        // 낮은 보상 미션 풀 (매일 2개 선택됨, 2 고정)
         this.easyMissionTemplates = [
             {
                 id: 'kill_50',
@@ -44,8 +44,8 @@ class DailyMissionSystem {
                 reward: { statPoints: 1, gems: 2 }
             }
         ];
-        
-        // 높은 보상 미션 풀 (매일 1개 선택됨, 💎3 고정)
+
+        // 높은 보상 미션 풀 (매일 1개 선택됨, 3 고정)
         this.hardMissionTemplates = [
             {
                 id: 'kill_100',
@@ -72,12 +72,12 @@ class DailyMissionSystem {
                 reward: { statPoints: 2, gems: 3 }
             }
         ];
-        
+
         // 통합 미션 템플릿 (하위 호환성용)
         this.missionTemplates = [...this.easyMissionTemplates, ...this.hardMissionTemplates];
-        
+
         // 주간 미션 정의 (일일 미션의 5배 난이도, 7~8배 보상)
-        // 낮은 보상 주간 미션 풀 (매주 2개 선택됨, 💎16 고정)
+        // 낮은 보상 주간 미션 풀 (매주 2개 선택됨, 16 고정)
         this.easyWeeklyMissionTemplates = [
             {
                 id: 'weekly_kill_250',
@@ -112,8 +112,8 @@ class DailyMissionSystem {
                 reward: { statPoints: 8, gems: 16 }
             }
         ];
-        
-        // 높은 보상 주간 미션 풀 (매주 1개 선택됨, 💎24 고정)
+
+        // 높은 보상 주간 미션 풀 (매주 1개 선택됨, 24 고정)
         this.hardWeeklyMissionTemplates = [
             {
                 id: 'weekly_kill_500',
@@ -140,7 +140,7 @@ class DailyMissionSystem {
                 reward: { statPoints: 15, gems: 24 }
             }
         ];
-        
+
         // 통합 주간 미션 템플릿 (하위 호환성용)
         this.weeklyMissionTemplates = [...this.easyWeeklyMissionTemplates, ...this.hardWeeklyMissionTemplates];
     }
@@ -178,7 +178,7 @@ class DailyMissionSystem {
     checkDailyReset() {
         const todayMidnight = this.getTodayMidnight();
         const lastReset = this.gameState.dailyMissions.lastReset;
-        
+
         // 마지막 리셋이 오늘 자정 이전이면 리셋
         if (lastReset < todayMidnight) {
             this.resetDailyMissions();
@@ -209,7 +209,7 @@ class DailyMissionSystem {
     checkWeeklyReset() {
         const thisWeekMonday = this.getThisWeekMonday();
         const lastReset = this.gameState.dailyMissions.weeklyLastReset;
-        
+
         // 마지막 리셋이 이번 주 월요일 이전이면 리셋
         if (lastReset < thisWeekMonday) {
             this.resetWeeklyMissions();
@@ -223,18 +223,18 @@ class DailyMissionSystem {
         // 이번 주 월요일로 설정
         this.gameState.dailyMissions.weeklyLastReset = this.getThisWeekMonday();
         this.gameState.dailyMissions.weeklyMissions = [];
-        
+
         // 낮은 보상 주간 미션 2개 무작위 선택
         const easyShuffled = [...this.easyWeeklyMissionTemplates].sort(() => Math.random() - 0.5);
         const easySelected = easyShuffled.slice(0, 2);
-        
+
         // 높은 보상 주간 미션 1개 무작위 선택
         const hardShuffled = [...this.hardWeeklyMissionTemplates].sort(() => Math.random() - 0.5);
         const hardSelected = hardShuffled.slice(0, 1);
-        
+
         // 합치기
         const selected = [...easySelected, ...hardSelected];
-        
+
         selected.forEach(template => {
             this.gameState.dailyMissions.weeklyMissions.push({
                 id: template.id,
@@ -249,7 +249,7 @@ class DailyMissionSystem {
                 isWeekly: true
             });
         });
-        
+
         gameLogger.info('Weekly missions reset (2 easy + 1 hard)');
         gameEventBus.emit(GAME_EVENTS.WEEKLY_MISSIONS_RESET);
     }
@@ -270,18 +270,18 @@ class DailyMissionSystem {
         // 현실 시간 기준 오늘 자정으로 설정
         this.gameState.dailyMissions.lastReset = this.getTodayMidnight();
         this.gameState.dailyMissions.missions = [];
-        
+
         // 낮은 보상 미션 2개 무작위 선택
         const easyShuffled = [...this.easyMissionTemplates].sort(() => Math.random() - 0.5);
         const easySelected = easyShuffled.slice(0, 2);
-        
+
         // 높은 보상 미션 1개 무작위 선택
         const hardShuffled = [...this.hardMissionTemplates].sort(() => Math.random() - 0.5);
         const hardSelected = hardShuffled.slice(0, 1);
-        
+
         // 합치기
         const selected = [...easySelected, ...hardSelected];
-        
+
         selected.forEach(template => {
             this.gameState.dailyMissions.missions.push({
                 id: template.id,
@@ -295,7 +295,7 @@ class DailyMissionSystem {
                 reward: template.reward
             });
         });
-        
+
         gameLogger.info('Daily missions reset (2 easy + 1 hard)');
         gameEventBus.emit(GAME_EVENTS.DAILY_MISSIONS_RESET);
     }
@@ -316,19 +316,19 @@ class DailyMissionSystem {
         gameEventBus.on(GAME_EVENTS.COMBAT_MONSTER_KILLED, () => {
             this.updateProgress('kill', 1);
         });
-        
+
         gameEventBus.on(GAME_EVENTS.STAGE_CHANGED, (data) => {
             this.updateProgress('stage', 1);
         });
-        
+
         gameEventBus.on(GAME_EVENTS.INVENTORY_GOLD_CHANGED, () => {
             // 골드는 현재 골드량으로 체크
         });
-        
+
         gameEventBus.on(GAME_EVENTS.INVENTORY_SYNTHESIZE, () => {
             this.updateProgress('synthesize', 1);
         });
-        
+
         gameEventBus.on(GAME_EVENTS.UPGRADE_PURCHASED, () => {
             this.updateProgress('upgrade', 1);
         });
@@ -343,7 +343,7 @@ class DailyMissionSystem {
         dailyMissions.forEach(mission => {
             this.updateMissionProgress(mission, type, amount);
         });
-        
+
         // 주간 미션 업데이트
         const weeklyMissions = this.gameState.dailyMissions.weeklyMissions || [];
         weeklyMissions.forEach(mission => {
@@ -362,7 +362,7 @@ class DailyMissionSystem {
             } else {
                 mission.progress = Math.min(mission.progress + amount, mission.target);
             }
-            
+
             // 완료 확인
             if (mission.progress >= mission.target) {
                 mission.completed = true;
@@ -379,17 +379,17 @@ class DailyMissionSystem {
         // 일일 미션에서 찾기
         let mission = this.gameState.dailyMissions.missions.find(m => m.id === missionId);
         let isWeekly = false;
-        
+
         // 없으면 주간 미션에서 찾기
         if (!mission) {
             mission = (this.gameState.dailyMissions.weeklyMissions || []).find(m => m.id === missionId);
             isWeekly = !!mission;
         }
-        
+
         if (!mission || !mission.completed || mission.claimed) {
             return false;
         }
-        
+
         // 보상 지급
         if (mission.reward.statPoints > 0) {
             this.gameState.player.statPoints += mission.reward.statPoints;
@@ -397,14 +397,14 @@ class DailyMissionSystem {
         if (mission.reward.gems > 0) {
             this.gameState.inventory.gems += mission.reward.gems;
         }
-        
+
         mission.claimed = true;
-        
+
         const claimEvent = isWeekly ? GAME_EVENTS.WEEKLY_MISSION_CLAIMED : GAME_EVENTS.DAILY_MISSION_CLAIMED;
         gameEventBus.emit(claimEvent, { mission });
-        
+
         gameLogger.info(`Claimed ${isWeekly ? 'weekly' : 'daily'} mission reward: ${mission.name}`);
-        
+
         return true;
     }
 
@@ -422,7 +422,7 @@ class DailyMissionSystem {
     activateBuff(buffType, durationMinutes) {
         const durationMs = durationMinutes * 60 * 1000;
         this.gameState.dailyMissions.buffs[buffType] = Date.now() + durationMs;
-        
+
         gameLogger.info(`Buff activated: ${buffType} for ${durationMinutes} minutes`);
         gameEventBus.emit(GAME_EVENTS.BUFF_ACTIVATED, { buffType, duration: durationMinutes });
     }
@@ -443,7 +443,7 @@ class DailyMissionSystem {
     getTimeUntilReset() {
         const now = Date.now();
         const tomorrowMidnight = this.getTomorrowMidnight();
-        
+
         return Math.max(0, tomorrowMidnight - now);
     }
 
@@ -463,7 +463,7 @@ class DailyMissionSystem {
     getTimeUntilWeeklyReset() {
         const now = Date.now();
         const nextMonday = this.getNextWeekMonday();
-        
+
         return Math.max(0, nextMonday - now);
     }
 
@@ -479,7 +479,7 @@ class DailyMissionSystem {
      */
     completeAllMissions() {
         const missions = this.gameState.dailyMissions.missions;
-        
+
         missions.forEach(mission => {
             if (!mission.completed) {
                 mission.progress = mission.target;
@@ -487,7 +487,7 @@ class DailyMissionSystem {
                 gameEventBus.emit(GAME_EVENTS.DAILY_MISSION_COMPLETED, { mission });
             }
         });
-        
+
         gameLogger.info('[TEST] All missions completed');
     }
 
@@ -528,7 +528,7 @@ class DailyMissionSystem {
             goldDouble: '골드 2배',
             expDouble: '경험치 2배'
         };
-        
+
         console.log('=== Buff Status ===');
         buffs.forEach(type => {
             const active = this.hasActiveBuff(type);

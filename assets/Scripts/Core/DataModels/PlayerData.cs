@@ -8,37 +8,37 @@ using System;
 [Serializable]
 public class PlayerData
 {
-    // ========== 기본 스탯 ==========
+    // 기본 스탯
     public int level = 1;
     public long experience = 0;
-    
+
     // HP
     public float currentHP = 100;
     public float maxHP = 100;
-    
+
     // 전투 스탯
     public float attack = 15;
     public float defense = 8;
     public float health = 200;
-    
+
     // 추가 스탯
     public float speed = 200;
     public float critChance = 0.05f;
     public float critDamage = 1.5f;
-    
+
     // 재화
     public long gold = 0;
     public int gems = 0;
-    
+
     // 환생
     public int rebirthCount = 0;
     public int statPoints = 0;
-    
-    // ========== 업그레이드 데이터 ==========
-    
+
+    // 업그레이드 데이터
+
     /// <summary>골드 업그레이드 레벨</summary>
     public SerializableDictionary<string, int> goldUpgrades = new SerializableDictionary<string, int>();
-    
+
     /// <summary>스탯 업그레이드 레벨</summary>
     public SerializableDictionary<string, int> statUpgrades = new SerializableDictionary<string, int>();
 
@@ -63,7 +63,7 @@ public class PlayerData
         gems = 0;
         rebirthCount = 0;
         statPoints = 0;
-        
+
         // 업그레이드 초기화
         InitializeUpgrades();
     }
@@ -86,7 +86,7 @@ public class PlayerData
         goldUpgrades.Add("decisiveDamage", 0);
         goldUpgrades.Add("goldBonus", 0);
         goldUpgrades.Add("expBonus", 0);
-        
+
         // 스탯 업그레이드 초기화
         statUpgrades = new SerializableDictionary<string, int>();
         statUpgrades.Add("attack", 0);
@@ -112,7 +112,7 @@ public class PlayerData
         defense = GameConfig.BasePlayerDefense;
         health = GameConfig.BasePlayerHP * 2;
         statPoints = 0;
-        
+
         // 스탯 업그레이드 초기화 (골드 업그레이드는 유지)
         statUpgrades = new SerializableDictionary<string, int>();
         statUpgrades.Add("attack", 0);
@@ -151,11 +151,11 @@ public class PlayerData
     public bool AddExperience(long amount)
     {
         experience += amount;
-        
+
         // Web 버전과 동일: 1.2배 스케일
         long expNeeded = GameConfig.ExpToLevelUp * (long)Math.Pow(1.2, level - 1);
         bool leveledUp = false;
-        
+
         while (experience >= expNeeded)
         {
             experience -= expNeeded;
@@ -163,11 +163,11 @@ public class PlayerData
             statPoints += 1;
             expNeeded = GameConfig.ExpToLevelUp * (long)Math.Pow(1.2, level - 1); // 다음 레벨업에 필요한 EXP 재계산
             leveledUp = true;
-            
+
             // HP 완전 회복 (Web 버전과 동일)
             currentHP = maxHP;
         }
-        
+
         return leveledUp;
     }
 }

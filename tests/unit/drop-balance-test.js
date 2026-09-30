@@ -1,4 +1,4 @@
-// ========== 드롭율 밸런스 테스트 (Node.js standalone) ==========
+// 드롭율 밸런스 테스트 (Node.js standalone)
 // CombatSystem.js의 rollItemDrop 로직을 재현해서 통계 검증
 
 function weightedRandomIndex(probabilities) {
@@ -14,12 +14,12 @@ function weightedRandomIndex(probabilities) {
 function simulate(probabilities, iterations = 100000) {
     const counts = [0, 0, 0, 0, 0];
     const labels = ['일반', '희귀', '에픽', '전설', '신화'];
-    
+
     for (let i = 0; i < iterations; i++) {
         const idx = weightedRandomIndex(probabilities);
         counts[idx]++;
     }
-    
+
     console.log(`\n📊 ${iterations.toLocaleString()}회 시뮬레이션 결과:`);
     console.log('─'.repeat(45));
     let total = 0;

@@ -23,11 +23,11 @@ class GameConfig {
         // CSV 데이터를 계층적 구조로 변환
         configData.forEach(row => {
             const { category, key, value } = row;
-            
+
             if (!this.configs.has(category)) {
                 this.configs.set(category, new Map());
             }
-            
+
             const categoryConfig = this.configs.get(category);
             categoryConfig.set(key, this.parseValue(value));
         });
@@ -37,12 +37,12 @@ class GameConfig {
 
     /**
      * 값 파싱 (자동 타입 변환)
-     * @param {string} value 
+     * @param {string} value
      * @returns {number|string|boolean|Object}
      */
     parseValue(value) {
         if (value === null || value === undefined) return null;
-        
+
         // 문자열
         if (typeof value === 'string') {
             // 숫자
@@ -61,31 +61,31 @@ class GameConfig {
                 }
             }
         }
-        
+
         return value;
     }
 
     /**
      * 설정 값 조회
-     * @param {string} category 
-     * @param {string} key 
-     * @param {*} defaultValue 
+     * @param {string} category
+     * @param {string} key
+     * @param {*} defaultValue
      * @returns {*}
      */
     get(category, key, defaultValue = null) {
         if (!this.configs.has(category)) {
             return defaultValue;
         }
-        
+
         const categoryConfig = this.configs.get(category);
         return categoryConfig.get(key) ?? defaultValue;
     }
 
     /**
      * 숫자 설정 값 조회
-     * @param {string} category 
-     * @param {string} key 
-     * @param {number} defaultValue 
+     * @param {string} category
+     * @param {string} key
+     * @param {number} defaultValue
      * @returns {number}
      */
     getNumber(category, key, defaultValue = 0) {

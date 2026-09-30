@@ -65,7 +65,7 @@ class GameState {
             killsInStage: 0,
             autoRepeat: false
         };
-        
+
         // 전투 페이즈 상태
         this.combatPhase = {
             phase: 'IDLE', // 'IDLE', 'MOVING', 'ENCOUNTERING', 'COMBAT', 'VICTORY', 'DEFEATED'
@@ -149,7 +149,7 @@ class GameState {
         this.lastSaveTime = Date.now();
         this.lastLoginTime = Date.now();
         this.inventoryResetDone = false; // ID 체계 리팩토링 v2 하드리셋 플래그
-        
+
         // 보석 업그레이드 (무한 성장 요소)
         // unlocked: 해금 여부 (보석 지불로 해금), level: 해금 후 업그레이드 레벨
         this.gemUpgrades = {
@@ -169,7 +169,7 @@ class GameState {
     normalizeInventoryKeys() {
         const normalized = new Map();
         let merged = false;
-        
+
         this.inventory.items.forEach((value, key) => {
             const strKey = key.toString();
             if (normalized.has(strKey)) {
@@ -181,7 +181,7 @@ class GameState {
                 normalized.set(strKey, value);
             }
         });
-        
+
         if (merged) {
             this.inventory.items = normalized;
             gameLogger.info(`Inventory keys normalized. Merged duplicate entries.`);
@@ -190,7 +190,7 @@ class GameState {
 
     /**
      * 상태 변경 감지 콜백 등록
-     * @param {Function} callback 
+     * @param {Function} callback
      */
     onChange(callback) {
         gameEventBus.on('game:state_changed', callback);
@@ -304,7 +304,7 @@ class GameState {
         if (this.player.level < 1) errors.push('Invalid player level');
         if (this.player.exp < 0) errors.push('Invalid exp');
         if (this.player.currentHp < 0) errors.push('Invalid HP');
-        
+
         if (this.player.statPoints < 0) errors.push('Invalid stat points');
 
         // 스테이지 검증
@@ -329,7 +329,7 @@ class GameState {
         }
         this.player.exp += amount;
         this.stats.totalGold += amount; // TEMP: gold tracking
-        
+
         let leveledUp = false;
         while (this.player.exp >= this.player.maxExp) {
             this.player.exp -= this.player.maxExp;
@@ -338,22 +338,22 @@ class GameState {
             this.player.maxExp = Math.floor(this.player.maxExp * 1.2);
             this.stats.totalLevelups++;
             leveledUp = true;
-            
+
             // HP 완전 회복
             this.player.currentHp = this.player.maxHp;
-            
+
             gameEventBus.emit(GAME_EVENTS.PLAYER_LEVELUP, { level: this.player.level });
         }
-        
-        gameEventBus.emit(GAME_EVENTS.PLAYER_EXP_CHANGED, { 
-            exp: this.player.exp, 
-            maxExp: this.player.maxExp 
+
+        gameEventBus.emit(GAME_EVENTS.PLAYER_EXP_CHANGED, {
+            exp: this.player.exp,
+            maxExp: this.player.maxExp
         });
-        
+
         if (leveledUp) {
             this.notifyChange('player.level');
         }
-        
+
         return leveledUp;
     }
 
@@ -366,7 +366,7 @@ class GameState {
         let totalDefenseBonus = 0;
         let totalHpBonus = 0;
         let totalMoveSpeed = 0;
-        
+
         Object.values(this.player.equipment).forEach(item => {
             if (item && item.stats) {
                 if (item.stats.attackBonus) totalAttackBonus += item.stats.attackBonus;
@@ -375,7 +375,7 @@ class GameState {
                 if (item.stats.moveSpeed) totalMoveSpeed += item.stats.moveSpeed;
             }
         });
-        
+
         // 효율 배율 계산 (10레벨마다 증가)
         // Lv 1-10: ×1.0, Lv 11-20: ×1.5, Lv 21-30: ×2.0, Lv 31-40: ×2.5, Lv 41+: ×3.0
         const calcUpgradeValue = (level) => {
@@ -385,68 +385,68 @@ class GameState {
             if (level < 40) return 10 * 1.0 + 10 * 1.5 + 10 * 2.0 + (level - 30) * 2.5;
             return 10 * 1.0 + 10 * 1.5 + 10 * 2.0 + 10 * 2.5 + (level - 40) * 3.0;
         };
-        
+
         // 골드 업그레이드 + 스탯 업그레이드 합산
         const goldUp = this.player.goldUpgrades;
         const statUp = this.player.statUpgrades;
-        
+
         // 기본 스탯 계산 + 양쪽 업그레이드 합산 (효율 배율 적용)
         const attackValue = calcUpgradeValue(goldUp.attack) + calcUpgradeValue(statUp.attack);
         const defenseValue = calcUpgradeValue(goldUp.defense) + calcUpgradeValue(statUp.defense);
         const hpValue = calcUpgradeValue(goldUp.hp) * 10 + calcUpgradeValue(statUp.hp) * 10;
-        
+
         const baseAttack = 10 + attackValue * 2;
         const baseDefense = 5 + defenseValue * 1;
         const baseMaxHp = 100 + hpValue;
-        
+
         // HP 버프 확인 (체력 2배)
         const hpBuff = this.hasActiveHpBuff() ? 2.0 : 1.0;
-        
+
         // % 보너스 적용
         this.player.derivedStats.attack = Math.floor(baseAttack * (1 + totalAttackBonus / 100));
         this.player.derivedStats.defense = Math.floor(baseDefense * (1 + totalDefenseBonus / 100));
         this.player.derivedStats.maxHp = Math.floor(baseMaxHp * (1 + totalHpBonus / 100) * hpBuff);
         this.player.derivedStats.moveSpeed = 100 + totalMoveSpeed;
-        
+
         // 크리티컬 (기존 + 양쪽 업그레이드 합산, 효율 배율 적용)
         const critChanceValue = calcUpgradeValue(goldUp.critChance) + calcUpgradeValue(statUp.critChance);
         this.player.derivedStats.critChance = 0.05 + critChanceValue * 0.002;
-        
+
         const critDamageValue = calcUpgradeValue(goldUp.critDamage) + calcUpgradeValue(statUp.critDamage);
         this.player.derivedStats.critDamage = 1.5 + critDamageValue * 0.01;
-        
+
         // 업그레이드 효과 (골드 + 스탯 합산, 효율 배율 적용)
         const hpRegenValue = calcUpgradeValue(goldUp.hpRegen) + calcUpgradeValue(statUp.hpRegen);
         this.player.derivedStats.hpRegen = hpRegenValue * 1;
-        
+
         const attackSpeedValue = calcUpgradeValue(goldUp.attackSpeed) + calcUpgradeValue(statUp.attackSpeed);
         this.player.derivedStats.attackSpeed = 100 + attackSpeedValue * 1;
-        
+
         // 결정타 (골드만, 효율 배율 적용)
         const decisiveChanceValue = calcUpgradeValue(goldUp.decisiveChance);
         this.player.derivedStats.decisiveChance = decisiveChanceValue * 0.002;
-        
+
         const decisiveDamageValue = calcUpgradeValue(goldUp.decisiveDamage);
         this.player.derivedStats.decisiveDamage = 2 + decisiveDamageValue * 0.01;
-        
+
         // 골드/경험치 보너스 (골드만, 효율 배율 적용)
         const goldBonusValue = calcUpgradeValue(goldUp.goldBonus);
         this.player.derivedStats.goldBonus = goldBonusValue * 1;
-        
+
         const expBonusValue = calcUpgradeValue(goldUp.expBonus);
         this.player.derivedStats.expBonus = expBonusValue * 1;
-        
+
         // 보석 업그레이드 효과 적용 (해금된 것만)
         const gemUp = this.gemUpgrades;
-        
+
         // 오프라인 보상 증가 (2%/레벨) - 해금 필요
         // (오프라인 보상 계산 시 참조됨)
-        
+
         // 치명타 피해 증가 (2%/레벨) - 해금 필요
         if (gemUp.critDamage.unlocked && gemUp.critDamage.level > 0) {
             this.player.derivedStats.critDamage = (this.player.derivedStats.critDamage || 1.5) + gemUp.critDamage.level * 0.02;
         }
-        
+
         // 기본 스탯 % 증가 (1%/레벨) - 해금 필요
         if (gemUp.baseStats.unlocked && gemUp.baseStats.level > 0) {
             const statBonus = 1 + gemUp.baseStats.level * 0.01;
@@ -454,12 +454,12 @@ class GameState {
             this.player.derivedStats.defense = Math.floor(this.player.derivedStats.defense * statBonus);
             this.player.derivedStats.maxHp = Math.floor(this.player.derivedStats.maxHp * statBonus);
         }
-        
+
         // HP 비율 유지
         if (this.player.currentHp > this.player.derivedStats.maxHp) {
             this.player.currentHp = this.player.derivedStats.maxHp;
         }
-        
+
         gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
             currentHp: this.player.currentHp,
             maxHp: this.player.derivedStats.maxHp
@@ -475,23 +475,23 @@ class GameState {
         // 방어력 적용 (최소 1 데미지)
         const actualDamage = Math.max(1, damage - this.player.derivedStats.defense);
         this.player.currentHp = Math.max(0, this.player.currentHp - actualDamage);
-        
+
         gameEventBus.emit(GAME_EVENTS.PLAYER_HP_CHANGED, {
             currentHp: this.player.currentHp,
             maxHp: this.player.maxHp
         });
-        
+
         const alive = this.player.currentHp > 0;
         if (!alive) {
             gameEventBus.emit(GAME_EVENTS.COMBAT_PLAYER_DIED);
         }
-        
+
         return alive;
     }
 
     /**
      * 골드 추가
-     * @param {number} amount 
+     * @param {number} amount
      */
     addGold(amount) {
         if (this.inventory.gold === null || this.inventory.gold === undefined) {
@@ -504,7 +504,7 @@ class GameState {
 
     /**
      * 골드 사용
-     * @param {number} amount 
+     * @param {number} amount
      * @returns {boolean} 성공 여부
      */
     spendGold(amount) {
@@ -520,35 +520,35 @@ class GameState {
     advanceStage() {
         const previousStage = this.stage.current;
         const wasBossStage = previousStage % 10 === 0;
-        
+
         this.stage.killsInStage = 0;
         this.stage.current++;
         this.stage.max = Math.max(this.stage.max, this.stage.current);
         this.stats.maxStage = Math.max(this.stats.maxStage, this.stage.current);
         this.stats.totalClears = (this.stats.totalClears || 0) + 1;
-        
-        gameEventBus.emit(GAME_EVENTS.STAGE_CHANGED, { 
+
+        gameEventBus.emit(GAME_EVENTS.STAGE_CHANGED, {
             stage: this.stage.current,
             isBoss: this.stage.current % 10 === 0
         });
-        
+
         // 보스 스테이지 클리어 보상 (보석) - 처음 클리어할 때만
         if (wasBossStage) {
             // 이미 클리어한 보스인지 확인
             if (!this.stats.clearedBossStages.has(previousStage)) {
                 // 처음 클리어하는 보스
                 this.stats.clearedBossStages.add(previousStage);
-                
+
                 const bossLevel = Math.floor(previousStage / 10); // 1=10층, 2=20층, ...
                 const gemReward = this.calculateBossGemReward(bossLevel);
-                
+
                 if (gemReward > 0) {
                     this.inventory.gems += gemReward;
-                    
+
                     gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
                         message: `보스 스테이지 ${previousStage}층 **첫 클리어**! 💎${gemReward} 보석을 획득했습니다!`
                     });
-                    
+
                     gameLogger.info(`Boss stage ${previousStage} first clear! +${gemReward} gems`);
                 }
             } else {
@@ -556,11 +556,11 @@ class GameState {
                 gameLogger.debug(`Boss stage ${previousStage} already cleared, no gem reward`);
             }
         }
-        
+
         if (this.stage.current % 10 === 0) {
             gameEventBus.emit(GAME_EVENTS.STAGE_BOSS_ENTER);
         }
-        
+
         this.notifyChange('stage.current');
     }
 
@@ -574,7 +574,7 @@ class GameState {
         // 10층: 5개, 20층: 10개, 30층: 15개, ... 100층: 50개
         // 100층 이후: 50개 고정
         const baseReward = Math.min(bossLevel * 5, 50);
-        
+
         return baseReward;
     }
 
@@ -585,11 +585,11 @@ class GameState {
         this.stage.kills++;
         this.stage.killsInStage++;
         this.stats.totalKills++;
-        
+
         // 스테이지 클리어 조건 (일반: 10 마리, 보스: 1 마리)
         const isBossStage = this.stage.current % 10 === 0;
         const clearCondition = isBossStage ? 1 : 10;
-        
+
         if (this.stage.killsInStage >= clearCondition) {
             this.advanceStage();
         }
@@ -621,13 +621,13 @@ class GameState {
         const bonusLevel = Math.max(0, this.player.level - this.rebirth.minLevel + 1);
         // 레벨당 1 카운트 + 보너스 (높은 레벨일수록 더 많이)
         let basePoints = Math.floor(bonusLevel * (1 + bonusLevel * 0.1));
-        
+
         // 보석 업그레이드: 환생 보너스 (1개/레벨, 최대 10) - 해금 필요
         if (this.gemUpgrades.rebirthBonus.unlocked) {
             const rebirthBonusLevel = Math.min(10, this.gemUpgrades.rebirthBonus.level);
             basePoints += rebirthBonusLevel;
         }
-        
+
         return basePoints;
     }
 
@@ -695,13 +695,13 @@ class GameState {
      */
     hardResetInventory() {
         gameLogger.info('Hard resetting inventory due to ID system refactoring');
-        
+
         // 인벤토리 아이템 완전 초기화
         this.inventory.items = new Map();
-        
+
         // 발견된 아이템도 초기화 (도감 리셋)
         this.inventory.discoveredItems = new Set();
-        
+
         // 장비 해제
         this.player.equipment = {
             weapon: null,
@@ -709,10 +709,10 @@ class GameState {
             accessory: null,
             boots: null
         };
-        
+
         // 파생 스탯 재계산
         this.recalculateDerivedStats();
-        
+
         gameLogger.info('Inventory hard reset completed');
     }
 
@@ -748,7 +748,7 @@ class GameState {
 
     /**
      * 역직렬화 (JSON 로드용)
-     * @param {Object} data 
+     * @param {Object} data
      */
     fromJSON(data) {
         if (data.version) this.version = data.version;
@@ -766,7 +766,7 @@ class GameState {
         if (data.combatPhase) Object.assign(this.combatPhase, data.combatPhase);
         if (data.inventory) {
             this.inventory.gold = data.inventory.gold ?? 0;
-            
+
             // 아이템 키 통일 (문자열로) - 숫자/문자열 키 중복 방지
             const normalizedItems = new Map();
             const itemsData = data.inventory.items || [];
@@ -781,7 +781,7 @@ class GameState {
                 }
             });
             this.inventory.items = normalizedItems;
-            
+
             // discoveredItems 복원
             if (data.inventory.discoveredItems) {
                 this.inventory.discoveredItems = new Set(data.inventory.discoveredItems);
@@ -800,7 +800,7 @@ class GameState {
         }
         if (data.lastSaveTime) this.lastSaveTime = data.lastSaveTime;
         if (data.inventoryResetDone !== undefined) this.inventoryResetDone = data.inventoryResetDone;
-        
+
         // 보석 업그레이드 로드 (구버전 호환: 숫자 → { unlocked, level })
         if (data.gemUpgrades) {
             const gemKeys = ['offlineBonus', 'critDamage', 'autoCombatDamage', 'rebirthBonus', 'dropRate', 'baseStats'];
@@ -825,7 +825,7 @@ class GameState {
                 }
             });
         }
-        
+
         this.recalculateDerivedStats();
     }
 }

@@ -16,7 +16,7 @@ public static class CSVParser
         if (string.IsNullOrEmpty(text)) return result;
 
         var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        
+
         // 헤더 행 추출 (주석/빈 행 스킵)
         int headerIndex = 0;
         while (headerIndex < lines.Length)
@@ -26,28 +26,28 @@ public static class CSVParser
                 break;
             headerIndex++;
         }
-        
+
         if (headerIndex >= lines.Length) return result;
-        
+
         var headers = ParseLine(lines[headerIndex]);
-        
+
         // 데이터 행 파싱
         for (int i = headerIndex + 1; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
             if (string.IsNullOrEmpty(line) || line.StartsWith("#")) continue;
-            
+
             var values = ParseLine(line);
             var row = new Dictionary<string, object>();
-            
+
             for (int j = 0; j < headers.Count && j < values.Count; j++)
             {
                 row[headers[j]] = ConvertType(values[j]);
             }
-            
+
             result.Add(row);
         }
-        
+
         return result;
     }
 
@@ -59,11 +59,11 @@ public static class CSVParser
         var result = new List<string>();
         var current = "";
         var inQuotes = false;
-        
+
         for (int i = 0; i < line.Length; i++)
         {
             var c = line[i];
-            
+
             if (c == '"')
             {
                 if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
@@ -86,7 +86,7 @@ public static class CSVParser
                 current += c;
             }
         }
-        
+
         result.Add(current.Trim());
         return result;
     }

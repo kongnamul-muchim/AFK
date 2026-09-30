@@ -32,9 +32,9 @@ public class DailyMissionData
     public long lastReset;
     public List<MissionData> weeklyMissions = new List<MissionData>();
     public long weeklyLastReset;
-    
+
     public MissionBuffsData buffs = new MissionBuffsData();
-    
+
     public void Reset()
     {
         missions.Clear();

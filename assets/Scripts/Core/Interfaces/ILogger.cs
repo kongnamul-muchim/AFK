@@ -9,17 +9,17 @@ public interface IGameLogger
     /// 정보 로그
     /// </summary>
     void Info(string message);
-    
+
     /// <summary>
     /// 경고 로그
     /// </summary>
     void Warn(string message);
-    
+
     /// <summary>
     /// 에러 로그
     /// </summary>
     void Error(string message);
-    
+
     /// <summary>
     /// 디버그 로그
     /// </summary>

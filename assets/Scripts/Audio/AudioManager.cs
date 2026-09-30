@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class AudioManager : MonoBehaviour
 {
     private static AudioManager _instance;
-    
+
     /// <summary>
     /// AudioManager의 싱글톤 인스턴스
     /// </summary>
@@ -27,11 +27,11 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
+
     private IGameState _gameState;
     private IGameLogger _logger;
-    
+
     private void InjectDependencies()
     {
         if (Bootstrap.Container == null) return;
@@ -41,37 +41,37 @@ public class AudioManager : MonoBehaviour
             _logger = Bootstrap.Container.Resolve<IGameLogger>();
     }
 
-    // ========== 오디오 소스 풀 ==========
-    
+    // 오디오 소스 풀
+
     [Header("Audio Sources")]
     [SerializeField] private AudioSource _bgmSource;
     [SerializeField] private int _sfxPoolSize = 10;
     [SerializeField] private int _uiSourceCount = 2;
-    
+
     private List<AudioSource> _sfxPool = new List<AudioSource>();
     private List<AudioSource> _uiSources = new List<AudioSource>();
-    
-    // ========== 볼륨 설정 ==========
-    
+
+    // 볼륨 설정
+
     [Header("Volume Settings")]
     [Range(0f, 1f)] [SerializeField] private float _bgmVolume = 0.7f;
     [Range(0f, 1f)] [SerializeField] private float _sfxVolume = 0.8f;
     [Range(0f, 1f)] [SerializeField] private float _uiVolume = 0.6f;
-    
-    // ========== 페이드 설정 ==========
-    
+
+    // 페이드 설정
+
     [Header("Fade Settings")]
     [SerializeField] private float _fadeDuration = 1f;
-    
-    // ========== 상태 ==========
-    
+
+    // 상태
+
     private bool _isMuted = false;
     private float _targetBgmVolume;
     private float _targetSfxVolume;
     private float _targetUiVolume;
-    
-    // ========== MonoBehaviour 라이프사이클 ==========
-    
+
+    // MonoBehaviour 라이프사이클
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -81,21 +81,21 @@ public class AudioManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
-        
+
         // 초기화
         InitializeAudio();
     }
-    
+
     private void Update()
     {
         UpdateVolume();
     }
-    
-    // ========== 초기화 ==========
-    
+
+    // 초기화
+
     private void InitializeAudio()
     {
         // BGM 소스 설정
@@ -106,7 +106,7 @@ public class AudioManager : MonoBehaviour
             _bgmSource.loop = true;
             _bgmSource.volume = _bgmVolume;
         }
-        
+
         // SFX 풀 생성
         for (int i = 0; i < _sfxPoolSize; i++)
         {
@@ -116,7 +116,7 @@ public class AudioManager : MonoBehaviour
             source.volume = _sfxVolume;
             _sfxPool.Add(source);
         }
-        
+
         // UI 소스 생성
         for (int i = 0; i < _uiSourceCount; i++)
         {
@@ -126,19 +126,19 @@ public class AudioManager : MonoBehaviour
             source.volume = _uiVolume;
             _uiSources.Add(source);
         }
-        
+
         // 저장된 볼륨 설정 로드
         LoadVolumeSettings();
-        
+
         _targetBgmVolume = _bgmVolume;
         _targetSfxVolume = _sfxVolume;
         _targetUiVolume = _uiVolume;
-        
+
         _logger.Debug("오디오 매니저 초기화 완료");
     }
-    
-    // ========== BGM ==========
-    
+
+    // BGM
+
     /// <summary>
     /// BGM 재생 (페이드 인)
     /// </summary>
@@ -150,28 +150,28 @@ public class AudioManager : MonoBehaviour
             _logger.Warn("BGM 클립이 없음");
             return;
         }
-        
+
         _bgmSource.clip = clip;
         _bgmSource.Play();
-        
+
         // 페이드 인
         StartCoroutine(FadeVolume(_bgmSource, 0f, _targetBgmVolume, _fadeDuration));
-        
+
         _logger.Debug($"BGM 재생: {clip.name}");
     }
-    
+
     /// <summary>
     /// BGM 정지 (페이드 아웃)
     /// </summary>
     public void StopBGM()
     {
         if (_bgmSource == null || !_bgmSource.isPlaying) return;
-        
+
         StartCoroutine(FadeVolume(_bgmSource, _bgmSource.volume, 0f, _fadeDuration));
-        
+
         _logger.Debug("BGM 정지");
     }
-    
+
     /// <summary>
     /// BGM 볼륨 설정
     /// </summary>
@@ -180,9 +180,9 @@ public class AudioManager : MonoBehaviour
         _targetBgmVolume = Mathf.Clamp01(volume);
         SaveVolumeSettings();
     }
-    
-    // ========== SFX ==========
-    
+
+    // SFX
+
     /// <summary>
     /// 효과음 재생
     /// </summary>
@@ -195,14 +195,14 @@ public class AudioManager : MonoBehaviour
             _logger.Warn("SFX 클립이 없음");
             return;
         }
-        
+
         AudioSource source = GetAvailableSFXSource();
         if (source == null)
         {
             _logger.Warn("사용 가능한 SFX 소스 없음");
             return;
         }
-        
+
         if (position.HasValue)
         {
             source.transform.position = position.Value;
@@ -212,14 +212,14 @@ public class AudioManager : MonoBehaviour
         {
             source.spatialBlend = 0f; // 2D 사운드
         }
-        
+
         source.clip = clip;
         source.Play();
-        
+
         // 자동 정리
         StartCoroutine(ReleaseSFXSource(source, clip.length));
     }
-    
+
     /// <summary>
     /// 효과음 볼륨 설정
     /// </summary>
@@ -232,7 +232,7 @@ public class AudioManager : MonoBehaviour
         }
         SaveVolumeSettings();
     }
-    
+
     /// <summary>
     /// 모든 효과음 정지
     /// </summary>
@@ -243,9 +243,9 @@ public class AudioManager : MonoBehaviour
             source.Stop();
         }
     }
-    
-    // ========== UI 사운드 ==========
-    
+
+    // UI 사운드
+
     /// <summary>
     /// UI 사운드 재생
     /// </summary>
@@ -257,16 +257,16 @@ public class AudioManager : MonoBehaviour
             _logger.Warn("UI 사운드 클립이 없음");
             return;
         }
-        
+
         AudioSource source = GetAvailableUISource();
         if (source == null) return;
-        
+
         source.clip = clip;
         source.Play();
-        
+
         StartCoroutine(ReleaseUISource(source, clip.length));
     }
-    
+
     /// <summary>
     /// UI 사운드 볼륨 설정
     /// </summary>
@@ -279,9 +279,9 @@ public class AudioManager : MonoBehaviour
         }
         SaveVolumeSettings();
     }
-    
-    // ========== 뮤트 ==========
-    
+
+    // 뮤트
+
     /// <summary>
     /// 전체 음량 음소거
     /// </summary>
@@ -290,10 +290,10 @@ public class AudioManager : MonoBehaviour
     {
         _isMuted = muted;
         AudioListener.volume = muted ? 0f : 1f;
-        
+
         _logger.Info($"음소거: {muted}");
     }
-    
+
     /// <summary>
     /// 음소거 상태 토글
     /// </summary>
@@ -301,9 +301,9 @@ public class AudioManager : MonoBehaviour
     {
         SetMute(!_isMuted);
     }
-    
-    // ========== 모바일 진동 ==========
-    
+
+    // 모바일 진동
+
     /// <summary>
     /// 진동 (모바일)
     /// </summary>
@@ -314,7 +314,7 @@ public class AudioManager : MonoBehaviour
         Handheld.Vibrate();
 #endif
     }
-    
+
     /// <summary>
     /// 진동 패턴
     /// </summary>
@@ -328,9 +328,9 @@ public class AudioManager : MonoBehaviour
         }
 #endif
     }
-    
-    // ========== 유틸리티 ==========
-    
+
+    // 유틸리티
+
     private AudioSource GetAvailableSFXSource()
     {
         foreach (var source in _sfxPool)
@@ -342,7 +342,7 @@ public class AudioManager : MonoBehaviour
         }
         return null;
     }
-    
+
     private AudioSource GetAvailableUISource()
     {
         foreach (var source in _uiSources)
@@ -354,19 +354,19 @@ public class AudioManager : MonoBehaviour
         }
         return null;
     }
-    
+
     private System.Collections.IEnumerator ReleaseSFXSource(AudioSource source, float duration)
     {
         yield return new WaitForSeconds(duration);
         source.clip = null;
     }
-    
+
     private System.Collections.IEnumerator ReleaseUISource(AudioSource source, float duration)
     {
         yield return new WaitForSeconds(duration);
         source.clip = null;
     }
-    
+
     private void UpdateVolume()
     {
         // 볼륨 점진적 변경
@@ -375,11 +375,11 @@ public class AudioManager : MonoBehaviour
             _bgmSource.volume = Mathf.Lerp(_bgmSource.volume, _targetBgmVolume, Time.deltaTime * 5f);
         }
     }
-    
+
     private System.Collections.IEnumerator FadeVolume(AudioSource source, float from, float to, float duration)
     {
         float elapsed = 0f;
-        
+
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -387,42 +387,42 @@ public class AudioManager : MonoBehaviour
             source.volume = Mathf.Lerp(from, to, t);
             yield return null;
         }
-        
+
         source.volume = to;
-        
+
         if (to == 0f)
         {
             source.Stop();
         }
     }
-    
-    // ========== 저장/복원 ==========
-    
+
+    // 저장/복원
+
     private void SaveVolumeSettings()
     {
         if (_gameState == null) return;
-        
+
         var settings = _gameState.Settings;
         settings.soundVolume = _targetSfxVolume;  // soundVolume을 SFX로 사용
         settings.musicVolume = _targetBgmVolume;  // musicVolume을 BGM으로 사용
         _gameState.Settings = settings;
     }
-    
+
     private void LoadVolumeSettings()
     {
         if (_gameState == null) return;
-        
+
         var settings = _gameState.Settings;
         _targetBgmVolume = settings.musicVolume > 0 ? settings.musicVolume : _bgmVolume;
         _targetSfxVolume = settings.soundVolume > 0 ? settings.soundVolume : _sfxVolume;
         _targetUiVolume = _uiVolume; // UI 볼륨은 별도 저장 필드 없음
-        
+
         SetBGMVolume(_targetBgmVolume);
         SetSFXVolume(_targetSfxVolume);
     }
-    
-    // ========== 편의 메서드 ==========
-    
+
+    // 편의 메서드
+
     /// <summary>
     /// 공격 사운드 재생 (CSV 정의 기반)
     /// </summary>
@@ -430,7 +430,7 @@ public class AudioManager : MonoBehaviour
     {
         PlaySoundById("attack");
     }
-    
+
     /// <summary>
     /// 피격 사운드 재생
     /// </summary>
@@ -438,7 +438,7 @@ public class AudioManager : MonoBehaviour
     {
         PlaySoundById("playerHit");
     }
-    
+
     /// <summary>
     /// 승리 사운드 재생
     /// </summary>
@@ -446,7 +446,7 @@ public class AudioManager : MonoBehaviour
     {
         PlaySoundById("victory");
     }
-    
+
     /// <summary>
     /// 버튼 클릭 사운드
     /// </summary>

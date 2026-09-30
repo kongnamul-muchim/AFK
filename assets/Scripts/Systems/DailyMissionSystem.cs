@@ -27,7 +27,7 @@ public enum MissionType
 public class DailyMissionSystem : MonoBehaviour
 {
     private static DailyMissionSystem _instance;
-    
+
     /// <summary>
     /// DailyMissionSystem의 싱글톤 인스턴스
     /// </summary>
@@ -45,10 +45,10 @@ public class DailyMissionSystem : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
 
-    // ========== 미션 템플릿 (Web DailyMissionSystem.js 기준) ==========
+
+    // 미션 템플릿 (Web DailyMissionSystem.js 기준)
 
     private class MissionTemplate
     {
@@ -104,7 +104,7 @@ public class DailyMissionSystem : MonoBehaviour
     private IGameState _gameState;
     private IEventBus _eventBus;
     private IGameLogger _logger;
-    
+
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
     /// </summary>
@@ -129,7 +129,7 @@ public class DailyMissionSystem : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
     }
@@ -138,7 +138,7 @@ public class DailyMissionSystem : MonoBehaviour
     {
         // 의존성 주입 확인
         InjectDependencies();
-        
+
         // 이벤트 구독
         _eventBus.On(GameEvents.MONSTER_KILL, OnMonsterKill);
         _eventBus.On(GameEvents.STAGE_CLEAR, OnStageClear);
@@ -157,8 +157,8 @@ public class DailyMissionSystem : MonoBehaviour
         _eventBus.Off(GameEvents.REBIRTH_PERFORMED, OnRebirth);
     }
 
-    // ========== 미션 생성 ==========
-    
+    // 미션 생성
+
     /// <summary>
     /// 일일 미션 생성
     /// </summary>
@@ -166,7 +166,7 @@ public class DailyMissionSystem : MonoBehaviour
     {
         var dailyMissions = _gameState.DailyMissions;
         dailyMissions.missions.Clear();
-        
+
         // 2 easy + 1 hard (Web 동일)
         var easy = Shuffle(easyTemplates);
         var hard = Shuffle(hardTemplates);
@@ -174,10 +174,10 @@ public class DailyMissionSystem : MonoBehaviour
         {
             AddMissionFromTemplate(dailyMissions.missions, t);
         }
-        
+
         dailyMissions.lastReset = DateTime.UtcNow.Ticks;
         _gameState.DailyMissions = dailyMissions;
-        
+
         _logger.Info($"일일 미션 생성 ({dailyMissions.missions.Count}개)");
     }
 
@@ -188,7 +188,7 @@ public class DailyMissionSystem : MonoBehaviour
     {
         var dailyMissions = _gameState.DailyMissions;
         dailyMissions.weeklyMissions.Clear();
-        
+
         // 2 easy + 1 hard, 주간 보정 (Web 동일)
         var easy = Shuffle(easyTemplates);
         var hard = Shuffle(hardTemplates);
@@ -205,10 +205,10 @@ public class DailyMissionSystem : MonoBehaviour
             };
             AddMissionFromTemplate(dailyMissions.weeklyMissions, weeklyTemplate);
         }
-        
+
         dailyMissions.weeklyLastReset = DateTime.UtcNow.Ticks;
         _gameState.DailyMissions = dailyMissions;
-        
+
         _logger.Info($"주간 미션 생성 ({dailyMissions.weeklyMissions.Count}개)");
     }
 
@@ -258,7 +258,7 @@ public class DailyMissionSystem : MonoBehaviour
     private int GetDailyTarget(MissionType type)
     {
         int stage = Mathf.Max(1, _gameState.Stage.maxStage);
-        
+
         switch (type)
         {
             case MissionType.Kill: return 20 + stage * 2;
@@ -273,7 +273,7 @@ public class DailyMissionSystem : MonoBehaviour
     private long GetDailyReward(MissionType type)
     {
         int stage = Mathf.Max(1, _gameState.Stage.maxStage);
-        
+
         switch (type)
         {
             case MissionType.Kill: return 100 + stage * 10;
@@ -292,8 +292,8 @@ public class DailyMissionSystem : MonoBehaviour
         return daily * 8;
     }
 
-    // ========== 미션 진행도 업데이트 ==========
-    
+    // 미션 진행도 업데이트
+
     private void OnMonsterKill()
     {
         UpdateMissionProgress(MissionType.Kill, 1);
@@ -328,7 +328,7 @@ public class DailyMissionSystem : MonoBehaviour
     {
         var dailyMissions = _gameState.DailyMissions;
         string typeStr = type.ToString();
-        
+
         // 일일 미션 업데이트
         for (int i = 0; i < dailyMissions.missions.Count; i++)
         {
@@ -336,18 +336,18 @@ public class DailyMissionSystem : MonoBehaviour
             if (mission.type == typeStr && !mission.completed)
             {
                 mission.progress += amount;
-                
+
                 if (mission.progress >= mission.target)
                 {
                     mission.completed = true;
                     _logger.Info($"미션 완료: {GetMissionDescription(type, mission.target)}");
                     _eventBus.Emit(GameEvents.DAILY_MISSION_COMPLETED);
                 }
-                
+
                 dailyMissions.missions[i] = mission;
             }
         }
-        
+
         // 주간 미션 업데이트
         for (int i = 0; i < dailyMissions.weeklyMissions.Count; i++)
         {
@@ -355,23 +355,23 @@ public class DailyMissionSystem : MonoBehaviour
             if (mission.type == typeStr && !mission.completed)
             {
                 mission.progress += amount;
-                
+
                 if (mission.progress >= mission.target)
                 {
                     mission.completed = true;
                     _logger.Info($"주간 미션 완료: {GetMissionDescription(type, mission.target)}");
                     _eventBus.Emit(GameEvents.WEEKLY_MISSION_COMPLETED);
                 }
-                
+
                 dailyMissions.weeklyMissions[i] = mission;
             }
         }
-        
+
         _gameState.DailyMissions = dailyMissions;
     }
 
-    // ========== 미션 보상 청구 ==========
-    
+    // 미션 보상 청구
+
     /// <summary>
     /// 미션 보상 청구
     /// </summary>
@@ -380,7 +380,7 @@ public class DailyMissionSystem : MonoBehaviour
     public bool ClaimReward(string missionId)
     {
         var dailyMissions = _gameState.DailyMissions;
-        
+
         // 일일 미션에서 찾기
         int index = dailyMissions.missions.FindIndex(m => m.id == missionId);
         if (index >= 0)
@@ -391,26 +391,26 @@ public class DailyMissionSystem : MonoBehaviour
                 _logger.Warn("보상을 청구할 수 없는 미션입니다.");
                 return false;
             }
-            
+
             // 보상 지급 (Web 동일: statPoints + gems)
             var player = _gameState.Player;
             player.statPoints += mission.rewardStatPoints;
             player.gems += mission.rewardGems;
             _gameState.Player = player;
-            
+
             mission.claimed = true;
             dailyMissions.missions[index] = mission;
             _gameState.DailyMissions = dailyMissions;
-            
+
             _logger.Info($"일일 미션 보상 청구: 스탯 +{mission.rewardStatPoints}pt, 보석 +{mission.rewardGems}");
-            
+
             _eventBus.Emit(GameEvents.DAILY_MISSION_CLAIMED);
             _eventBus.Emit(GameEvents.GEM_CHANGED);
             _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-            
+
             return true;
         }
-        
+
         // 주간 미션에서 찾기
         index = dailyMissions.weeklyMissions.FindIndex(m => m.id == missionId);
         if (index >= 0)
@@ -421,41 +421,41 @@ public class DailyMissionSystem : MonoBehaviour
                 _logger.Warn("보상을 청구할 수 없는 미션입니다.");
                 return false;
             }
-            
+
             // 주간 보상 지급 (Web 동일: statPoints + gems)
             var player = _gameState.Player;
             player.statPoints += mission.rewardStatPoints;
             player.gems += mission.rewardGems;
             _gameState.Player = player;
-            
+
             mission.claimed = true;
             dailyMissions.weeklyMissions[index] = mission;
             _gameState.DailyMissions = dailyMissions;
-            
+
             _logger.Info($"주간 미션 보상 청구: 스탯 +{mission.rewardStatPoints}pt, 보석 +{mission.rewardGems}");
-            
+
             _eventBus.Emit(GameEvents.WEEKLY_MISSION_CLAIMED);
             _eventBus.Emit(GameEvents.GEM_CHANGED);
             _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-            
+
             return true;
         }
-        
+
         return false;
     }
 
-    // ========== 일일/주간 초기화 ==========
-    
+    // 일일/주간 초기화
+
     /// <summary>
     /// 일일 초기화 확인 (매일 0시 기준)
     /// </summary>
     public void CheckDailyReset()
     {
         var dailyMissions = _gameState.DailyMissions;
-        
+
         DateTime now = DateTime.UtcNow;
         DateTime lastReset = new DateTime(dailyMissions.lastReset, DateTimeKind.Utc);
-        
+
         // 하루 지났는지 확인
         if ((now.Date - lastReset.Date).TotalDays >= 1)
         {
@@ -470,10 +470,10 @@ public class DailyMissionSystem : MonoBehaviour
     public void CheckWeeklyReset()
     {
         var dailyMissions = _gameState.DailyMissions;
-        
+
         DateTime now = DateTime.UtcNow;
         DateTime lastReset = new DateTime(dailyMissions.weeklyLastReset, DateTimeKind.Utc);
-        
+
         // 월요일이고 일주일이 지났는지 확인
         if (now.DayOfWeek == DayOfWeek.Monday && (now - lastReset).TotalDays >= 7)
         {
@@ -483,8 +483,8 @@ public class DailyMissionSystem : MonoBehaviour
         }
     }
 
-    // ========== 버프 시스템 ==========
-    
+    // 버프 시스템
+
     /// <summary>
     /// 현재 활성화된 버프 확인
     /// </summary>
@@ -501,7 +501,7 @@ public class DailyMissionSystem : MonoBehaviour
             "expDouble" => dailyMissions.buffs.expDouble,
             _ => 0
         };
-        
+
         return buffTime > DateTime.UtcNow.Ticks;
     }
 
@@ -515,7 +515,7 @@ public class DailyMissionSystem : MonoBehaviour
         var dailyMissions = _gameState.DailyMissions;
         long durationTicks = TimeSpan.FromMinutes(durationMinutes).Ticks;
         long expireTime = DateTime.UtcNow.Ticks + durationTicks;
-        
+
         switch (buffType)
         {
             case "attackDouble":
@@ -531,9 +531,9 @@ public class DailyMissionSystem : MonoBehaviour
                 dailyMissions.buffs.expDouble = expireTime;
                 break;
         }
-        
+
         _gameState.DailyMissions = dailyMissions;
-        
+
         _logger.Info($"버프 활성화: {buffType} ({durationMinutes}분)");
         _eventBus.Emit(GameEvents.BUFF_ACTIVATED);
     }
@@ -568,15 +568,15 @@ public class DailyMissionSystem : MonoBehaviour
             "expDouble" => dailyMissions.buffs.expDouble,
             _ => 0
         };
-        
+
         if (buffTime <= DateTime.UtcNow.Ticks)
             return 0;
-        
+
         return (buffTime - DateTime.UtcNow.Ticks) / TimeSpan.TicksPerSecond;
     }
 
-    // ========== 유틸리티 ==========
-    
+    // 유틸리티
+
     /// <summary>
     /// 완료 가능한 미션 수
     /// </summary>
@@ -584,7 +584,7 @@ public class DailyMissionSystem : MonoBehaviour
     {
         var dailyMissions = _gameState.DailyMissions;
         int count = 0;
-        
+
         foreach (var mission in dailyMissions.missions)
         {
             if (mission.completed && !mission.claimed) count++;
@@ -593,7 +593,7 @@ public class DailyMissionSystem : MonoBehaviour
         {
             if (mission.completed && !mission.claimed) count++;
         }
-        
+
         return count;
     }
 }

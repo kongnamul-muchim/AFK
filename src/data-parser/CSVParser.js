@@ -13,7 +13,7 @@ class CSVParser {
     static parse(text) {
         const lines = text.split(/\r?\n/);
         const result = [];
-        
+
         // 헤더 행 추출
         let headerIndex = 0;
         while (headerIndex < lines.length) {
@@ -24,48 +24,48 @@ class CSVParser {
             }
             headerIndex++;
         }
-        
+
         if (headerIndex >= lines.length) {
             gameLogger.warn('CSV has no data');
             return [];
         }
-        
+
         const headers = this.parseLine(lines[headerIndex]);
-        
+
         // 데이터 행 파싱
         for (let i = headerIndex + 1; i < lines.length; i++) {
             const line = lines[i].trim();
-            
+
             // 주석, 빈 행 스킵
             if (!line || line.startsWith('#')) continue;
-            
+
             const values = this.parseLine(line);
             const row = {};
-            
+
             headers.forEach((header, index) => {
                 const value = values[index];
                 row[header] = this.convertType(value);
             });
-            
+
             result.push(row);
         }
-        
+
         return result;
     }
 
     /**
      * CSV 행 파싱 (큰따옴표 처리 포함)
-     * @param {string} line 
+     * @param {string} line
      * @returns {string[]}
      */
     static parseLine(line) {
         const result = [];
         let current = '';
         let inQuotes = false;
-        
+
         for (let i = 0; i < line.length; i++) {
             const char = line[i];
-            
+
             if (char === '"') {
                 // 큰따옴표 이스케이프 확인
                 if (inQuotes && line[i + 1] === '"') {
@@ -81,31 +81,31 @@ class CSVParser {
                 current += char;
             }
         }
-        
+
         // 마지막 필드 추가
         result.push(current.trim());
-        
+
         return result;
     }
 
     /**
      * 타입 자동 변환
-     * @param {string} value 
+     * @param {string} value
      * @returns {number|boolean|string|Object}
      */
     static convertType(value) {
         // 빈 문자열
         if (value === '') return null;
-        
+
         // 불리언
         if (value.toLowerCase() === 'true') return true;
         if (value.toLowerCase() === 'false') return false;
-        
+
         // 숫자
         if (/^-?\d+(\.\d+)?$/.test(value)) {
             return parseFloat(value);
         }
-        
+
         // JSON 문자열 (중괄호로 시작)
         if (value.startsWith('{') && value.endsWith('}')) {
             try {
@@ -117,7 +117,7 @@ class CSVParser {
                 return value;
             }
         }
-        
+
         // 문자열
         return value;
     }

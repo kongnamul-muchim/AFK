@@ -13,7 +13,7 @@ const LOG_LEVELS = {
 class Logger {
     constructor() {
         // 환경에 따라 자동 감지 (나중에 설정에서 조절 가능)
-        this.isDevelopment = window.location.hostname === 'localhost' || 
+        this.isDevelopment = window.location.hostname === 'localhost' ||
                             window.location.hostname === '127.0.0.1' ||
                             window.DEBUG === true;
         this.minLevel = this.isDevelopment ? LOG_LEVELS.DEBUG : LOG_LEVELS.INFO;
@@ -22,7 +22,7 @@ class Logger {
 
     /**
      * 로그 레벨 설정
-     * @param {number} level 
+     * @param {number} level
      */
     setLevel(level) {
         this.minLevel = level;
@@ -62,7 +62,7 @@ class Logger {
         if (this.minLevel <= LOG_LEVELS.ERROR) {
             console.error(`[ERROR] ${msg}`, ...args);
         }
-        
+
         if (this.errorCollectionEnabled) {
             this.reportError(msg, args);
         }
@@ -70,8 +70,8 @@ class Logger {
 
     /**
      * 오류 보고 (추후 Crashlytics 등 연동)
-     * @param {string} msg 
-     * @param {Array} args 
+     * @param {string} msg
+     * @param {Array} args
      */
     reportError(msg, args) {
         // TODO: Crashlytics, Sentry 등 오류 수집 서비스 연동
@@ -87,7 +87,7 @@ class Logger {
 
     /**
      * 전투 로그 (게임 내 표시용)
-     * @param {string} message 
+     * @param {string} message
      */
     combat(message) {
         gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, { message });

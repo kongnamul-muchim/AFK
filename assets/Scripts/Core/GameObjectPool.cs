@@ -68,7 +68,7 @@ public class GameObjectPool
 
         obj.SetActive(false);
         _active.Remove(obj);
-        
+
         if (!_available.Contains(obj))
         {
             _available.Enqueue(obj);

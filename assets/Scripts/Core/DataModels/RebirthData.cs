@@ -10,15 +10,15 @@ public class RebirthData
     public int rebirthCount = 0;
     public int bonusPoints = 0;
     public int minLevel = 50;
-    
+
     public SerializableDictionary<string, int> upgrades = new SerializableDictionary<string, int>();
-    
+
     public void Initialize()
     {
         rebirthCount = 0;
         bonusPoints = 0;
         minLevel = 50;
-        
+
         upgrades = new SerializableDictionary<string, int>();
         upgrades.Add("dailyMissionBonus", 0);
         upgrades.Add("goldDouble", 0);
@@ -47,13 +47,13 @@ public class StatsData
     public int totalBossKills;
     public long totalGoldEarned;
     public int totalItemsDiscovered;
-    
+
     /// <summary>
     /// 클리어한 보스 스테이지 목록 (보석 보상을 위해)
     /// Web 버전의 clearedBossStages: Set<number>와 동일
     /// </summary>
     public List<int> clearedBossStages = new List<int>();
-    
+
     /// <summary>
     /// 보스 스테이지를 클리어했는지 확인
     /// </summary>
@@ -61,7 +61,7 @@ public class StatsData
     {
         return clearedBossStages.Contains(stage);
     }
-    
+
     /// <summary>
     /// 보스 스테이지를 클리어한 것으로 표시
     /// </summary>

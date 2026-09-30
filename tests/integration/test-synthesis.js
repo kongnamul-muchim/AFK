@@ -1,4 +1,4 @@
-// ========== 합성 시스템 자동 테스트 (Node.js) ==========
+// 합성 시스템 자동 테스트 (Node.js)
 // node test-synthesis.js 로 실행
 
 const fs = require('fs');
@@ -7,7 +7,7 @@ const fs = require('fs');
 function parseCSV(text) {
     const lines = text.split('\n').filter(line => line.trim() && !line.startsWith('#'));
     const headers = lines[0].split(',').map(h => h.trim());
-    
+
     return lines.slice(1).map(line => {
         const values = line.split(',').map(v => v.trim());
         const row = {};
@@ -27,7 +27,7 @@ function parseCSV(text) {
 function findNextGradeItem(items, currentName, type, nextGrade) {
     console.log(`\n[findNextGradeItem] currentName="${currentName}", type="${type}", nextGrade=${nextGrade}`);
     console.log(`[findNextGradeItem] Total items in CSV: ${items.length}`);
-    
+
     // 1. 같은 이름 + 다음 등급 찾기
     const sameName = items.find(i => {
         const nameMatch = i.name === currentName;
@@ -37,14 +37,14 @@ function findNextGradeItem(items, currentName, type, nextGrade) {
         }
         return nameMatch && gradeMatch;
     });
-    
+
     if (sameName) {
         console.log(`[findNextGradeItem] Returning same name item: ${sameName.name}`);
         return sameName;
     }
-    
+
     console.log(`[findNextGradeItem] No same name found, searching by type...`);
-    
+
     // 2. 같은 타입 + 다음 등급 찾기
     const byType = items.find(i => {
         const typeMatch = i.type === type;
@@ -54,7 +54,7 @@ function findNextGradeItem(items, currentName, type, nextGrade) {
         }
         return typeMatch && gradeMatch;
     });
-    
+
     if (!byType) {
         const availableGrades = items
             .filter(i => i.type === type)
@@ -63,7 +63,7 @@ function findNextGradeItem(items, currentName, type, nextGrade) {
         console.warn(`[findNextGradeItem] No item found! type="${type}", grade=${nextGrade}`);
         console.warn(`[findNextGradeItem] Available ${type} items: ${availableGrades}`);
     }
-    
+
     return byType;
 }
 
@@ -74,39 +74,39 @@ function testSynthesisPath(items, startItemId, maxSteps = 20) {
         console.log(`❌ Item ID ${startItemId} not found!`);
         return;
     }
-    
+
     console.log(`\n╔════════════════════════════════════════════════════════╗`);
     console.log(`║  Testing: ${startItem.name} (ID:${startItemId})`.padEnd(59) + '║');
     console.log(`╚════════════════════════════════════════════════════════╝`);
-    
+
     let currentId = startItemId;
     let steps = 0;
     const results = [];
-    
+
     while (steps < maxSteps) {
         const current = items.find(i => i.id === currentId);
         if (!current) {
             console.log(`❌ Item ID ${currentId} not found in CSV!`);
             break;
         }
-        
+
         results.push(current);
         const nextGrade = current.grade + 1;
-        
+
         const nextItem = findNextGradeItem(items, current.name, current.type, nextGrade);
-        
+
         if (!nextItem) {
             console.log(`\n✅ ${current.name} grade.${current.grade} - 최대 등급 도달!`);
             break;
         }
-        
+
         const isTransition = current.name !== nextItem.name;
         console.log(`  Step ${String(steps+1).padEnd(2)}: ${current.name.padEnd(15)} g.${String(current.grade).padEnd(2)} → ${nextItem.name.padEnd(15)} g.${String(nextItem.grade).padEnd(2)} ${isTransition ? '🔄 전환!' : ''}`);
-        
+
         currentId = nextItem.id;
         steps++;
     }
-    
+
     return results;
 }
 

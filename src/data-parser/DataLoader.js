@@ -28,12 +28,12 @@ class DataLoader {
      */
     async loadAll() {
         gameLogger.info('Loading all data files...');
-        
+
         const files = [...this.requiredFiles, ...this.optionalFiles];
         const results = await Promise.allSettled(
             files.map(name => this.load(name))
         );
-        
+
         // 필수 파일 확인
         const failedRequired = [];
         results.forEach((result, index) => {
@@ -47,12 +47,12 @@ class DataLoader {
                 gameLogger.debug(`Loaded ${fileName}`);
             }
         });
-        
+
         if (failedRequired.length > 0) {
             gameLogger.error('Missing required files:', failedRequired);
             throw new Error(`Missing required data files: ${failedRequired.join(', ')}`);
         }
-        
+
         gameLogger.info('All data loaded successfully');
         return true;
     }
@@ -67,40 +67,40 @@ class DataLoader {
         if (this.cache.has(name)) {
             return this.cache.get(name);
         }
-        
+
         const url = `${this.dataPath}${name}.csv`;
         const data = await CSVParser.parseFile(url);
-        
+
         // 검증
         this.validate(name, data);
-        
+
         // 캐싱
         this.cache.set(name, data);
-        
+
         return data;
     }
 
     /**
      * 데이터 검증
-     * @param {string} name 
-     * @param {Object[]} data 
+     * @param {string} name
+     * @param {Object[]} data
      */
     validate(name, data) {
         if (!Array.isArray(data)) {
             throw new Error(`${name}: Data must be an array`);
         }
-        
+
         if (data.length === 0) {
             gameLogger.warn(`${name}: Empty data file`);
             return;
         }
-        
+
         // ID 중복 검사
         const idFields = this.getIdField(name);
         if (idFields) {
             const ids = new Set();
             const duplicates = [];
-            
+
             data.forEach((row, index) => {
                 const id = row[idFields];
                 if (ids.has(id)) {
@@ -108,7 +108,7 @@ class DataLoader {
                 }
                 ids.add(id);
             });
-            
+
             if (duplicates.length > 0) {
                 gameLogger.warn(`${name}: Duplicate IDs found:`, duplicates);
             }
@@ -117,7 +117,7 @@ class DataLoader {
 
     /**
      * ID 필드명 반환
-     * @param {string} name 
+     * @param {string} name
      * @returns {string|null}
      */
     getIdField(name) {
@@ -134,7 +134,7 @@ class DataLoader {
 
     /**
      * 데이터 조회
-     * @param {string} name 
+     * @param {string} name
      * @returns {Object[]|null}
      */
     get(name) {
@@ -143,22 +143,22 @@ class DataLoader {
 
     /**
      * ID 로 항목 조회
-     * @param {string} name 
-     * @param {string|number} id 
+     * @param {string} name
+     * @param {string|number} id
      * @returns {Object|null}
      */
     getById(name, id) {
         const data = this.get(name);
         if (!data) return null;
-        
+
         const idField = this.getIdField(name);
         return data.find(row => row[idField] == id) || null;
     }
 
     /**
      * 필터링
-     * @param {string} name 
-     * @param {Function} predicate 
+     * @param {string} name
+     * @param {Function} predicate
      * @returns {Object[]}
      */
     filter(name, predicate) {
@@ -169,23 +169,23 @@ class DataLoader {
 
     /**
      * 설정 값 조회
-     * @param {string} category 
-     * @param {string} key 
+     * @param {string} category
+     * @param {string} key
      * @returns {*}
      */
     getConfig(category, key) {
         const config = this.get('game_config');
         if (!config) return null;
-        
+
         const row = config.find(c => c.category === category && c.key === key);
         return row ? row.value : null;
     }
 
     /**
      * 설정 값 (숫자) 조회
-     * @param {string} category 
-     * @param {string} key 
-     * @param {number} defaultValue 
+     * @param {string} category
+     * @param {string} key
+     * @param {number} defaultValue
      * @returns {number}
      */
     getConfigNumber(category, key, defaultValue = 0) {

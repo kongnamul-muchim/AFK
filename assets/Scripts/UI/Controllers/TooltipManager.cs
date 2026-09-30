@@ -8,10 +8,10 @@ using UnityEngine.UIElements;
 public class TooltipManager : MonoBehaviour
 {
     public static TooltipManager Instance { get; private set; }
-    
+
     private VisualElement _root;
     private VisualElement _itemTooltip;
-    
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -22,7 +22,7 @@ public class TooltipManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    
+
     /// <summary>
     /// 툴팁 시스템 초기화
     /// </summary>
@@ -32,7 +32,7 @@ public class TooltipManager : MonoBehaviour
         _itemTooltip = _root.Q<VisualElement>("ItemTooltip");
         Debug.Log($"[TOOLTIP-MGR] Initialize 완료: _itemTooltip={(_itemTooltip != null ? "있음" : "null")}");
     }
-    
+
     /// <summary>
     /// 아이템 툴팁 표시
     /// </summary>
@@ -40,27 +40,27 @@ public class TooltipManager : MonoBehaviour
     {
         ShowItemTooltip(itemName, grade, position, 0, 0, 0);
     }
-    
+
     /// <summary>
     /// 아이템 툴팁 표시 (스탯 포함, Web 버전과 동일)
     /// </summary>
     public void ShowItemTooltip(string itemName, int grade, Vector2 position, int attackBonus, int defenseBonus, int hpBonus)
     {
         if (_itemTooltip == null) return;
-        
+
         var tooltipName = _root.Q<Label>("TooltipName");
         var tooltipGrade = _root.Q<Label>("TooltipGrade");
-        
+
         if (tooltipName != null)
             tooltipName.text = itemName;
-        
+
         if (tooltipGrade != null)
         {
             string[] gradeNames = GetGradeNames();
             tooltipGrade.text = grade < gradeNames.Length ? gradeNames[grade] : "알 수 없음";
             tooltipGrade.style.color = GetGradeColor(grade);
         }
-        
+
         // 스탯 표시 (Web 버전과 동일)
         var statsContainer = _root.Q<VisualElement>("TooltipStats");
         if (statsContainer != null)
@@ -73,7 +73,7 @@ public class TooltipManager : MonoBehaviour
             if (hpBonus != 0)
                 statsContainer.Add(CreateStatLabel($"❤️ 체력: +{hpBonus}%"));
         }
-        
+
         // 툴팁 위치 설정
         var parent = _itemTooltip.parent;
         if (parent != null)
@@ -87,10 +87,10 @@ public class TooltipManager : MonoBehaviour
             _itemTooltip.style.left = position.x + 20;
             _itemTooltip.style.top = position.y + 20;
         }
-        
+
         _itemTooltip.style.display = DisplayStyle.Flex;
     }
-    
+
     private Label CreateStatLabel(string text)
     {
         var label = new Label(text);
@@ -98,7 +98,7 @@ public class TooltipManager : MonoBehaviour
         label.style.color = Color.white;
         return label;
     }
-    
+
     /// <summary>
     /// 아이템 툴팁 숨기기
     /// </summary>
@@ -107,7 +107,7 @@ public class TooltipManager : MonoBehaviour
         if (_itemTooltip != null)
             _itemTooltip.style.display = DisplayStyle.None;
     }
-    
+
     /// <summary>
     /// 비교 툴팁 표시 - 현재 장비와 비교
     /// </summary>
@@ -118,34 +118,34 @@ public class TooltipManager : MonoBehaviour
     {
         Debug.Log($"[TOOLTIP-MGR] ShowComparisonTooltip 시작: itemName={itemName}");
         Debug.Log($"[TOOLTIP-MGR] _itemTooltip={( _itemTooltip != null ? "있음" : "null")}, _root={( _root != null ? "있음" : "null")}");
-        
+
         if (_itemTooltip == null)
         {
             Debug.LogWarning("[TOOLTIP-MGR] _itemTooltip이 null! 초기화 확인 필요");
             return;
         }
-        
+
         // 기본 정보 설정
         var tooltipName = _root.Q<Label>("TooltipName");
         var tooltipGrade = _root.Q<Label>("TooltipGrade");
-        
+
         if (tooltipName != null)
             tooltipName.text = itemName + " [장착 비교]";
-        
+
         if (tooltipGrade != null)
         {
             string[] rarityNames = GetGradeNames();
             tooltipGrade.text = rarityNames[Mathf.Clamp(rarity, 0, rarityNames.Length - 1)];
             tooltipGrade.style.color = GetGradeColor(rarity);
         }
-        
+
         // Stats 정보 업데이트 (기존 Label 또는 VisualElement 활용)
         // 비교 정보를 툴팁에 표시하기 위해 특수 마크업 사용
-        UpdateTooltipStats(newAttack, newDefense, newHealth, 
-            newAttack - currentAttack, 
-            newDefense - currentDefense, 
+        UpdateTooltipStats(newAttack, newDefense, newHealth,
+            newAttack - currentAttack,
+            newDefense - currentDefense,
             newHealth - currentHealth);
-        
+
         // 위치 설정
         var parent = _itemTooltip.parent;
         if (parent != null)
@@ -159,11 +159,11 @@ public class TooltipManager : MonoBehaviour
             _itemTooltip.style.left = position.x + 20;
             _itemTooltip.style.top = position.y + 20;
         }
-        
+
         _itemTooltip.style.display = DisplayStyle.Flex;
         Debug.Log($"[TOOLTIP-MGR] 툴팁 표시 완료!");
     }
-    
+
     /// <summary>
     /// 툴팁 스탯 정보 업데이트 (비교 표시)
     /// </summary>
@@ -174,19 +174,19 @@ public class TooltipManager : MonoBehaviour
         if (statsContainer != null)
         {
             statsContainer.Clear();
-            
+
             // 공격력
             string atkDeltaStr = atkDelta != 0 ? $"({(atkDelta > 0 ? "+" : "")}{atkDelta:F0})" : "";
             var atkRow = new Label($"⚔️ 공격력: {atk:F0} {atkDeltaStr}");
             atkRow.style.color = atkDelta > 0 ? Color.green : (atkDelta < 0 ? Color.red : Color.white);
             statsContainer.Add(atkRow);
-            
+
             // 방어력
             string defDeltaStr = defDelta != 0 ? $"({(defDelta > 0 ? "+" : "")}{defDelta:F0})" : "";
             var defRow = new Label($"🛡️ 방어력: {def:F0} {defDeltaStr}");
             defRow.style.color = defDelta > 0 ? Color.green : (defDelta < 0 ? Color.red : Color.white);
             statsContainer.Add(defRow);
-            
+
             // 체력
             string hpDeltaStr = hpDelta != 0 ? $"({(hpDelta > 0 ? "+" : "")}{hpDelta:F0})" : "";
             var hpRow = new Label($"❤️ 체력: {hp:F0} {hpDeltaStr}");
@@ -194,7 +194,7 @@ public class TooltipManager : MonoBehaviour
             statsContainer.Add(hpRow);
         }
     }
-    
+
     /// <summary>
     /// 자동 숨김 예약
     /// </summary>
@@ -203,7 +203,7 @@ public class TooltipManager : MonoBehaviour
         CancelAllInvokes();
         Invoke(nameof(HideItemTooltip), delay);
     }
-    
+
     /// <summary>
     /// 예약된 Invoke 취소
     /// </summary>
@@ -211,7 +211,7 @@ public class TooltipManager : MonoBehaviour
     {
         CancelInvoke(nameof(HideItemTooltip));
     }
-    
+
     /// <summary>
     /// 등급 이름 배열 가져오기
     /// </summary>
@@ -219,7 +219,7 @@ public class TooltipManager : MonoBehaviour
     {
         return new[] { "일반", "고급", "희귀", "영웅", "전설" };
     }
-    
+
     /// <summary>
     /// 등급 색상 가져오기
     /// </summary>

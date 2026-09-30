@@ -9,7 +9,7 @@ class GemShopUI {
     constructor(gameState, dailyMissionSystem) {
         this.gameState = gameState;
         this.dailyMissionSystem = dailyMissionSystem;
-        
+
         // 상점 아이템 정의
         this.shopItems = [
             {

@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class CombatLogManager : MonoBehaviour
 {
     private static CombatLogManager _instance;
-    
+
     public static CombatLogManager Instance
     {
         get
@@ -23,12 +23,12 @@ public class CombatLogManager : MonoBehaviour
             return _instance;
         }
     }
-    
+
     private ScrollView _logScrollView;
     private IEventBus _eventBus;
     private const int MAX_LOG_ENTRIES = 50;
     private Queue<string> _logHistory = new Queue<string>();
-    
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -39,7 +39,7 @@ public class CombatLogManager : MonoBehaviour
         _instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    
+
     /// <summary>
     /// 전투 로그 초기화 (Web 버전의 gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, ...) 연동)
     /// </summary>
@@ -52,7 +52,7 @@ public class CombatLogManager : MonoBehaviour
             Debug.LogWarning("[CombatLogManager] CombatLog VisualElement를 찾을 수 없습니다.");
             return;
         }
-        
+
         // ScrollView가 자식에 있는지 확인
         _logScrollView = combatLogContainer.Q<ScrollView>();
         if (_logScrollView == null)
@@ -65,7 +65,7 @@ public class CombatLogManager : MonoBehaviour
             _logScrollView.style.flexGrow = 1;
             combatLogContainer.Add(_logScrollView);
         }
-        
+
         // 이벤트 버스 연결 (이벤트 구독)
         _eventBus = Bootstrap.Container?.Resolve<IEventBus>() ?? EventBus.Instance;
         if (_eventBus != null)
@@ -77,38 +77,38 @@ public class CombatLogManager : MonoBehaviour
             _eventBus.On(GameEvents.GEM_CHANGED, OnGemChanged);
         }
     }
-    
+
     private void OnGoldChanged()
     {
         if (Bootstrap.Container == null) return;
         var state = Bootstrap.Container.Resolve<IGameState>();
         AddLog($"골드: {state.Player.gold}", LogType.Gold);
     }
-    
+
     private void OnItemAcquired()
     {
         AddLog("아이템을 획득했습니다!", LogType.Item);
     }
-    
+
     private void OnItemDiscovered()
     {
         AddLog("새로운 아이템을 발견했습니다!", LogType.Item);
     }
-    
+
     private void OnPlayerLevelUp()
     {
         if (Bootstrap.Container == null) return;
         var state = Bootstrap.Container.Resolve<IGameState>();
         AddLog($"레벨업! Lv.{state.Player.level}", LogType.Info);
     }
-    
+
     private void OnGemChanged()
     {
         if (Bootstrap.Container == null) return;
         var state = Bootstrap.Container.Resolve<IGameState>();
         AddLog($"보석: {state.Player.gems}", LogType.Item);
     }
-    
+
     private void OnDestroy()
     {
         if (_eventBus != null)
@@ -120,28 +120,28 @@ public class CombatLogManager : MonoBehaviour
             _eventBus.Off(GameEvents.GEM_CHANGED, OnGemChanged);
         }
     }
-    
+
     /// <summary>
     /// 로그 추가
     /// </summary>
     public void AddLog(string message, LogType type = LogType.Info)
     {
         if (string.IsNullOrEmpty(message)) return;
-        
+
         string formattedMessage = FormatLogMessage(message, type);
-        
+
         _logHistory.Enqueue(formattedMessage);
-        
+
         // 최대 로그 수 제한
         while (_logHistory.Count > MAX_LOG_ENTRIES)
         {
             _logHistory.Dequeue();
         }
-        
+
         // UI 업데이트
         UpdateLogDisplay();
     }
-    
+
     private string FormatLogMessage(string message, LogType type)
     {
         string prefix = type switch
@@ -154,16 +154,16 @@ public class CombatLogManager : MonoBehaviour
             LogType.Boss => "👹",
             _ => "📝"
         };
-        
+
         return $"{prefix} {message}";
     }
-    
+
     private void UpdateLogDisplay()
     {
         if (_logScrollView == null) return;
-        
+
         _logScrollView.Clear();
-        
+
         foreach (var log in _logHistory)
         {
             var label = new Label(log);
@@ -171,11 +171,11 @@ public class CombatLogManager : MonoBehaviour
             label.style.unityTextAlign = TextAnchor.MiddleLeft;
             _logScrollView.Add(label);
         }
-        
+
         // 자동으로 스크롤을 맨 아래로
         _logScrollView.verticalScroller.value = _logScrollView.verticalScroller.highValue;
     }
-    
+
     /// <summary>
     /// 로그 지우기
     /// </summary>
@@ -184,7 +184,7 @@ public class CombatLogManager : MonoBehaviour
         _logHistory.Clear();
         UpdateLogDisplay();
     }
-    
+
     public enum LogType
     {
         Info,

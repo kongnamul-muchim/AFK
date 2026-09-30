@@ -8,7 +8,7 @@ import { gameLogger } from '../core/Logger.js';
 class RebirthSystem {
     constructor(gameState) {
         this.gameState = gameState;
-        
+
         // 환생 업그레이드 정의 (순차적 해금)
         this.upgradeDefinitions = {
             dailyMissionBonus: {
@@ -174,7 +174,7 @@ class RebirthSystem {
 
         const bonusPoints = this.gameState.performRebirth();
         gameLogger.info(`Rebirth #${this.gameState.rebirth.count} performed. Gained ${bonusPoints} bonus points.`);
-        
+
         return true;
     }
 
@@ -192,7 +192,7 @@ class RebirthSystem {
         return Object.entries(this.upgradeDefinitions).map(([key, def]) => {
             const currentLevel = this.gameState.rebirth.upgrades[key] || 0;
             const isUnlocked = this.isUpgradeUnlocked(key);
-            
+
             return {
                 key,
                 ...def,
@@ -208,12 +208,12 @@ class RebirthSystem {
     isUpgradeUnlocked(key) {
         const def = this.upgradeDefinitions[key];
         if (!def) return false;
-        
+
         // requires가 비어있고 isHidden이면 모든 업그레이드 만렙 확인
         if (def.requires && def.requires.length === 0 && def.isHidden) {
             return this.areAllUpgradesMaxedExcept(key);
         }
-        
+
         // requires가 있으면 해당 업그레이드들이 만렙인지 확인
         if (def.requires && def.requires.length > 0) {
             return def.requires.every(reqKey => {
@@ -222,7 +222,7 @@ class RebirthSystem {
                 return reqLevel >= reqDef.maxLevel;
             });
         }
-        
+
         // requires가 없는 기본 업그레이드는 항상 해금
         return true;
     }
@@ -245,16 +245,16 @@ class RebirthSystem {
     canPurchaseUpgrade(key) {
         const def = this.upgradeDefinitions[key];
         if (!def) return false;
-        
+
         // 해금되지 않았으면 구매 불가
         if (!this.isUpgradeUnlocked(key)) return false;
-        
+
         const currentLevel = this.gameState.rebirth.upgrades[key] || 0;
         if (currentLevel >= def.maxLevel) return false;
-        
+
         const cost = def.costPerLevel;
         if (this.gameState.rebirth.bonusPoints < cost) return false;
-        
+
         return true;
     }
 

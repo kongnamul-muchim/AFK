@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class StageSystem : MonoBehaviour
 {
     private static StageSystem _instance;
-    
+
     /// <summary>
     /// StageSystem의 싱글톤 인스턴스
     /// </summary>
@@ -27,12 +27,12 @@ public class StageSystem : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
+
     private IGameState _gameState;
     private IEventBus _eventBus;
     private IGameLogger _logger;
-    
+
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
     /// </summary>
@@ -57,13 +57,13 @@ public class StageSystem : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
     }
 
-    // ========== 스테이지 관리 ==========
-    
+    // 스테이지 관리
+
     /// <summary>
     /// 현재 스테이지로 이동
     /// </summary>
@@ -75,10 +75,10 @@ public class StageSystem : MonoBehaviour
             _logger.Warn($"잘못된 스테이지 번호: {stageNumber}, 1로 보정");
             stageNumber = 1;
         }
-        
+
         var stage = _gameState.Stage;
         stage.currentStage = stageNumber;
-        
+
         // 클리어 배열 초기화 (필요시 확장)
         if (stage.clearedStages == null || stage.clearedStages.Length < stageNumber)
         {
@@ -90,12 +90,12 @@ public class StageSystem : MonoBehaviour
             stage.clearedStages = newCleared;
         }
         _gameState.Stage = stage;
-        
+
         _logger.Info($"스테이지 {stageNumber} 진입");
-        
+
         // 스테이지 진입 이벤트
         _eventBus.Emit(GameEvents.STAGE_ENTERED);
-        
+
         // 전투 시작
         CombatSystem.Instance.StartCombat();
     }
@@ -115,7 +115,7 @@ public class StageSystem : MonoBehaviour
     public void ClearStage()
     {
         int currentStage = _gameState.Stage.currentStage;
-        
+
         // 클리어 플래그 설정
         if (_gameState.Stage.clearedStages != null && currentStage <= _gameState.Stage.clearedStages.Length)
         {
@@ -125,7 +125,7 @@ public class StageSystem : MonoBehaviour
             stage.clearedStages = clearedStages;
             _gameState.Stage = stage;
         }
-        
+
         // 최대 스테이지 업데이트
         if (currentStage >= _gameState.Stage.maxStage)
         {
@@ -134,16 +134,16 @@ public class StageSystem : MonoBehaviour
             _gameState.Stage = stage2;
             _eventBus.Emit(GameEvents.STAGE_RECORD_UPDATED);
         }
-        
+
         // 플레이어 HP 완전 회복
         var player = _gameState.Player;
         player.currentHP = _gameState.GetTotalHealth();
         _gameState.Player = player;
-        
+
         // 이벤트 발생
         _eventBus.Emit(GameEvents.STAGE_CLEAR);
         _eventBus.Emit(GameEvents.STATS_CHANGED);
-        
+
         _logger.Info($"스테이지 {currentStage} 클리어!");
     }
 
@@ -168,7 +168,7 @@ public class StageSystem : MonoBehaviour
         {
             return false;
         }
-        
+
         return _gameState.Stage.clearedStages[stage - 1];
     }
 

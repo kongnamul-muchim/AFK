@@ -9,23 +9,23 @@ using System.Collections.Generic;
 public class MissionsUIClass : MonoBehaviour
 {
     private IGameState _gameState;
-    
+
     private string _currentTab = "daily";
-    
+
     private VisualElement _root;
     private ScrollView _scrollView;
     private VisualElement _missionContainer;
-    
+
     // 탭 버튼들
     private Button _missionsTabDaily;
     private Button _missionsTabWeekly;
-    
+
     // 헤더 표시 요소들
     private Label _missionsGems;
     private Label _missionsResetTimer;
-    
+
     private System.Timers.Timer _updateTimer;
-    
+
     private void Awake()
     {
         try
@@ -38,40 +38,40 @@ public class MissionsUIClass : MonoBehaviour
             // Debug.LogError($"MissionUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
-    
+
     private void InjectDependencies()
     {
         if (Bootstrap.Container == null) return;
         _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
-    
+
     public void Initialize(VisualElement root)
     {
         _root = root;
-        
+
         _missionsTabDaily = _root.Q<Button>("MissionsTabDaily");
         _missionsTabWeekly = _root.Q<Button>("MissionsTabWeekly");
-        
+
         _scrollView = _root.Q<ScrollView>("MissionsGrid");
         _missionContainer = _scrollView;
-        
+
         // ScrollView 설정
         if (_scrollView != null)
         {
             _scrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             _scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
         }
-        
+
         // 헤더 표시 요소들
         _missionsGems = _root.Q<Label>("MissionsGems");
         _missionsResetTimer = _root.Q<Label>("MissionsResetTimer");
-        
+
         SetupTabs();
         if (_missionsTabDaily != null)
             OnTabClicked("daily", _missionsTabDaily);
         StartTimer();
     }
-    
+
     private void SetupTabs()
     {
         if (_missionsTabDaily != null)
@@ -79,7 +79,7 @@ public class MissionsUIClass : MonoBehaviour
         if (_missionsTabWeekly != null)
             _missionsTabWeekly.clicked += () => OnTabClicked("weekly", _missionsTabWeekly);
     }
-    
+
     private void OnTabClicked(string tabType, Button clickedTab)
     {
         _currentTab = tabType;
@@ -89,13 +89,13 @@ public class MissionsUIClass : MonoBehaviour
         UpdateDisplay();
         RefreshMissionsGrid();
     }
-    
+
     private void ResetTabButtons()
     {
         if (_missionsTabDaily != null) _missionsTabDaily.RemoveFromClassList("active");
         if (_missionsTabWeekly != null) _missionsTabWeekly.RemoveFromClassList("active");
     }
-    
+
     /// <summary>
     /// 타이머 시작 (1초마다 업데이트)
     /// </summary>
@@ -112,17 +112,17 @@ public class MissionsUIClass : MonoBehaviour
         _updateTimer.AutoReset = true;
         _updateTimer.Enabled = true;
     }
-    
+
     /// <summary>
     /// 타이머 업데이트 (갱신까지 남은 시간 표시)
     /// </summary>
     private void UpdateTimer()
     {
         if (_missionsResetTimer == null) return;
-        
+
         TimeSpan timeUntilReset;
         string tabText;
-        
+
         if (_currentTab == "weekly")
         {
             // 주간 미션: 다음 주 월요일 0시까지
@@ -141,10 +141,10 @@ public class MissionsUIClass : MonoBehaviour
             timeUntilReset = nextReset - now;
             tabText = "일일 갱신";
         }
-        
+
         _missionsResetTimer.text = $"{tabText}까지: {timeUntilReset.Hours:D2}:{timeUntilReset.Minutes:D2}:{timeUntilReset.Seconds:D2}";
     }
-    
+
     /// <summary>
     /// 디스플레이 업데이트 (보석, 타이머 등)
     /// </summary>
@@ -156,19 +156,19 @@ public class MissionsUIClass : MonoBehaviour
             _missionsGems.text = $"💎 {gems:N0}";
         }
     }
-    
+
     /// <summary>
     /// 미션 그리드 새로고침
     /// </summary>
     public void RefreshMissionsGrid()
     {
         if (_missionContainer == null || _gameState == null) return;
-        
+
         // 컨테이너 비우기
         _missionContainer.Clear();
-        
+
         var missions = GetMissions();
-        
+
         if (missions == null || missions.Count == 0)
         {
             var noMissionContainer = new VisualElement();
@@ -176,30 +176,30 @@ public class MissionsUIClass : MonoBehaviour
             noMissionContainer.style.alignItems = Align.Center;
             noMissionContainer.style.justifyContent = Justify.Center;
             noMissionContainer.style.marginTop = 30;
-            
+
             var noMissionLabel = new Label("미션이 없습니다.");
             noMissionLabel.style.fontSize = 28;
             noMissionLabel.style.color = new Color(0.4f, 0.4f, 0.4f);
             noMissionContainer.Add(noMissionLabel);
-            
+
             _missionContainer.Add(noMissionContainer);
             return;
         }
-        
+
         foreach (var mission in missions)
         {
             var item = CreateMissionCard(mission);
             _missionContainer.Add(item);
         }
-        
+
         // Debug.Log($"미션 그리드 업데이트: {missions.Count}개 ({_currentTab})");
     }
-    
+
     private List<MissionDisplayData> GetMissions()
     {
         var missions = new List<MissionDisplayData>();
         var dailyMissions = _gameState.DailyMissions;
-        
+
         System.Func<string, string> getMissionName = (type) => type switch
         {
             "Kill" => "몬스터 처치",
@@ -209,7 +209,7 @@ public class MissionsUIClass : MonoBehaviour
             "Rebirth" => "환생",
             _ => "미션"
         };
-        
+
         System.Func<string, int, string> getMissionDesc = (type, target) => type switch
         {
             "Kill" => $"몬스터 {target}마리 처치",
@@ -219,15 +219,15 @@ public class MissionsUIClass : MonoBehaviour
             "Rebirth" => $"환생 {target}회",
             _ => "미션 진행"
         };
-        
+
         var sourceList = _currentTab == "daily" ? dailyMissions.missions : dailyMissions.weeklyMissions;
-        
+
         // 보상 금액을 DailyMissionSystem에서 계산
 
-        
+
         foreach (var sysMission in sourceList)
         {
-            
+
             missions.Add(new MissionDisplayData
             {
                 id = sysMission.id,
@@ -240,10 +240,10 @@ public class MissionsUIClass : MonoBehaviour
                 reward = new MissionDisplayReward { statPoints = sysMission.rewardStatPoints, gems = sysMission.rewardGems }
             });
         }
-        
+
         return missions;
     }
-    
+
     /// <summary>
     /// 미션 카드 생성
     /// </summary>
@@ -262,7 +262,7 @@ public class MissionsUIClass : MonoBehaviour
         container.style.borderBottomLeftRadius = 12;
         container.style.borderBottomRightRadius = 12;
         container.style.marginBottom = 10;
-        
+
         if (mission.completed && !mission.claimed)
         {
             container.style.borderLeftWidth = 3;
@@ -272,37 +272,37 @@ public class MissionsUIClass : MonoBehaviour
         {
             container.style.opacity = 0.6f;
         }
-        
+
         // 상단 행: 미션 이름 + 진행도 텍스트
         var headerRow = new VisualElement();
         headerRow.style.flexDirection = FlexDirection.Row;
         headerRow.style.justifyContent = Justify.SpaceBetween;
         headerRow.style.alignItems = Align.Center;
-        
+
         var nameLabel = new Label(mission.name);
         nameLabel.style.fontSize = 26;
         nameLabel.style.color = Color.white;
         nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
         nameLabel.style.flexGrow = 1;
         headerRow.Add(nameLabel);
-        
+
         var progressLabel = new Label($"{mission.progress} / {mission.target}");
         progressLabel.style.fontSize = 20;
         progressLabel.style.color = mission.completed ? new Color(0.29f, 0.93f, 0.5f) : new Color(0.69f, 0.69f, 0.69f);
         headerRow.Add(progressLabel);
-        
+
         container.Add(headerRow);
-        
+
         // 설명
         var descLabel = new Label(mission.description);
         descLabel.style.fontSize = 18;
         descLabel.style.color = new Color(0.53f, 0.53f, 0.53f);
         descLabel.style.marginTop = 5;
         container.Add(descLabel);
-        
+
         // 진행바
         var progressPercent = Math.Min(100, (mission.progress * 100.0f / mission.target));
-        
+
         var progressBarBg = new VisualElement();
         progressBarBg.style.width = Length.Percent(100);
         progressBarBg.style.height = 8;
@@ -312,36 +312,36 @@ public class MissionsUIClass : MonoBehaviour
         progressBarBg.style.borderBottomLeftRadius = 4;
         progressBarBg.style.borderBottomRightRadius = 4;
         progressBarBg.style.marginTop = 10;
-        
+
         var progressBarFill = new VisualElement();
         progressBarFill.style.width = Length.Percent(progressPercent);
         progressBarFill.style.height = 8;
-        progressBarFill.style.backgroundColor = mission.completed ? 
+        progressBarFill.style.backgroundColor = mission.completed ?
             new Color(0.29f, 0.93f, 0.5f) : new Color(0.29f, 0.62f, 1);
         progressBarFill.style.borderTopLeftRadius = 4;
         progressBarFill.style.borderTopRightRadius = 4;
         progressBarFill.style.borderBottomLeftRadius = 4;
         progressBarFill.style.borderBottomRightRadius = 4;
         progressBarBg.Add(progressBarFill);
-        
+
         container.Add(progressBarBg);
-        
+
         // 하단 행: 보상 + 청구 버튼
         var bottomRow = new VisualElement();
         bottomRow.style.flexDirection = FlexDirection.Row;
         bottomRow.style.justifyContent = Justify.SpaceBetween;
         bottomRow.style.alignItems = Align.Center;
         bottomRow.style.marginTop = 10;
-        
+
         var rewardText = "";
         if (mission.reward.statPoints > 0) rewardText += $"⭐{mission.reward.statPoints}pt";
         if (mission.reward.gems > 0) rewardText += (rewardText.Length > 0 ? " " : "") + $"💎{mission.reward.gems}";
-        
+
         var rewardLabel = new Label($"보상: {rewardText}");
         rewardLabel.style.fontSize = 20;
         rewardLabel.style.color = new Color(1, 0.84f, 0);
         bottomRow.Add(rewardLabel);
-        
+
         var claimBtn = new Button(() => ClaimReward(mission.id));
         if (mission.claimed)
         {
@@ -362,7 +362,7 @@ public class MissionsUIClass : MonoBehaviour
             claimBtn.style.color = Color.gray;
             claimBtn.SetEnabled(false);
         }
-        
+
         claimBtn.style.fontSize = 32;
         claimBtn.style.paddingLeft = 30;
         claimBtn.style.paddingRight = 30;
@@ -373,12 +373,12 @@ public class MissionsUIClass : MonoBehaviour
         claimBtn.style.borderBottomLeftRadius = 8;
         claimBtn.style.borderBottomRightRadius = 8;
         bottomRow.Add(claimBtn);
-        
+
         container.Add(bottomRow);
-        
+
         return container;
     }
-    
+
     /// <summary>
     /// 미션 보상 청구
     /// </summary>
@@ -393,7 +393,7 @@ public class MissionsUIClass : MonoBehaviour
             RefreshMissionsGrid();
         }
     }
-    
+
     private void OnDestroy()
     {
         if (_updateTimer != null)
@@ -402,9 +402,9 @@ public class MissionsUIClass : MonoBehaviour
             _updateTimer.Dispose();
         }
     }
-    
-    // ==================== UI 표시용 데이터 클래스 ====================
-    
+
+    // UI 표시용 데이터 클래스
+
     private class MissionDisplayData
     {
         public string id;
@@ -416,7 +416,7 @@ public class MissionsUIClass : MonoBehaviour
         public bool claimed;
         public MissionDisplayReward reward;
     }
-    
+
     private class MissionDisplayReward
     {
         public int statPoints;

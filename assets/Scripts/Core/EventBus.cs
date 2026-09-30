@@ -10,7 +10,7 @@ using System.Collections.Generic;
 public class EventBus : MonoBehaviour, IEventBus
 {
     private static EventBus _instance;
-    
+
     /// <summary>
     /// EventBus의 싱글톤 인스턴스
     /// </summary>
@@ -32,13 +32,13 @@ public class EventBus : MonoBehaviour, IEventBus
     /// 이벤트명과 콜백 리스트를 저장하는 딕셔너리 (문자열 기반 - 레거시)
     /// </summary>
     private Dictionary<string, List<Action>> _eventListeners = new Dictionary<string, List<Action>>();
-    
+
     /// <summary>
     /// 제네릭 이벤트 핸들러 저장소 (타입 안전성 제공)
     /// </summary>
     private Dictionary<Type, Delegate> _genericEventHandlers = new Dictionary<Type, Delegate>();
 
-    // ========== MonoBehaviour 라이프사이클 ==========
+    // MonoBehaviour 라이프사이클
 
     private void Awake()
     {
@@ -58,7 +58,7 @@ public class EventBus : MonoBehaviour, IEventBus
         _eventListeners.Clear();
     }
 
-    // ========== 이벤트 관리 메서드 ==========
+    // 이벤트 관리 메서드
 
     /// <summary>
     /// 이벤트 등록
@@ -77,7 +77,7 @@ public class EventBus : MonoBehaviour, IEventBus
         {
             _eventListeners[eventName] = new List<Action>();
         }
-        
+
         _eventListeners[eventName].Add(callback);
         GameLogger.DebugLog($"이벤트 등록: {eventName} (리스너 수: {_eventListeners[eventName].Count})");
     }
@@ -109,7 +109,7 @@ public class EventBus : MonoBehaviour, IEventBus
         {
             // 복사본을 만들어 순회 (이벤트 처리 중 등록/해제 방지)
             var listeners = new List<Action>(_eventListeners[eventName]);
-            
+
             foreach (var listener in listeners)
             {
                 try
@@ -121,7 +121,7 @@ public class EventBus : MonoBehaviour, IEventBus
                     GameLogger.Error($"이벤트 발생 중 오류 ({eventName}): {e.Message}");
                 }
             }
-            
+
             GameLogger.DebugLog($"이벤트 발생: {eventName} (리스너 수: {listeners.Count})");
         }
     }
@@ -177,7 +177,7 @@ public class EventBus : MonoBehaviour, IEventBus
         _genericEventHandlers.Clear();
     }
 
-    // ========== 제네릭 이벤트 시스템 (타입 안전성) ==========
+    // 제네릭 이벤트 시스템 (타입 안전성)
 
     /// <summary>
     /// 제네릭 이벤트 등록 (타입 안전성 제공)
@@ -193,7 +193,7 @@ public class EventBus : MonoBehaviour, IEventBus
         }
 
         Type eventType = typeof(T);
-        
+
         if (_genericEventHandlers.TryGetValue(eventType, out var existing))
         {
             _genericEventHandlers[eventType] = Delegate.Combine(existing, callback);
@@ -202,7 +202,7 @@ public class EventBus : MonoBehaviour, IEventBus
         {
             _genericEventHandlers[eventType] = callback;
         }
-        
+
         GameLogger.DebugLog($"제네릭 이벤트 등록: {eventType.Name}");
     }
 
@@ -214,17 +214,17 @@ public class EventBus : MonoBehaviour, IEventBus
     public void Off<T>(Action<T> callback)
     {
         Type eventType = typeof(T);
-        
+
         if (_genericEventHandlers.TryGetValue(eventType, out var existing))
         {
             _genericEventHandlers[eventType] = Delegate.Remove(existing, callback);
-            
+
             // 모든 핸들러가 제거되면 딕셔너리에서 삭제
             if (_genericEventHandlers[eventType] == null)
             {
                 _genericEventHandlers.Remove(eventType);
             }
-            
+
             GameLogger.DebugLog($"제네릭 이벤트 해제: {eventType.Name}");
         }
     }
@@ -237,7 +237,7 @@ public class EventBus : MonoBehaviour, IEventBus
     public void Emit<T>(T eventData)
     {
         Type eventType = typeof(T);
-        
+
         if (_genericEventHandlers.TryGetValue(eventType, out var handlers))
         {
             if (handlers is Action<T> typedHandler)
@@ -251,7 +251,7 @@ public class EventBus : MonoBehaviour, IEventBus
                     GameLogger.Error($"제네릭 이벤트 발생 중 오류 ({eventType.Name}): {e.Message}");
                 }
             }
-            
+
             GameLogger.DebugLog($"제네릭 이벤트 발생: {eventType.Name}");
         }
     }
@@ -286,7 +286,7 @@ public class EventBus : MonoBehaviour, IEventBus
     public int GetGenericListenerCount<T>()
     {
         Type eventType = typeof(T);
-        
+
         if (_genericEventHandlers.TryGetValue(eventType, out var handlers))
         {
             if (handlers is Action<T> typedHandler)
@@ -294,12 +294,12 @@ public class EventBus : MonoBehaviour, IEventBus
                 return typedHandler.GetInvocationList().Length;
             }
         }
-        
+
         return 0;
     }
 
-    // ========== IEventBus 인터페이스 구현 ==========
-    
+    // IEventBus 인터페이스 구현
+
     void IEventBus.Clear()
     {
         _eventListeners.Clear();
@@ -312,145 +312,145 @@ public class EventBus : MonoBehaviour, IEventBus
 /// </summary>
 public static class GameEvents
 {
-    // ========== 플레이어 관련 이벤트 ==========
-    
+    // 플레이어 관련 이벤트
+
     /// <summary>플레이어가 레벨업했을 때</summary>
     public const string PLAYER_LEVEL_UP = "PLAYER_LEVEL_UP";
-    
+
     /// <summary>플레이어 스탯이 변경되었을 때</summary>
     public const string PLAYER_STAT_CHANGED = "PLAYER_STAT_CHANGED";
-    
+
     /// <summary>플레이어가 사망했을 때</summary>
     public const string PLAYER_DEATH = "PLAYER_DEATH";
-    
+
     /// <summary>플레이어가 부활했을 때</summary>
     public const string PLAYER_REVIVE = "PLAYER_REVIVE";
 
-    // ========== 스테이지 관련 이벤트 ==========
-    
+    // 스테이지 관련 이벤트
+
     /// <summary>스테이지를 클리어했을 때</summary>
     public const string STAGE_CLEAR = "STAGE_CLEAR";
-    
+
     /// <summary>스테이지에 진입했을 때</summary>
     public const string STAGE_ENTERED = "STAGE_ENTERED";
-    
+
     /// <summary>최대 스테이지 기록을 갱신했을 때</summary>
     public const string STAGE_RECORD_UPDATED = "STAGE_RECORD_UPDATED";
 
-    // ========== 전투 관련 이벤트 ==========
-    
+    // 전투 관련 이벤트
+
     /// <summary>몬스터를 처치했을 때</summary>
     public const string MONSTER_KILL = "MONSTER_KILL";
-    
+
     /// <summary>보스를 처치했을 때</summary>
     public const string BOSS_KILL = "BOSS_KILL";
-    
+
     /// <summary>전투 페이즈가 변경되었을 때</summary>
     public const string COMBAT_PHASE_CHANGED = "COMBAT_PHASE_CHANGED";
-    
+
     /// <summary>전투가 시작되었을 때 (몬스터 조우)</summary>
     public const string COMBAT_ENCOUNTER = "COMBAT_ENCOUNTER";
-    
+
     /// <summary>전투에서 승리했을 때</summary>
     public const string COMBAT_VICTORY = "COMBAT_VICTORY";
-    
+
     /// <summary>전투에서 패배했을 때</summary>
     public const string COMBAT_DEFEAT = "COMBAT_DEFEAT";
 
-    // ========== 아이템 관련 이벤트 ==========
-    
+    // 아이템 관련 이벤트
+
     /// <summary>아이템을 획득했을 때</summary>
     public const string ITEM_ACQUIRED = "ITEM_ACQUIRED";
-    
+
     /// <summary>아이템을 합성했을 때</summary>
     public const string ITEM_SYNTHESIZED = "ITEM_SYNTHESIZED";
-    
+
     /// <summary>아이템을 장착했을 때</summary>
     public const string ITEM_EQUIPPED = "ITEM_EQUIPPED";
-    
+
     /// <summary>아이템을 해제했을 때</summary>
     public const string ITEM_UNEQUIPPED = "ITEM_UNEQUIPPED";
-    
+
     /// <summary>아이템을 버렸을 때</summary>
     public const string ITEM_DISCARDED = "ITEM_DISCARDED";
-    
+
     /// <summary>새 아이템을 발견했을 때 (도감용)</summary>
     public const string ITEM_DISCOVERED = "ITEM_DISCOVERED";
 
-    // ========== 재화 관련 이벤트 ==========
-    
+    // 재화 관련 이벤트
+
     /// <summary>골드가 변경되었을 때</summary>
     public const string GOLD_CHANGED = "GOLD_CHANGED";
-    
+
     /// <summary>보석이 변경되었을 때</summary>
     public const string GEM_CHANGED = "GEM_CHANGED";
 
-    // ========== 미션 관련 이벤트 ==========
-    
+    // 미션 관련 이벤트
+
     /// <summary>일일 미션이 진행되었을 때</summary>
     public const string DAILY_MISSION_PROGRESS = "DAILY_MISSION_PROGRESS";
-    
+
     /// <summary>일일 미션이 완료되었을 때</summary>
     public const string DAILY_MISSION_COMPLETED = "DAILY_MISSION_COMPLETED";
-    
+
     /// <summary>일일 미션 보상을 수령했을 때</summary>
     public const string DAILY_MISSION_CLAIMED = "DAILY_MISSION_CLAIMED";
-    
+
     /// <summary>주간 미션이 초기화되었을 때</summary>
     public const string WEEKLY_MISSIONS_RESET = "WEEKLY_MISSIONS_RESET";
-    
+
     /// <summary>주간 미션이 완료되었을 때</summary>
     public const string WEEKLY_MISSION_COMPLETED = "WEEKLY_MISSION_COMPLETED";
-    
+
     /// <summary>주간 미션 보상을 수령했을 때</summary>
     public const string WEEKLY_MISSION_CLAIMED = "WEEKLY_MISSION_CLAIMED";
 
-    // ========== 업그레이드 관련 이벤트 ==========
-    
+    // 업그레이드 관련 이벤트
+
     /// <summary>보석 업그레이드를 했을 때</summary>
     public const string GEM_UPGRADED = "GEM_UPGRADED";
-    
+
     /// <summary>스탯을 올렸을 때</summary>
     public const string STAT_POINT_USED = "STAT_POINT_USED";
 
-    // ========== 기타 이벤트 ==========
-    
+    // 기타 이벤트
+
     /// <summary>게임 통계가 변경되었을 때</summary>
     public const string STATS_CHANGED = "STATS_CHANGED";
-    
+
     /// <summary>오프라인 보상을 수령했을 때</summary>
     public const string OFFLINE_REWARDS_CLAIMED = "OFFLINE_REWARDS_CLAIMED";
-    
+
     /// <summary>환생했을 때</summary>
     public const string REBIRTH_PERFORMED = "REBIRTH_PERFORMED";
-    
+
     /// <summary>튜토리얼 스텝을 완료했을 때</summary>
     public const string TUTORIAL_STEP_COMPLETED = "TUTORIAL_STEP_COMPLETED";
-    
+
     /// <summary>게임 설정이 변경되었을 때</summary>
     public const string SETTINGS_CHANGED = "SETTINGS_CHANGED";
-    
+
     /// <summary>UI 패널이 열렸을 때</summary>
     public const string UI_PANEL_OPENED = "UI_PANEL_OPENED";
-    
+
     /// <summary>UI 패널이 닫혔을 때</summary>
     public const string UI_PANEL_CLOSED = "UI_PANEL_CLOSED";
-    
+
     /// <summary>게임이 일시정지되었을 때</summary>
     public const string GAME_PAUSED = "GAME_PAUSED";
-    
+
     /// <summary>게임이 재개되었을 때</summary>
     public const string GAME_RESUMED = "GAME_RESUMED";
-    
+
     /// <summary>게임이 저장되었을 때</summary>
     public const string GAME_SAVED = "GAME_SAVED";
-    
+
     /// <summary>게임이 로드되었을 때</summary>
     public const string GAME_LOADED = "GAME_LOADED";
-    
+
     /// <summary>버프가 활성화되었을 때</summary>
     public const string BUFF_ACTIVATED = "BUFF_ACTIVATED";
-    
+
     /// <summary>버프가 만료되었을 때</summary>
     public const string BUFF_EXPIRED = "BUFF_EXPIRED";
 }

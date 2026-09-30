@@ -59,7 +59,7 @@ public class Bootstrap : MonoBehaviour
         if (saveManager.SaveExists())
         {
             GameState loadedState = saveManager.Load();
-            
+
             if (loadedState != null)
             {
                 // 로드된 상태로 GameState 업데이트
@@ -119,7 +119,7 @@ public class Bootstrap : MonoBehaviour
     private void UpdateGameStateFromLoaded(GameState loadedState)
     {
         GameState currentState = GameState.Instance;
-        
+
         // 각 필드 복사
         currentState.player = loadedState.player;
         currentState.stage = loadedState.stage;
@@ -139,15 +139,15 @@ public class Bootstrap : MonoBehaviour
     public void RestartGame()
     {
         GameLogger.Info("게임 재시작...");
-        
+
         SaveManager.Instance.StopAutoSave();
-        
+
         // GameState 초기화
         GameState.Instance.Initialize();
-        
+
         // 저장 파일 삭제
         SaveManager.Instance.DeleteSave();
-        
+
         // 다시 초기화
         InitializeGame();
     }
@@ -158,13 +158,13 @@ public class Bootstrap : MonoBehaviour
     private void OnApplicationQuit()
     {
         GameLogger.Info("게임 종료 - 저장 중...");
-        
+
         // 최종 저장
         if (GameState.Instance != null)
         {
             SaveManager.Instance.Save(GameState.Instance);
         }
-        
+
         SaveManager.Instance.StopAutoSave();
     }
 

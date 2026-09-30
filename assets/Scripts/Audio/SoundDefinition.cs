@@ -10,7 +10,7 @@ public class SoundDefinition
     public string fileName;
     public string type;      // "sfx" or "bgm"
     public float defaultVolume = 0.8f;
-    
+
     /// <summary>실제 로드된 AudioClip (Resources에서 로드)</summary>
     [System.NonSerialized] public AudioClip clip;
     [System.NonSerialized] public bool loaded;

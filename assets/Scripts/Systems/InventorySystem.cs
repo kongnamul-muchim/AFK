@@ -26,7 +26,7 @@ public enum EquipmentSlot
 public class InventorySystem : MonoBehaviour
 {
     private static InventorySystem _instance;
-    
+
     /// <summary>
     /// InventorySystem의 싱글톤 인스턴스
     /// </summary>
@@ -44,12 +44,12 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
+
     private IGameState _gameState;
     private IEventBus _eventBus;
     private IGameLogger _logger;
-    
+
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
     /// </summary>
@@ -74,13 +74,13 @@ public class InventorySystem : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
     }
 
-    // ========== 아이템 관리 ==========
-    
+    // 아이템 관리
+
     /// <summary>
     /// 인벤토리에 아이템 추가
     /// </summary>
@@ -151,15 +151,15 @@ public class InventorySystem : MonoBehaviour
     {
         var inventory = _gameState.Inventory;
         int index = inventory.items.FindIndex(x => x.id == itemId && x.grade == grade);
-        
+
         if (index < 0)
         {
             // _logger.Warn($"아이템을 찾을 수 없습니다: {itemId}");
             return false;
         }
-        
+
         ItemData item = inventory.items[index];
-        
+
         // 카운트가 0 이하면 제거만 하고 리턴 (음수 방지)
         if (item.count <= 0)
         {
@@ -168,7 +168,7 @@ public class InventorySystem : MonoBehaviour
             // _logger.Warn($"아이템 카운트 0 이하: {itemId}, 제거만 수행");
             return false;
         }
-        
+
         if (item.count > quantity)
         {
             item.count -= quantity;
@@ -179,10 +179,10 @@ public class InventorySystem : MonoBehaviour
         {
             inventory.items.RemoveAt(index);
         }
-        
+
         _gameState.Inventory = inventory;
         // _logger.Debug($"아이템 제거: {item.name} x{quantity}");
-        
+
         return true;
     }
 
@@ -207,7 +207,7 @@ public class InventorySystem : MonoBehaviour
     public bool HasItem(string itemId, int grade, int requiredQuantity = 1)
     {
         ItemData? item = FindItem(itemId, grade);
-        
+
         return item != null && item.Value.count >= requiredQuantity;
     }
 
@@ -221,8 +221,8 @@ public class InventorySystem : MonoBehaviour
         _gameState.Inventory = inventory;
     }
 
-    // ========== 장비 관리 ==========
-    
+    // 장비 관리
+
     /// <summary>
     /// 장비 장착
     /// </summary>
@@ -240,14 +240,14 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
 
-        // ★★★ 디버그 로그: 아이템 정보 확인
+        //  디버그 로그: 아이템 정보 확인
         Debug.Log($"[EQUIP] itemId={itemId}, name={item.Value.name}, type={item.Value.type}, grade={grade}");
 
         // 장비 슬롯 결정: item.type을 직접 사용 (Web 버전과 동일)
         // type: "weapon", "armor", "accessory", "boots" 등
         EquipmentSlot slot = GetSlotFromItemType(item.Value.type);
 
-        // ★★★ 디버그 로그: 슬롯 결정 확인
+        //  디버그 로그: 슬롯 결정 확인
         Debug.Log($"[EQUIP] GetSlotFromItemType(\"{item.Value.type}\") = {slot}");
 
         // 기존 장비 해제 (Web 버전과 동일: 아이템을 소모하지 않고 복사)
@@ -271,7 +271,7 @@ public class InventorySystem : MonoBehaviour
         inventory.equipment.Add(equipment);
         _gameState.Inventory = inventory;
 
-        // ★★★ 디버그 로그: 장착 완료
+        //  디버그 로그: 장착 완료
         Debug.Log($"[EQUIP] 장착 완료: {item.Value.name} → 슬롯 {slot}");
 
         // 스탯 업데이트
@@ -302,7 +302,7 @@ public class InventorySystem : MonoBehaviour
 
         EquipmentData equipment = inventory.equipment[index];
 
-        // ★★★ 디버그 로그: 장비 해제
+        //  디버그 로그: 장비 해제
         Debug.Log($"[UNEQUIP] 슬롯 {slot}에서 {equipment.name} 해제됨");
 
         // type 복원 (slot에서 type으로 변환)
@@ -396,7 +396,7 @@ public class InventorySystem : MonoBehaviour
                 result = EquipmentSlot.Accessory;
                 break;
             default:
-                // ★★★ 디버그 로그: 알 수 없는 타입
+                //  디버그 로그: 알 수 없는 타입
                 Debug.LogWarning($"[EQUIP-SLOT] 알 수 없는 itemType=\"{itemType}\", Accessory로 처리");
                 result = EquipmentSlot.Accessory;
                 break;
@@ -434,7 +434,7 @@ public class InventorySystem : MonoBehaviour
     {
         float baseValue = 10f;
         float gradeMultiplier = 1f + grade * 0.5f;
-        
+
         switch (statType)
         {
             case "attack":
@@ -456,21 +456,21 @@ public class InventorySystem : MonoBehaviour
         float totalAttackBonus = 0f;
         float totalDefenseBonus = 0f;
         float totalHealthBonus = 0f;
-        
+
         foreach (var equipment in _gameState.Inventory.equipment)
         {
             totalAttackBonus += equipment.attackBonus;
             totalDefenseBonus += equipment.defenseBonus;
             totalHealthBonus += equipment.healthBonus;
         }
-        
+
         // 플레이어 기본 스탯에 보너스 추가 (GameState.GetTotalAttack 등에서 계산됨)
         // 여기서는 추가 보너스가 필요한 경우만 처리
-        
+
         // _logger.Debug($"장비 보너스 업데이트: 공격력 +{totalAttackBonus}, 방어력 +{totalDefenseBonus}, 체력 +{totalHealthBonus}");
     }
 
-    // ========== 합성 시스템 ==========
+    // 합성 시스템
 
     /// <summary>
     /// Rarity 문자열을 int로 변환
@@ -508,9 +508,9 @@ public class InventorySystem : MonoBehaviour
     private NextGradeItemResult FindNextGradeItemFromCSV(string currentName, string itemType, int nextGrade)
     {
         var itemsData = DataLoader.Load("items");
-        
+
         // _logger.Debug($"[FindNextGradeItem] currentName=\"{currentName}\", type=\"{itemType}\", nextGrade={nextGrade}");
-        
+
         // 1. 같은 이름 + 다음 등급 먼저 찾기
         foreach (var row in itemsData)
         {
@@ -534,9 +534,9 @@ public class InventorySystem : MonoBehaviour
                 }
             }
         }
-        
+
         // _logger.Debug($"[FindNextGradeItem] No same name found, searching by type...");
-        
+
         // 2. 같은 타입 + 다음 등급 찾기 (베이스 아이템 전환)
         foreach (var row in itemsData)
         {
@@ -560,7 +560,7 @@ public class InventorySystem : MonoBehaviour
                 }
             }
         }
-        
+
         // 찾기 실패
         _logger.Warn($"[FindNextGradeItem] No item found! type=\"{itemType}\", grade={nextGrade}");
         return null;
@@ -572,9 +572,9 @@ public class InventorySystem : MonoBehaviour
     private int GetMaxGradeByType(string itemType)
     {
         var itemsData = DataLoader.Load("items");
-        
+
         int maxGrade = 10; // 기본값
-        
+
         foreach (var row in itemsData)
         {
             if (row.TryGetValue("type", out var typeObj) && row.TryGetValue("grade", out var gradeObj))
@@ -587,7 +587,7 @@ public class InventorySystem : MonoBehaviour
                 }
             }
         }
-        
+
         // _logger.Debug($"[GetMaxGradeByType] type={itemType}, maxGrade={maxGrade}");
         return maxGrade;
     }
@@ -646,7 +646,7 @@ public class InventorySystem : MonoBehaviour
         {
             RemoveItem(itemId, grade);
         }
-        
+
         // 다음 등급 아이템 생성 (실제 CSV 데이터 기반)
         ItemData synthesizedItem = new ItemData
         {
@@ -657,7 +657,7 @@ public class InventorySystem : MonoBehaviour
             type = nextItem.type,
             rarity = nextItem.rarity
         };
-        
+
         // 인벤토리에 추가
         var inventory = _gameState.Inventory;
         inventory.items.Add(synthesizedItem);
@@ -702,10 +702,10 @@ public class InventorySystem : MonoBehaviour
     public int SynthesizeAll()
     {
         int synthesizedCount = 0;
-        
+
         // 등급별로 그룹화
         var groups = new Dictionary<string, List<ItemData>>();
-        
+
         foreach (var item in _gameState.Inventory.items)
         {
             string key = $"{item.id}_g{item.grade}";
@@ -715,7 +715,7 @@ public class InventorySystem : MonoBehaviour
             }
             groups[key].Add(item);
         }
-        
+
         // 각 그룹별로 합성 시도
         foreach (var kvp in groups)
         {
@@ -724,14 +724,14 @@ public class InventorySystem : MonoBehaviour
             {
                 totalQuantity += item.count;
             }
-            
+
             if (totalQuantity >= GameConfig.SynthesisRequiredCount)
             {
                 ItemData firstItem = kvp.Value[0];
                 // CSV 기반 최대 등급 조회
                 string itemType = firstItem.type ?? "weapon";
                 int maxGrade = GetMaxGradeByType(itemType);
-                
+
                 if (firstItem.grade < maxGrade)
                 {
                     while (HasItem(firstItem.id, firstItem.grade, GameConfig.SynthesisRequiredCount))
@@ -742,12 +742,12 @@ public class InventorySystem : MonoBehaviour
                 }
             }
         }
-        
+
         if (synthesizedCount > 0)
         {
             // _logger.Info($"일괄 합성 완료: {synthesizedCount}회");
         }
-        
+
         return synthesizedCount;
     }
 
@@ -801,8 +801,8 @@ public class InventorySystem : MonoBehaviour
         return prefix + baseName;
     }
 
-    // ========== 유틸리티 ==========
-    
+    // 유틸리티
+
     /// <summary>
     /// 인벤토리 슬롯 수 가져오기
     /// </summary>

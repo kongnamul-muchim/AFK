@@ -9,17 +9,17 @@ using System.Collections.Generic;
 public class ModalManager : MonoBehaviour
 {
     public static ModalManager Instance { get; private set; }
-    
+
     private VisualElement _root;
     private VisualElement _currentModal;
-    
+
     // 모달 캐시
     private Dictionary<string, VisualElement> _modalCache = new Dictionary<string, VisualElement>();
-    
+
     // 모달 열림/닫힘 이벤트
     public System.Action<string> OnModalOpened;
     public System.Action<string> OnModalClosed;
-    
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -30,7 +30,7 @@ public class ModalManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    
+
     /// <summary>
     /// 모달 시스템 초기화
     /// </summary>
@@ -39,24 +39,24 @@ public class ModalManager : MonoBehaviour
         _root = root;
         SetupModalCloseButtons();
     }
-    
+
     /// <summary>
     /// 모달 표시
     /// </summary>
     public void ShowModal(VisualElement modal, string modalName = null)
     {
         HideAllModals();
-        
+
         if (modal != null)
         {
             modal.style.display = DisplayStyle.Flex;
             _currentModal = modal;
-            
+
             if (!string.IsNullOrEmpty(modalName))
                 OnModalOpened?.Invoke(modalName);
         }
     }
-    
+
     /// <summary>
     /// 모달 숨기기
     /// </summary>
@@ -65,15 +65,15 @@ public class ModalManager : MonoBehaviour
         if (modal != null)
         {
             modal.style.display = DisplayStyle.None;
-            
+
             if (_currentModal == modal)
                 _currentModal = null;
-            
+
             if (!string.IsNullOrEmpty(modalName))
                 OnModalClosed?.Invoke(modalName);
         }
     }
-    
+
     /// <summary>
     /// 모든 모달 숨기기
     /// </summary>
@@ -90,7 +90,7 @@ public class ModalManager : MonoBehaviour
             _root.Q<VisualElement>("StatisticsModal"),
             _root.Q<VisualElement>("TutorialOverlay")
         };
-        
+
         foreach (var modal in allModals)
         {
             if (modal != null && !IsExcluded(modal, excludeModals))
@@ -98,10 +98,10 @@ public class ModalManager : MonoBehaviour
                 modal.style.display = DisplayStyle.None;
             }
         }
-        
+
         _currentModal = null;
     }
-    
+
     private bool IsExcluded(VisualElement modal, VisualElement[] excludeModals)
     {
         if (excludeModals == null) return false;
@@ -111,7 +111,7 @@ public class ModalManager : MonoBehaviour
         }
         return false;
     }
-    
+
     /// <summary>
     /// 모달 닫기 버튼 설정
     /// </summary>
@@ -125,7 +125,7 @@ public class ModalManager : MonoBehaviour
         SetupCloseButton("CloseOfflineBtn", "OfflineRewardModal");
         SetupCloseButton("CloseStatisticsBtn", "StatisticsModal");
     }
-    
+
     private void SetupCloseButton(string buttonName, string modalName)
     {
         var closeBtn = _root.Q<Button>(buttonName);
@@ -135,7 +135,7 @@ public class ModalManager : MonoBehaviour
             closeBtn.clicked += () => HideModal(modal, modalName);
         }
     }
-    
+
     /// <summary>
     /// 튜토리얼 표시
     /// </summary>
@@ -145,7 +145,7 @@ public class ModalManager : MonoBehaviour
         if (tutorialOverlay != null)
             tutorialOverlay.style.display = DisplayStyle.Flex;
     }
-    
+
     /// <summary>
     /// 튜토리얼 숨기기
     /// </summary>
@@ -155,7 +155,7 @@ public class ModalManager : MonoBehaviour
         if (tutorialOverlay != null)
             tutorialOverlay.style.display = DisplayStyle.None;
     }
-    
+
     /// <summary>
     /// 튜토리얼 메시지 업데이트
     /// </summary>
@@ -165,9 +165,9 @@ public class ModalManager : MonoBehaviour
         if (tutorialMessage != null)
             tutorialMessage.text = message;
     }
-    
-    // ========== 지연 로딩 시스템 (UXMLLoader 연동) ==========
-    
+
+    // 지연 로딩 시스템 (UXMLLoader 연동)
+
     /// <summary>
     /// 모달을 지연 로딩하여 표시합니다.
     /// 처음에는 UXML 파일을 로드하고, 이후에는 캐시된 것을 사용합니다.
@@ -186,7 +186,7 @@ public class ModalManager : MonoBehaviour
                 return;
             }
         }
-        
+
         // 새 로딩
         var newModal = UXMLLoader.LoadModal(modalName, _root);
         if (newModal != null)
@@ -201,7 +201,7 @@ public class ModalManager : MonoBehaviour
             Debug.LogError($"[ModalManager] 모달 로드 실패: {modalName}");
         }
     }
-    
+
     /// <summary>
     /// 특정 모달을 캐시에서 언로드합니다.
     /// 메모리 절약을 위해 사용하지 않는 모달을 정리할 때 사용합니다.
@@ -210,7 +210,7 @@ public class ModalManager : MonoBehaviour
     {
         UXMLLoader.UnloadModal(modalName);
     }
-    
+
     /// <summary>
     /// 모든 모달을 언로드합니다.
     /// </summary>
@@ -219,7 +219,7 @@ public class ModalManager : MonoBehaviour
         HideAllModals();
         UXMLLoader.UnloadAll();
     }
-    
+
     /// <summary>
     /// 캐시 상태 로그 출력
     /// </summary>

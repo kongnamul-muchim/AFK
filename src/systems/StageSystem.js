@@ -7,7 +7,7 @@ import { gameLogger } from '../core/Logger.js';
 
 class StageSystem {
     /**
-     * @param {GameState} gameState 
+     * @param {GameState} gameState
      */
     constructor(gameState) {
         this.gameState = gameState;
@@ -51,22 +51,22 @@ class StageSystem {
      */
     enterAutoRepeat() {
         this.gameState.stage.autoRepeat = true;
-        
+
         // 이전 10 층 단위로 이동
         const currentStage = this.gameState.stage.current;
         const repeatStage = Math.max(1, currentStage - 10);
-        
+
         this.gameState.stage.current = repeatStage;
         this.gameState.stage.killsInStage = 0;
-        
+
         gameEventBus.emit(GAME_EVENTS.STAGE_AUTO_REPEAT, {
             stage: repeatStage
         });
-        
+
         gameEventBus.emit(GAME_EVENTS.COMBAT_LOG, {
             message: `자동 반복 모드 진입 - ${repeatStage}층에서 다시 시작합니다.`
         });
-        
+
         gameLogger.info(`Auto-repeat: Stage ${currentStage} → ${repeatStage}`);
     }
 

@@ -18,7 +18,7 @@ class StorageManager {
 
     /**
      * 저장소 초기화
-     * @param {GameState} gameState 
+     * @param {GameState} gameState
      */
     init(gameState) {
         this.gameState = gameState;
@@ -102,7 +102,7 @@ class StorageManager {
             }
 
             const parsed = JSON.parse(data);
-            
+
             // 버전 확인 및 마이그레이션
             if (parsed.version !== CURRENT_VERSION) {
                 gameLogger.info(`Migrating from version ${parsed.version} to ${CURRENT_VERSION}`);
@@ -120,21 +120,21 @@ class StorageManager {
 
     /**
      * 데이터 마이그레이션
-     * @param {Object} oldData 
+     * @param {Object} oldData
      * @returns {Object} 마이그레이션된 데이터
      */
     migrate(oldData) {
         const data = { ...oldData, version: CURRENT_VERSION };
-        
+
         // v1 → v2 마이그레이션 준비
         // 예: 새로운 필드 추가, 구조 변경 등
-        
+
         return data;
     }
 
     /**
      * 데이터 내보내기 (JSON 파일 다운로드)
-     * @param {Object} gameState 
+     * @param {Object} gameState
      */
     exportData(gameState) {
         try {
@@ -161,7 +161,7 @@ class StorageManager {
 
     /**
      * 데이터 가져오기 (JSON 파일 업로드)
-     * @param {File} file 
+     * @param {File} file
      * @returns {Promise<Object>} 파싱된 데이터
      */
     importData(file) {
@@ -170,12 +170,12 @@ class StorageManager {
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    
+
                     // 유효성 검사
                     if (!data.version || !data.gameData) {
                         throw new Error('Invalid save file format');
                     }
-                    
+
                     resolve(data.gameData);
                     gameLogger.info('Data imported');
                 } catch (error) {

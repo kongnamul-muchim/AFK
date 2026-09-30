@@ -42,7 +42,7 @@ class EventBus {
      */
     off(event, callback) {
         if (!this.events.has(event)) return this;
-        
+
         if (!callback) {
             // 모든 리스너 제거
             this.events.delete(event);
@@ -66,7 +66,7 @@ class EventBus {
      */
     emit(event, data = null) {
         if (!this.events.has(event)) return this;
-        
+
         const listeners = this.events.get(event);
         // 복사본을 만들어 순회 (중간에 제거되어도 안전)
         [...listeners].forEach(({ callback, context }) => {
@@ -116,7 +116,7 @@ const GAME_EVENTS = {
     PLAYER_STAT_CHANGED: 'player:stat_changed',
     PLAYER_HP_CHANGED: 'player:hp_changed',
     PLAYER_EXP_CHANGED: 'player:exp_changed',
-    
+
     // 전투
     COMBAT_ATTACK: 'combat:attack',
     COMBAT_DAMAGE: 'combat:damage',
@@ -126,32 +126,32 @@ const GAME_EVENTS = {
     COMBAT_PHASE_CHANGED: 'combat:phase_changed',
     COMBAT_ENCOUNTER: 'combat:encounter',
     COMBAT_VICTORY: 'combat:victory',
-    
+
     // 스테이지
     STAGE_CHANGED: 'stage:changed',
     STAGE_BOSS_ENTER: 'stage:boss_enter',
     STAGE_BOSS_DEFEATED: 'stage:boss_defeated',
     STAGE_AUTO_REPEAT: 'stage:auto_repeat',
-    
+
     // 인벤토리
     INVENTORY_ITEM_ADDED: 'inventory:item_added',
     INVENTORY_ITEM_REMOVED: 'inventory:item_removed',
     INVENTORY_GOLD_CHANGED: 'inventory:gold_changed',
     INVENTORY_SYNTHESIZE: 'inventory:synthesize',
-    
+
     // 튜토리얼
     TUTORIAL_STEP: 'tutorial:step',
     TUTORIAL_COMPLETED: 'tutorial:completed',
-    
+
     // 설정
     SETTINGS_CHANGED: 'settings:changed',
-    
+
     // 게임 상태
     GAME_LOADED: 'game:loaded',
     GAME_SAVED: 'game:saved',
     GAME_PAUSED: 'game:paused',
     GAME_RESUMED: 'game:resumed',
-    
+
     // 오프라인
     OFFLINE_REWARD: 'offline:reward',
 
@@ -168,12 +168,12 @@ const GAME_EVENTS = {
     DAILY_MISSIONS_RESET: 'daily:missions_reset',
     DAILY_MISSION_COMPLETED: 'daily:mission_completed',
     DAILY_MISSION_CLAIMED: 'daily:mission_claimed',
-    
+
     // 주간 미션
     WEEKLY_MISSIONS_RESET: 'weekly:missions_reset',
     WEEKLY_MISSION_COMPLETED: 'weekly:mission_completed',
     WEEKLY_MISSION_CLAIMED: 'weekly:mission_claimed',
-    
+
     BUFF_ACTIVATED: 'buff:activated',
 
     // 환생

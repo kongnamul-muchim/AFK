@@ -5,10 +5,10 @@ using System.Collections.Generic;
 public class PopupManager : MonoBehaviour
 {
     public static PopupManager Instance { get; private set; }
-    
+
     private Dictionary<string, VisualElement> _popupCache = new();
     private VisualElement _currentPopup;
-    
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -19,16 +19,16 @@ public class PopupManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-    
+
     public void ShowPopup(string popupName)
     {
         HideCurrentPopup();
-        
+
         if (!_popupCache.ContainsKey(popupName))
         {
             LoadPopup(popupName);
         }
-        
+
         if (_popupCache.TryGetValue(popupName, out var popup))
         {
             _currentPopup = popup;
@@ -48,7 +48,7 @@ public class PopupManager : MonoBehaviour
             Debug.LogError($"팝업 {popupName}을(를) 찾을 수 없습니다!");
         }
     }
-    
+
     public void HideCurrentPopup()
     {
         if (_currentPopup != null)
@@ -58,7 +58,7 @@ public class PopupManager : MonoBehaviour
             _currentPopup = null;
         }
     }
-    
+
     private void LoadPopup(string popupName)
     {
         var popupAsset = Resources.Load<VisualTreeAsset>($"UI/{popupName}");

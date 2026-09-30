@@ -13,14 +13,14 @@ public class SerializableDictionary<TKey, TValue>
         public TKey key;
         public TValue value;
     }
-    
+
     public KeyValuePair[] pairs;
-    
+
     public SerializableDictionary()
     {
         pairs = new KeyValuePair[0];
     }
-    
+
     public SerializableDictionary(Dictionary<TKey, TValue> dict)
     {
         pairs = new KeyValuePair[dict.Count];
@@ -31,7 +31,7 @@ public class SerializableDictionary<TKey, TValue>
             i++;
         }
     }
-    
+
     public Dictionary<TKey, TValue> ToDictionary()
     {
         var dict = new Dictionary<TKey, TValue>();
@@ -47,11 +47,11 @@ public class SerializableDictionary<TKey, TValue>
         }
         return dict;
     }
-    
+
     public void Add(TKey key, TValue value)
     {
         if (pairs == null) pairs = new KeyValuePair[0];
-        
+
         foreach (var kvp in pairs)
         {
             if (kvp != null && kvp.key != null && kvp.key.Equals(key))
@@ -60,13 +60,13 @@ public class SerializableDictionary<TKey, TValue>
                 return;
             }
         }
-        
+
         var newPairs = new KeyValuePair[pairs.Length + 1];
         Array.Copy(pairs, newPairs, pairs.Length);
         newPairs[pairs.Length] = new KeyValuePair { key = key, value = value };
         pairs = newPairs;
     }
-    
+
     public bool ContainsKey(TKey key)
     {
         if (pairs == null) return false;
@@ -77,7 +77,7 @@ public class SerializableDictionary<TKey, TValue>
         }
         return false;
     }
-    
+
     public TValue this[TKey key]
     {
         get

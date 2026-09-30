@@ -29,17 +29,17 @@ public class SpriteExtractor
     private static void Extract(Sprite sprite)
     {
         Texture2D sourceTex = sprite.texture;
-        
+
         // 스프라이트의 영역만큼 새로운 텍스처 생성
         Texture2D newTex = new Texture2D((int)sprite.rect.width, (int)sprite.rect.height);
-        
+
         // 원본에서 해당 영역의 픽셀만 복사
         Color[] pixels = sourceTex.GetPixels(
-            (int)sprite.textureRect.x, 
-            (int)sprite.textureRect.y, 
-            (int)sprite.textureRect.width, 
+            (int)sprite.textureRect.x,
+            (int)sprite.textureRect.y,
+            (int)sprite.textureRect.width,
             (int)sprite.textureRect.height);
-            
+
         newTex.SetPixels(pixels);
         newTex.Apply();
 
@@ -47,7 +47,7 @@ public class SpriteExtractor
         byte[] bytes = newTex.EncodeToPNG();
         string directory = Path.GetDirectoryName(AssetDatabase.GetAssetPath(sourceTex));
         string savePath = Path.Combine(directory, sprite.name + ".png");
-        
+
         File.WriteAllBytes(savePath, bytes);
         Object.DestroyImmediate(newTex);
     }

@@ -21,10 +21,10 @@ public class MonsterFactory
 
         // 몬스터 스펙 계산
         MonsterData monster = CalculateMonsterStats(stage, actualIsBoss);
-        
+
         // 몬스터 이름 생성
         monster.name = GenerateMonsterName(stage, actualIsBoss);
-        
+
         return monster;
     }
 
@@ -43,16 +43,16 @@ public class MonsterFactory
     {
         // Web 버전과 동일한 스케일링 공식: base * 1.1^(stage-1)
         float stageMultiplier = Mathf.Pow(GameConfig.MonsterStatPerStage, stage - 1);
-        
+
         // 기본 스탯 (Web 버전 monsters.csv 기준)
         float baseHP = 50f;  // slime hp_base
         float baseAttack = 5f; // slime atk_base
         float baseDefense = 5f;
-        
+
         float hp = baseHP * stageMultiplier;
         float attack = baseAttack * stageMultiplier;
         float defense = baseDefense * stageMultiplier;
-        
+
         // 보스 배율 (Web 버전: 보스 스테이지만)
         if (isBoss)
         {
@@ -60,16 +60,16 @@ public class MonsterFactory
             attack *= GameConfig.BossStatMultiplier;
             defense *= GameConfig.BossStatMultiplier;
         }
-        
+
         // 몬스터 등급 결정 (Web 버전: stage 기반)
         int grade = isBoss ? 3 : GetMonsterGrade(stage);
-        
+
         // 등급별 스탯 보정
         float gradeMult = GameConfig.GradeStatMultipliers[Mathf.Min(grade, 4)];
         hp *= gradeMult;
         attack *= gradeMult;
         defense *= gradeMult;
-        
+
         return new MonsterData
         {
             stage = stage,
@@ -89,7 +89,7 @@ public class MonsterFactory
         // 스테이지가 높을수록 고등급 몬스터 등장 확률 증가
         // 단순화: 스테이지 / 5로 등급 결정 (최대 4)
         int baseGrade = Mathf.Min(stage / 5, 4);
-        
+
         // 약간의 랜덤성 추가 (±1)
         int variance = Random.Range(-1, 2);
         return Mathf.Clamp(baseGrade + variance, 0, 4);
@@ -102,7 +102,7 @@ public class MonsterFactory
     {
         int typeIndex = Mathf.Min(stage / 10, MonsterTypes.Length - 1);
         string prefix = isBoss ? "보스 " : MonsterPrefixes[Mathf.Min(stage / 5, MonsterPrefixes.Length - 1)];
-        
+
         return prefix + MonsterTypes[typeIndex];
     }
 
@@ -115,7 +115,7 @@ public class MonsterFactory
         // 등급에 따라 약간 변동
         float baseSpeed = 1f;
         float gradeBonus = monster.grade * 0.1f;
-        
+
         return baseSpeed + gradeBonus;
     }
 }

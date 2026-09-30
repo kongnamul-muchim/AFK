@@ -8,7 +8,7 @@ using UnityEngine;
 public class RebirthSystem : MonoBehaviour
 {
     private static RebirthSystem _instance;
-    
+
     /// <summary>
     /// RebirthSystem의 싱글톤 인스턴스
     /// </summary>
@@ -26,12 +26,12 @@ public class RebirthSystem : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
+
     private IGameState _gameState;
     private IEventBus _eventBus;
     private IGameLogger _logger;
-    
+
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
     /// </summary>
@@ -56,13 +56,13 @@ public class RebirthSystem : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
     }
 
-    // ========== 환생 시스템 ==========
-    
+    // 환생 시스템
+
     /// <summary>
     /// 환생 가능 여부 확인
     /// </summary>
@@ -75,7 +75,7 @@ public class RebirthSystem : MonoBehaviour
             _logger.Warn($"환생 불가 - 최소 레벨 {GameConfig.MinRebirthLevel} 필요 (현재: {_gameState.Player.level})");
             return false;
         }
-        
+
         return true;
     }
 
@@ -88,33 +88,33 @@ public class RebirthSystem : MonoBehaviour
         {
             return false;
         }
-        
+
         _logger.Info($"환생 시작 - {_gameState.Rebirth.rebirthCount + 1}번째 환생");
-        
+
         int bonusPoints = GetBonusPointsPreview();
-        
+
         // 데이터 초기화 (GameState.ResetForRebirth에서 처리)
         // 발견된 아이템, 골드 업그레이드, stats, gemUpgrades는 유지됨
         _gameState.ResetForRebirth();
-        
+
         // 환생 카운트 증가 및 보너스 포인트 추가
         var rebirth = _gameState.Rebirth;
         rebirth.rebirthCount++;
         rebirth.bonusPoints += bonusPoints;
         _gameState.Rebirth = rebirth;
-        
+
         // 통계 업데이트
         var stats = _gameState.Stats;
         stats.totalRebirths++;
         _gameState.Stats = stats;
-        
+
         _logger.Info($"환생 완료 - 보너스 포인트: {bonusPoints}");
-        
+
         // 이벤트 발생
         _eventBus.Emit(GameEvents.REBIRTH_PERFORMED);
         _eventBus.Emit(GameEvents.STATS_CHANGED);
         _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         return true;
     }
 
@@ -127,10 +127,10 @@ public class RebirthSystem : MonoBehaviour
         int minLevel = GameConfig.MinRebirthLevel;
         int bonusLevel = Mathf.Max(0, playerLevel - minLevel + 1);
         int basePoints = Mathf.FloorToInt(bonusLevel * (1 + bonusLevel * 0.1f));
-        
+
         int gemBonusLevel = _gameState.GemUpgrades.rebirthBonusLevel;
         basePoints += Mathf.Min(gemBonusLevel, 10);
-        
+
         return basePoints;
     }
 
@@ -155,8 +155,8 @@ public class RebirthSystem : MonoBehaviour
 ";
     }
 
-    // ========== 보석 업그레이드 시스템 ==========
-    
+    // 보석 업그레이드 시스템
+
     /// <summary>
     /// 보석 업그레이드 타입 열거형
     /// </summary>
@@ -179,20 +179,20 @@ public class RebirthSystem : MonoBehaviour
     {
         int currentLevel = GetGemLevel(type);
         int maxLevel = GetMaxGemLevel(type);
-        
+
         if (currentLevel >= maxLevel)
         {
             _logger.Warn($"최대 레벨 도달: {type}");
             return false;
         }
-        
+
         long cost = GetUpgradeCost(type);
         if (_gameState.Player.gems < cost)
         {
             _logger.Warn($"보석 부족: {_gameState.Player.gems}/{cost}");
             return false;
         }
-        
+
         return true;
     }
 
@@ -207,24 +207,24 @@ public class RebirthSystem : MonoBehaviour
         {
             return false;
         }
-        
+
         long cost = GetUpgradeCost(type);
-        
+
         // 보석 차감
         var player = _gameState.Player;
         player.gems -= (int)cost;
         _gameState.Player = player;
-        
+
         // 레벨 증가
         IncreaseGemLevel(type);
-        
+
         _logger.Info($"보석 업그레이드: {type} → 레벨 {GetGemLevel(type)}");
-        
+
         // 이벤트 발생
         _eventBus.Emit(GameEvents.GEM_UPGRADED);
         _eventBus.Emit(GameEvents.GEM_CHANGED);
         _eventBus.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         return true;
     }
 
@@ -251,7 +251,7 @@ public class RebirthSystem : MonoBehaviour
     private void IncreaseGemLevel(GemUpgradeType type)
     {
         var gemUpgrades = _gameState.GemUpgrades;
-        
+
         switch (type)
         {
             case GemUpgradeType.OfflineReward: gemUpgrades.offlineRewardLevel++; break;
@@ -261,7 +261,7 @@ public class RebirthSystem : MonoBehaviour
             case GemUpgradeType.DropRate: gemUpgrades.dropRateLevel++; break;
             case GemUpgradeType.StatBonus: gemUpgrades.statBonusLevel++; break;
         }
-        
+
         _gameState.GemUpgrades = gemUpgrades;
     }
 
@@ -290,10 +290,10 @@ public class RebirthSystem : MonoBehaviour
     public long GetUpgradeCost(GemUpgradeType type)
     {
         int currentLevel = GetGemLevel(type);
-        
+
         // 기본 비용: 10 * (레벨 + 1)
         long baseCost = 10 * (currentLevel + 1);
-        
+
         // 타입별 보정
         switch (type)
         {
@@ -315,7 +315,7 @@ public class RebirthSystem : MonoBehaviour
     public string GetGemEffectDescription(GemUpgradeType type)
     {
         int level = GetGemLevel(type);
-        
+
         switch (type)
         {
             case GemUpgradeType.OfflineReward:

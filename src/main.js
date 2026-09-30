@@ -34,7 +34,7 @@ class Game {
         this.uiManager = null;
         this.audioManager = null;
         this.renderer = null;
-        
+
         // Systems
         this.combatSystem = null;
         this.stageSystem = null;
@@ -44,7 +44,7 @@ class Game {
         this.statsTracker = null;
         this.dailyMissionSystem = null;
         this.rebirthSystem = null;
-        
+
         this.isRunning = false;
         this.lastFrameTime = 0;
         this.updateAccumulator = 0;
@@ -56,7 +56,7 @@ class Game {
      */
     async init() {
         gameLogger.info('Initializing game...');
-        
+
         try {
             // 로딩 화면 표시
             this.loadingScreen = new LoadingScreen();
@@ -104,22 +104,22 @@ class Game {
             } catch (error) {
                 gameLogger.warn('Some images failed to load (using fallback graphics):', error.message);
             }
-            
+
             // 로딩 완료 (이미지 실패해도 진행)
             this.updateLoadingProgress(70, 'UI 초기화...');
 
             // 게임 상태 로드 또는 신규 생성
             const savedData = this.storageManager.load();
             let offlineRewardData = null; // 오프라인 보상 데이터 저장용
-            
+
             if (savedData) {
                 this.gameState = new GameState();
                 this.gameState.fromJSON(savedData);
-                
+
                 // 오프라인 보상 시스템 미리 초기화 (저장 데이터 계산 필요)
                 this.offlineRewards = new OfflineRewards(this.gameState);
                 this.offlineRewards.init();
-                
+
                 // 기존 세이브 데이터의 아이템 ID가 새 체계와 호환되지 않음
                 // 단, 한 번만 실행 (플래그로 관리)
                 if (!this.gameState.inventoryResetDone) {
@@ -128,7 +128,7 @@ class Game {
                     this.gameState.inventoryResetDone = true;
                     this.storageManager.save(this.gameState.toJSON()); // 플래그 저장
                 }
-                
+
                 // 오프라인 보상 계산 (UI 표시는 나중에)
                 const offlineSeconds = this.offlineRewards.calculateOfflineSeconds();
                 gameLogger.info(`Offline seconds: ${offlineSeconds}, condition: ${offlineSeconds > 60}`);
@@ -142,20 +142,20 @@ class Game {
                     };
                     gameLogger.info(`Offline reward calculated: ${reward.hours.toFixed(1)}h, ${reward.gold} gold, ${reward.exp} exp, ${reward.items.length} items`);
                 }
-                
+
                 gameLogger.info('Game loaded from save (inventory reset)');
             } else {
                 this.gameState = new GameState();
                 gameLogger.info('New game created');
             }
-            
+
             // StorageManager 에 gameState 연동
             this.storageManager.init(this.gameState);
-            
+
             // 오프라인 보상 시스템 (savedData 체크 전에 필요할 수 있음)
             this.offlineRewards = new OfflineRewards(this.gameState);
             this.offlineRewards.init();
-            
+
             this.updateLoadingProgress(70, 'UI 초기화...');
 
             // UI 매니저 초기화
@@ -170,53 +170,53 @@ class Game {
             // 시스템 초기화
             this.stageSystem = new StageSystem(this.gameState);
             this.stageSystem.init();
-            
+
             this.inventorySystem = new InventorySystem(this.gameState);
             this.inventorySystem.init();
-            
+
             // 인벤토리 UI 초기화
             this.inventoryUI = new InventoryUI(this.gameState, this.inventorySystem);
             this.inventoryUI.init();
-            
+
             this.tutorialSystem = new TutorialSystem(this.gameState);
             this.tutorialSystem.init();
-            
+
             this.statsTracker = new StatsTracker(this.gameState);
             this.statsTracker.init();
-            
+
             // 일일 미션 시스템
             this.dailyMissionSystem = new DailyMissionSystem(this.gameState);
             this.dailyMissionSystem.init();
-            
+
             this.combatSystem = new CombatSystem(this.gameState);
             this.combatSystem.init();
 
             // 렌더러 초기화 (combatSystem 전달)
             this.renderer = new GameRenderer(this.gameState, this.combatSystem);
             this.renderer.init();
-            
+
             // UI 초기화
             this.dailyMissionUI = new DailyMissionUI(this.gameState, this.dailyMissionSystem);
             this.dailyMissionUI.init();
-            
+
             this.gemShopUI = new GemShopUI(this.gameState, this.dailyMissionSystem);
             this.gemShopUI.init();
-            
+
             // 환생 시스템
             this.rebirthSystem = new RebirthSystem(this.gameState);
             this.rebirthSystem.init();
-            
+
             // 업그레이드 UI 초기화 (rebirthSystem 필요)
             this.upgradeUI = new UpgradeUI(this.gameState, this.rebirthSystem);
             this.upgradeUI.init();
-            
+
             // UI 초기화
             this.dailyMissionUI = new DailyMissionUI(this.gameState, this.dailyMissionSystem);
             this.dailyMissionUI.init();
-            
+
             this.gemShopUI = new GemShopUI(this.gameState, this.dailyMissionSystem);
             this.gemShopUI.init();
-            
+
             this.updateLoadingProgress(90, '마지막 준비...');
 
             // 이벤트 리스너 등록
@@ -225,43 +225,43 @@ class Game {
             // 로딩 화면 숨김
             this.loadingScreen.hide();
             document.getElementById('game-container').style.display = 'flex';
-            
+
             // 캔버스 리사이즈 (컨테이너가 보여진 후에 올바른 크기 측정 가능)
             if (this.renderer) {
                 this.renderer.resize();
             }
-            
+
             this.updateLoadingProgress(100, '완료!');
-            
+
             gameLogger.info('Game initialized successfully');
             gameEventBus.emit(GAME_EVENTS.GAME_LOADED);
-            
+
             this.isRunning = true;
             this.lastFrameTime = performance.now();
             this.gameLoop();
-            
+
             // 오프라인 보상이 있으면 UI 표시 (로딩 완료 후)
             if (offlineRewardData && this.uiManager) {
                 // 약간의 지연 후 표시 (UI 안정화)
                 setTimeout(() => {
                     this.uiManager.showOfflineRewardDetailed(offlineRewardData);
-                    
+
                     // 보상 지급 (UI 표시 후)
                     this.gameState.addGold(offlineRewardData.gold);
                     this.gameState.addExp(offlineRewardData.exp);
-                    
+
                     (offlineRewardData.items || offlineRewardData.equipment || []).forEach(item => {
                         this.gameState.inventory.addItem(equip);
                     });
-                    
+
                     // 저장 시간 업데이트 (오프라인 보상 지급 후)
                     this.gameState.lastSaveTime = Date.now();
                     this.storageManager.save(); // 즉시 저장
-                    
+
                     gameLogger.info('Offline reward UI displayed and rewards granted');
                 }, 500);
             }
-            
+
         } catch (error) {
             gameLogger.error('Failed to initialize game:', error);
             this.loadingScreen.showError(error.message);
@@ -270,8 +270,8 @@ class Game {
 
     /**
      * 로딩 진행률 업데이트
-     * @param {number} percent 
-     * @param {string} tip 
+     * @param {number} percent
+     * @param {string} tip
      */
     updateLoadingProgress(percent, tip) {
         if (this.loadingScreen) {
@@ -281,24 +281,24 @@ class Game {
 
     /**
      * 오프라인 보상 계산
-     * @param {number} seconds 
+     * @param {number} seconds
      */
     calculateOfflineReward(seconds) {
         const hours = Math.min(seconds / 3600, 24); // 최대 24 시간
         const expPerHour = gameDataLoader.getConfigNumber('offline', 'expPerHour', 100);
         const goldPerHour = gameDataLoader.getConfigNumber('offline', 'goldPerHour', 50);
-        
+
         const expReward = Math.floor(hours * expPerHour);
         const goldReward = Math.floor(hours * goldPerHour);
-        
+
         this.gameState.addExp(expReward);
         this.gameState.addGold(goldReward);
-        
+
         // 오프라인 보상 모달 표시
         if (this.uiManager) {
             this.uiManager.showOfflineReward(hours, expReward, goldReward);
         }
-        
+
         gameLogger.info(`Offline reward: ${hours.toFixed(1)}h, ${expReward} exp, ${goldReward} gold`);
     }
 
@@ -352,14 +352,14 @@ class Game {
 
     /**
      * 게임 루프
-     * @param {number} currentTime 
+     * @param {number} currentTime
      */
     gameLoop(currentTime = 0) {
         if (!this.isRunning) return;
 
         const deltaTime = currentTime - this.lastFrameTime;
         this.lastFrameTime = currentTime;
-        
+
         // 업데이트 (고정 시간 간격)
         this.updateAccumulator += deltaTime;
         while (this.updateAccumulator >= this.UPDATE_INTERVAL) {
@@ -376,17 +376,17 @@ class Game {
 
     /**
      * 게임 업데이트
-     * @param {number} dt 
+     * @param {number} dt
      */
     update(dt) {
         // 플레이 시간 기록
         this.statsTracker.updatePlayTime(dt);
-        
+
         // UI 업데이트
         if (this.uiManager) {
             this.uiManager.updateGameView();
         }
-        
+
         // 전투 시스템 업데이트 (새로운 루프 시스템)
         if (!this.combatSystem.isRunning) {
             this.combatSystem.startCombat();
@@ -397,7 +397,7 @@ class Game {
 
     /**
      * 렌더링
-     * @param {number} dt 
+     * @param {number} dt
      */
     render(dt) {
         if (this.renderer) {
@@ -440,16 +440,16 @@ class Game {
      */
     destroy() {
         this.isRunning = false;
-        
+
         if (this.storageManager) {
             this.storageManager.save(this.gameState.toJSON());
             this.storageManager.destroy();
         }
-        
+
         if (this.renderer) {
             this.renderer.destroy();
         }
-        
+
         gameEventBus.removeAllListeners();
         gameLogger.info('Game destroyed');
     }

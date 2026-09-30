@@ -1,6 +1,6 @@
 /**
  * UnityBridge - Unity 와 JavaScript 간 통신 브릿지
- * 
+ *
  * Unity(WebGL) 에서 JavaScript 게임 로직을 호출하기 위한 인터페이스
  * 웹 브라우저에서 Unity 연동을 테스트할 수 있음
  */
@@ -12,10 +12,10 @@ class UnityBridge {
         this.game = game;
         this.isUnityConnected = false;
         this.messageQueue = [];
-        
+
         // Unity 에서 호출 가능한 함수들을 window 에 등록
         this.registerUnityFunctions();
-        
+
         gameLogger.info('UnityBridge initialized');
     }
 
@@ -27,25 +27,25 @@ class UnityBridge {
         window.UnityBridge = {
             // 초기화
             init: () => this.handleUnityInit(),
-            
+
             // 입력 처리
             onStatPointUsed: (statType) => this.handleStatPointUsed(statType),
             onItemSynthesized: (itemId) => this.handleItemSynthesized(itemId),
             onSettingsChanged: (settings) => this.handleSettingsChanged(settings),
-            
+
             // 게임 제어
             pause: () => this.handlePause(),
             resume: () => this.handleResume(),
             save: () => this.handleSave(),
             load: () => this.handleLoad(),
-            
+
             // Unity 상태 확인
             isConnected: () => this.isUnityConnected,
-            
+
             // 메시지 전송 (Unity → JS)
             sendMessage: (message) => this.handleUnityMessage(message)
         };
-        
+
         gameLogger.debug('Unity functions registered on window.UnityBridge');
     }
 
@@ -55,10 +55,10 @@ class UnityBridge {
     handleUnityInit() {
         this.isUnityConnected = true;
         gameLogger.info('Unity connected!');
-        
+
         // 대기 중인 메시지 처리
         this.processMessageQueue();
-        
+
         // Unity 에 게임 상태 전송
         this.sendGameStateToUnity();
     }
@@ -80,7 +80,7 @@ class UnityBridge {
 
     /**
      * 설정 변경 핸들러
-     * @param {Object} settings 
+     * @param {Object} settings
      */
     handleSettingsChanged(settings) {
         if (this.game.gameState) {
@@ -141,7 +141,7 @@ class UnityBridge {
         try {
             const data = JSON.parse(message);
             gameLogger.debug('Message from Unity:', data);
-            
+
             switch (data.type) {
                 case 'input':
                     this.handleUnityInput(data.payload);
@@ -160,7 +160,7 @@ class UnityBridge {
 
     /**
      * Unity 입력 처리
-     * @param {Object} input 
+     * @param {Object} input
      */
     handleUnityInput(input) {
         switch (input.action) {
@@ -178,7 +178,7 @@ class UnityBridge {
 
     /**
      * Unity 렌더링 완료 처리
-     * @param {Object} data 
+     * @param {Object} data
      */
     handleRenderComplete(data) {
         // 다음 프레임 업데이트
@@ -187,7 +187,7 @@ class UnityBridge {
 
     /**
      * Unity 오디오 재생 요청
-     * @param {Object} data 
+     * @param {Object} data
      */
     handleAudioPlay(data) {
         if (this.game.audioManager) {
@@ -235,7 +235,7 @@ class UnityBridge {
      */
     sendGameStateToUnity() {
         if (!this.game.gameState) return;
-        
+
         const state = {
             player: {
                 level: this.game.gameState.player.level,
@@ -255,7 +255,7 @@ class UnityBridge {
                 itemCount: this.game.gameState.inventory.items.size
             }
         };
-        
+
         this.sendToUnity('OnGameStateUpdate', JSON.stringify(state));
     }
 
@@ -267,34 +267,34 @@ class UnityBridge {
         gameEventBus.on(GAME_EVENTS.PLAYER_LEVELUP, (data) => {
             this.sendToUnity('OnPlayerLevelUp', JSON.stringify(data));
         });
-        
+
         gameEventBus.on(GAME_EVENTS.PLAYER_HP_CHANGED, (data) => {
             this.sendToUnity('OnPlayerHpChanged', JSON.stringify(data));
         });
-        
+
         gameEventBus.on(GAME_EVENTS.PLAYER_EXP_CHANGED, (data) => {
             this.sendToUnity('OnPlayerExpChanged', JSON.stringify(data));
         });
-        
+
         // 인벤토리 변경
         gameEventBus.on(GAME_EVENTS.INVENTORY_GOLD_CHANGED, (data) => {
             this.sendToUnity('OnGoldChanged', JSON.stringify(data));
         });
-        
+
         gameEventBus.on(GAME_EVENTS.INVENTORY_ITEM_ADDED, (data) => {
             this.sendToUnity('OnItemAdded', JSON.stringify(data));
         });
-        
+
         // 스테이지 변경
         gameEventBus.on(GAME_EVENTS.STAGE_CHANGED, (data) => {
             this.sendToUnity('OnStageChanged', JSON.stringify(data));
         });
-        
+
         // 전투 로그
         gameEventBus.on(GAME_EVENTS.COMBAT_LOG, (data) => {
             this.sendToUnity('OnCombatLog', JSON.stringify(data));
         });
-        
+
         gameLogger.debug('UnityBridge event listeners setup complete');
     }
 
@@ -303,13 +303,13 @@ class UnityBridge {
      */
     testConnection() {
         gameLogger.info('Testing Unity connection...');
-        
+
         // 테스트 데이터 전송
         this.sendToUnity('OnTestConnection', JSON.stringify({
             timestamp: Date.now(),
             message: 'Hello from JavaScript!'
         }));
-        
+
         return true;
     }
 

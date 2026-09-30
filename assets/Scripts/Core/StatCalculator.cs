@@ -15,25 +15,25 @@ public static class StatCalculator
     {
         // 기본 공격력 (업그레이드 포함)
         float baseAttack = CalculateBaseAttack(player);
-        
+
         // 장비 공격력 보너스: Web 버전과 동일하게 비율 적용
         float atkBonusPercent = 0f;
         foreach (var equip in inventory.equipment)
         {
             atkBonusPercent += equip.attackBonus;
         }
-        
+
         float total = baseAttack * (1 + atkBonusPercent / 100f);
-        
+
         // 보석 업그레이드 보너스
         total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
-        
+
         // 환생 보너스
         total *= (1 + rebirth.rebirthCount * 0.1f);
-        
+
         return Mathf.Floor(total);
     }
-    
+
     /// <summary>
     /// 기본 공격력 계산 (Web 버전의 derivedStats 계산 방식)
     /// goldUpgrades + statUpgrades 포함
@@ -42,11 +42,11 @@ public static class StatCalculator
     {
         int goldAttack = player.goldUpgrades.ContainsKey("attack") ? player.goldUpgrades["attack"] : 0;
         int statAttack = player.statUpgrades.ContainsKey("attack") ? player.statUpgrades["attack"] : 0;
-        
+
         int attackValue = CalcUpgradeValue(goldAttack) + CalcUpgradeValue(statAttack);
         return GameConfig.BasePlayerAttack + attackValue * 2;
     }
-    
+
     /// <summary>
     /// 기본 방어력 계산
     /// </summary>
@@ -54,11 +54,11 @@ public static class StatCalculator
     {
         int goldDefense = player.goldUpgrades.ContainsKey("defense") ? player.goldUpgrades["defense"] : 0;
         int statDefense = player.statUpgrades.ContainsKey("defense") ? player.statUpgrades["defense"] : 0;
-        
+
         int defenseValue = CalcUpgradeValue(goldDefense) + CalcUpgradeValue(statDefense);
         return GameConfig.BasePlayerDefense + defenseValue * 1;
     }
-    
+
     /// <summary>
     /// 기본 HP 계산
     /// </summary>
@@ -66,11 +66,11 @@ public static class StatCalculator
     {
         int goldHp = player.goldUpgrades.ContainsKey("hp") ? player.goldUpgrades["hp"] : 0;
         int statHp = player.statUpgrades.ContainsKey("hp") ? player.statUpgrades["hp"] : 0;
-        
+
         int hpValue = CalcUpgradeValue(goldHp) + CalcUpgradeValue(statHp);
         return GameConfig.BasePlayerHP + hpValue * 10;
     }
-    
+
     /// <summary>
     /// 업그레이드 효율값 계산 (Web 버전의 calcUpgradeValue와 동일)
     /// </summary>
@@ -82,7 +82,7 @@ public static class StatCalculator
         if (level < 40) return 10 + 15 + 20 + Mathf.RoundToInt((level - 30) * 2.5f);
         return 10 + 15 + 20 + 25 + Mathf.RoundToInt((level - 40) * 3.0f);
     }
-    
+
     /// <summary>
     /// 기본 크리티컬 확률 계산
     /// </summary>
@@ -90,7 +90,7 @@ public static class StatCalculator
     {
         int goldCrit = player.goldUpgrades.ContainsKey("critChance") ? player.goldUpgrades["critChance"] : 0;
         int statCrit = player.statUpgrades.ContainsKey("critChance") ? player.statUpgrades["critChance"] : 0;
-        
+
         float critValue = CalcUpgradeValue(goldCrit) + CalcUpgradeValue(statCrit);
         return 0.05f + critValue * 0.002f; // 0.5% per upgrade level
     }
@@ -103,19 +103,19 @@ public static class StatCalculator
     public static float CalculateTotalDefense(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
         float baseDefense = CalculateBaseDefense(player);
-        
+
         // 장비 방어력 보너스: Web 버전과 동일하게 비율 적용
         float defBonusPercent = 0f;
         foreach (var equip in inventory.equipment)
         {
             defBonusPercent += equip.defenseBonus;
         }
-        
+
         float total = baseDefense * (1 + defBonusPercent / 100f);
-        
+
         total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
         total *= (1 + rebirth.rebirthCount * 0.1f);
-        
+
         return Mathf.Floor(total);
     }
 
@@ -127,19 +127,19 @@ public static class StatCalculator
     public static float CalculateTotalHealth(PlayerData player, InventoryData inventory, GemUpgradeData gemUpgrades, RebirthData rebirth)
     {
         float baseHealth = CalculateBaseHealth(player);
-        
+
         // 장비 HP 보너스: Web 버전과 동일하게 비율 적용 (1 + hpBonus/100)
         float hpBonusPercent = 0f;
         foreach (var equip in inventory.equipment)
         {
             hpBonusPercent += equip.healthBonus;
         }
-        
+
         float total = baseHealth * (1 + hpBonusPercent / 100f);
-        
+
         total *= (1 + gemUpgrades.statBonusLevel * GameConfig.StatBonusPerLevel);
         total *= (1 + rebirth.rebirthCount * 0.1f);
-        
+
         return Mathf.Floor(total);
     }
 
@@ -183,28 +183,28 @@ public static class StatCalculator
     {
         float[] baseRates = new float[GameConfig.DropRates.Length];
         System.Array.Copy(GameConfig.DropRates, baseRates, GameConfig.DropRates.Length);
-        
+
         if (gemUpgrades.dropRateLevel > 0)
         {
             // 고레어 아이템 확률 증가, 저레어 아이템 확률 감소
             float bonusPerLevel = 0.01f; // 레벨당 1% 재분배
-            
+
             // 일반 아이템 확률 감소
             baseRates[0] = Mathf.Max(0.3f, baseRates[0] - (gemUpgrades.dropRateLevel * bonusPerLevel * 4));
-            
+
             // 고급 아이템 확률 증가
             baseRates[1] = baseRates[1] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-            
+
             // 희귀 아이템 확률 증가
             baseRates[2] = baseRates[2] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-            
+
             // 영웅 아이템 확률 증가
             baseRates[3] = baseRates[3] + (gemUpgrades.dropRateLevel * bonusPerLevel);
-            
+
             // 전설 아이템 확률 증가
             baseRates[4] = baseRates[4] + (gemUpgrades.dropRateLevel * bonusPerLevel);
         }
-        
+
         return baseRates;
     }
 }

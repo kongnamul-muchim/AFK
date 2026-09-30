@@ -18,7 +18,7 @@ public class SaveData
     public RebirthData rebirth;
     public StatsData stats;
     public GemUpgradeData gemUpgrades;
-    
+
     /// <summary>
     /// 현재 GameState에서 SaveData 생성
     /// </summary>
@@ -38,7 +38,7 @@ public class SaveData
             gemUpgrades = state.gemUpgrades
         };
     }
-    
+
     /// <summary>
     /// SaveData를 GameState에 적용
     /// </summary>

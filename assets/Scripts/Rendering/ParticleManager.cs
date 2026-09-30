@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class ParticleManager : MonoBehaviour
 {
     private static ParticleManager _instance;
-    
+
     /// <summary>
     /// ParticleManager의 싱글톤 인스턴스
     /// </summary>
@@ -27,11 +27,11 @@ public class ParticleManager : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
+
     private IGameState _gameState;
     private IGameLogger _logger;
-    
+
     private void InjectDependencies()
     {
         if (Bootstrap.Container == null) return;
@@ -41,8 +41,8 @@ public class ParticleManager : MonoBehaviour
             _logger = Bootstrap.Container.Resolve<IGameLogger>();
     }
 
-    // ========== 파티클 풀 ==========
-    
+    // 파티클 풀
+
     [System.Serializable]
     public class ParticlePool
     {
@@ -53,18 +53,18 @@ public class ParticleManager : MonoBehaviour
         [HideInInspector]
         public List<ParticleSystem> active = new List<ParticleSystem>();
     }
-    
+
     [Header("Particle Pools")]
     [SerializeField] private ParticlePool[] _particlePools;
-    
+
     [Header("Default Settings")]
     [SerializeField] private Transform _particleParent;
     [SerializeField] private int defaultPoolSize = 20;
-    
+
     private Dictionary<string, ParticlePool> _pools = new Dictionary<string, ParticlePool>();
-    
-    // ========== MonoBehaviour 라이프사이클 ==========
-    
+
+    // MonoBehaviour 라이프사이클
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -74,28 +74,28 @@ public class ParticleManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
-        
+
         // 풀 초기화
         InitializePools();
     }
-    
+
     private void InitializePools()
     {
         if (_particleParent == null)
         {
             _particleParent = transform;
         }
-        
+
         foreach (var pool in _particlePools)
         {
             if (pool.prefab == null) continue;
-            
+
             string poolId = pool.prefab.name;
             _pools[poolId] = pool;
-            
+
             for (int i = 0; i < pool.poolSize; i++)
             {
                 ParticleSystem particle = Instantiate(pool.prefab, _particleParent);
@@ -103,12 +103,12 @@ public class ParticleManager : MonoBehaviour
                 pool.available.Enqueue(particle);
             }
         }
-        
+
         _logger.Debug($"파티클 풀 초기화 완료 ({_pools.Count}개 풀)");
     }
-    
-    // ========== 파티클 재생 ==========
-    
+
+    // 파티클 재생
+
     /// <summary>
     /// 파티클 재생 (위치 지정)
     /// </summary>
@@ -121,27 +121,27 @@ public class ParticleManager : MonoBehaviour
             _logger.Warn($"파티클 풀을 찾을 수 없음: {particleId}");
             return;
         }
-        
+
         ParticlePool pool = _pools[particleId];
-        
+
         if (pool.available.Count == 0)
         {
             // 풀이 부족하면 확장
             _logger.Debug($"파티클 풀 확장: {particleId}");
             ExpandPool(pool);
         }
-        
+
         ParticleSystem particle = pool.available.Dequeue();
         particle.transform.position = position;
         particle.gameObject.SetActive(true);
         particle.Play();
-        
+
         pool.active.Add(particle);
-        
+
         // 자동 정리 예약
         StartCoroutine(StopAfterDuration(particle, pool));
     }
-    
+
     /// <summary>
     /// 파티클 재생 (회전 포함)
     /// </summary>
@@ -155,25 +155,25 @@ public class ParticleManager : MonoBehaviour
             _logger.Warn($"파티클 풀을 찾을 수 없음: {particleId}");
             return;
         }
-        
+
         ParticlePool pool = _pools[particleId];
-        
+
         if (pool.available.Count == 0)
         {
             ExpandPool(pool);
         }
-        
+
         ParticleSystem particle = pool.available.Dequeue();
         particle.transform.position = position;
         particle.transform.rotation = rotation;
         particle.gameObject.SetActive(true);
         particle.Play();
-        
+
         pool.active.Add(particle);
-        
+
         StartCoroutine(StopAfterDuration(particle, pool));
     }
-    
+
     /// <summary>
     /// 파티클 즉시 정지 및 반환
     /// </summary>
@@ -181,20 +181,20 @@ public class ParticleManager : MonoBehaviour
     public void StopParticle(string particleId)
     {
         if (!_pools.ContainsKey(particleId)) return;
-        
+
         ParticlePool pool = _pools[particleId];
-        
+
         if (pool.active.Count > 0)
         {
             ParticleSystem particle = pool.active[pool.active.Count - 1];
             particle.Stop();
             particle.gameObject.SetActive(false);
-            
+
             pool.active.RemoveAt(pool.active.Count - 1);
             pool.available.Enqueue(particle);
         }
     }
-    
+
     /// <summary>
     /// 모든 파티클 정지
     /// </summary>
@@ -203,7 +203,7 @@ public class ParticleManager : MonoBehaviour
         foreach (var kvp in _pools)
         {
             ParticlePool pool = kvp.Value;
-            
+
             // 활성 파티클 복사본을 만들어 순회
             var activeCopy = new List<ParticleSystem>(pool.active);
             foreach (var particle in activeCopy)
@@ -212,46 +212,46 @@ public class ParticleManager : MonoBehaviour
                 particle.gameObject.SetActive(false);
                 pool.available.Enqueue(particle);
             }
-            
+
             pool.active.Clear();
         }
     }
-    
-    // ========== 풀 관리 ==========
-    
+
+    // 풀 관리
+
     private void ExpandPool(ParticlePool pool)
     {
         int expandCount = pool.poolSize / 2; // 50% 확장
-        
+
         for (int i = 0; i < expandCount; i++)
         {
             ParticleSystem particle = Instantiate(pool.prefab, _particleParent);
             particle.gameObject.SetActive(false);
             pool.available.Enqueue(particle);
         }
-        
+
         _logger.Debug($"파티클 풀 확장 완료: +{expandCount}개");
     }
-    
+
     private System.Collections.IEnumerator StopAfterDuration(ParticleSystem particle, ParticlePool pool)
     {
         // 파티클의 main.duration + startLifetime 대기
         float duration = particle.main.duration + particle.main.startLifetime.constant;
-        
+
         yield return new WaitForSeconds(duration);
-        
+
         if (particle != null)
         {
             particle.Stop();
             particle.gameObject.SetActive(false);
-            
+
             pool.active.Remove(particle);
             pool.available.Enqueue(particle);
         }
     }
-    
-    // ========== 편의 메서드 ==========
-    
+
+    // 편의 메서드
+
     /// <summary>
     /// 공격 이펙트 재생
     /// </summary>
@@ -259,7 +259,7 @@ public class ParticleManager : MonoBehaviour
     {
         PlayParticle("ParticleAttackHit", position);
     }
-    
+
     /// <summary>
     /// 피격 이펙트 재생
     /// </summary>
@@ -267,7 +267,7 @@ public class ParticleManager : MonoBehaviour
     {
         PlayParticle("ParticleDamageFlash", position);
     }
-    
+
     /// <summary>
     /// 처치 이펙트 재생
     /// </summary>
@@ -275,7 +275,7 @@ public class ParticleManager : MonoBehaviour
     {
         PlayParticle("ParticleMonsterDeath", position);
     }
-    
+
     /// <summary>
     /// 레벨업 이펙트 재생
     /// </summary>
@@ -283,7 +283,7 @@ public class ParticleManager : MonoBehaviour
     {
         PlayParticle("ParticleLevelUp", position);
     }
-    
+
     /// <summary>
     /// 합성 이펙트 재생
     /// </summary>
@@ -291,7 +291,7 @@ public class ParticleManager : MonoBehaviour
     {
         PlayParticle("ParticleSynthesis", position);
     }
-    
+
     /// <summary>
     /// 환생 이펙트 재생
     /// </summary>
@@ -299,9 +299,9 @@ public class ParticleManager : MonoBehaviour
     {
         PlayParticle("ParticleRebirth", position);
     }
-    
-    // ========== 디버그 ==========
-    
+
+    // 디버그
+
     /// <summary>
     /// 파티클 풀 상태 출력
     /// </summary>
@@ -313,7 +313,7 @@ public class ParticleManager : MonoBehaviour
             _logger.Info($"{kvp.Key}: 활성={kvp.Value.active.Count}, 대기={kvp.Value.available.Count}");
         }
     }
-    
+
     /// <summary>
     /// 현재 활성 파티클 수
     /// </summary>

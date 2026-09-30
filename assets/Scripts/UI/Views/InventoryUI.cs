@@ -10,32 +10,32 @@ using System.Linq;
 public class InventoryUIClass : MonoBehaviour
 {
     private IGameState _gameState;
-    
+
     private List<Dictionary<string, object>> _allItemsData = new List<Dictionary<string, object>>();
-    
+
     private string _currentTab = "weapon";
-    
+
     private VisualElement _root;
     private VisualElement _inventoryContainer;
     private ScrollView _scrollView;
-    
+
     // 탭 버튼들
     private Button _tabWeapon;
     private Button _tabArmor;
     private Button _tabAccessory;
     private Button _tabBoots;
-    
+
     private Label _bonusAtk;
     private Label _bonusDef;
     private Label _bonusHP;
     private Label _inventoryGold;
-    
+
     // 장비 슬롯들
     private VisualElement _weaponSlot;
     private VisualElement _armorSlot;
     private VisualElement _accessorySlot;
     private VisualElement _bootsSlot;
-    
+
     // 비교 툴팁 상태
     private string _pendingCompareItemId = null;
     private int _pendingCompareGrade = 0;
@@ -56,27 +56,27 @@ public class InventoryUIClass : MonoBehaviour
             // Debug.LogError($"InventoryUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
-    
+
     private void InjectDependencies()
     {
         if (Bootstrap.Container == null) return;
         _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
-    
+
     public void Initialize(VisualElement root)
     {
         _root = root;
-        
+
         // 탭 버튼 찾기
         _tabWeapon = _root.Q<Button>("TabWeapon");
         _tabArmor = _root.Q<Button>("TabArmor");
         _tabAccessory = _root.Q<Button>("TabAccessory");
         _tabBoots = _root.Q<Button>("TabBoots");
-        
+
         // ScrollView와 아이템 컨테이너 찾기
         _scrollView = _root.Q<ScrollView>("InventoryScrollContainer");
         _inventoryContainer = _root.Q<VisualElement>("InventoryItems");
-        
+
         // 장비 슬롯 찾기 (USS의 .equipment-slot 클래스로 찾아서 순서대로 저장)
         var allSlots = _root.Query<VisualElement>(className: "equipment-slot").ToList();
         if (allSlots.Count >= 4)
@@ -91,20 +91,20 @@ public class InventoryUIClass : MonoBehaviour
         {
             // Debug.LogWarning($"장비 슬롯 부족: {allSlots.Count}개 (4개 기대)");
         }
-        
+
         // ScrollView 설정
         if (_scrollView != null)
         {
             _scrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             _scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
         }
-        
+
         // 장비 보너스 합계 라벨
         _bonusAtk = _root.Q<Label>("BonusAtk");
         _bonusDef = _root.Q<Label>("BonusDef");
         _bonusHP = _root.Q<Label>("BonusHP");
         _inventoryGold = _root.Q<Label>("InventoryGold");
-        
+
         // 합성 버튼 찾기
         _synthesizeAllButton = _root.Q<Button>("BatchSynthesizeBtn");
         if (_synthesizeAllButton != null)
@@ -121,11 +121,11 @@ public class InventoryUIClass : MonoBehaviour
         }
 
         SetupTabs();
-        
+
         if (_tabWeapon != null)
             OnTabClicked("weapon", _tabWeapon);
     }
-    
+
     private void SetupTabs()
     {
         if (_tabWeapon != null)
@@ -137,7 +137,7 @@ public class InventoryUIClass : MonoBehaviour
         if (_tabBoots != null)
             _tabBoots.clicked += () => OnTabClicked("boots", _tabBoots);
     }
-    
+
     private void OnTabClicked(string tabType, Button clickedTab)
     {
         _currentTab = tabType;
@@ -146,7 +146,7 @@ public class InventoryUIClass : MonoBehaviour
             clickedTab.AddToClassList("active");
         RefreshInventoryGrid();
     }
-    
+
     private void ResetTabButtons()
     {
         if (_tabWeapon != null) _tabWeapon.RemoveFromClassList("active");
@@ -154,23 +154,23 @@ public class InventoryUIClass : MonoBehaviour
         if (_tabAccessory != null) _tabAccessory.RemoveFromClassList("active");
         if (_tabBoots != null) _tabBoots.RemoveFromClassList("active");
     }
-    
+
     /// <summary>
     /// 장비 슬롯 UI 업데이트 (장착된 아이템 표시)
     /// </summary>
     private void UpdateEquipmentSlots()
     {
         if (_gameState == null) return;
-        
+
         // 장비 목록 가져오기
         var equipment = _gameState.Inventory.equipment;
-        
+
         // 각 슬롯에 대해
         UpdateSingleEquipmentSlot(_weaponSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Weapon), "⚔️", "무기");
         UpdateSingleEquipmentSlot(_armorSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Armor), "🛡️", "방어구");
         UpdateSingleEquipmentSlot(_accessorySlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Accessory), "💍", "액세서리");
         UpdateSingleEquipmentSlot(_bootsSlot, equipment.FirstOrDefault(e => e.slot == (int)EquipmentSlot.Boots), "👢", "부츠");
-        
+
         UpdateBonusDisplay();
     }
 
@@ -180,7 +180,7 @@ public class InventoryUIClass : MonoBehaviour
     private void UpdateBonusDisplay()
     {
         if (_gameState == null) return;
-        
+
         float totalAtk = 0, totalDef = 0, totalHp = 0;
         foreach (var eq in _gameState.Inventory.equipment)
         {
@@ -188,33 +188,33 @@ public class InventoryUIClass : MonoBehaviour
             totalDef += eq.defenseBonus;
             totalHp += eq.healthBonus;
         }
-        
+
         if (_bonusAtk != null) _bonusAtk.text = $"공격력: +{totalAtk}%";
         if (_bonusDef != null) _bonusDef.text = $"방어력: +{totalDef}%";
         if (_bonusHP != null) _bonusHP.text = $"체력: +{totalHp}%";
         if (_inventoryGold != null) _inventoryGold.text = _gameState.Player.gold.ToString("N0");
     }
-    
+
     /// <summary>
     /// 개별 장비 슬롯 업데이트
     /// </summary>
     private void UpdateSingleEquipmentSlot(VisualElement slot, EquipmentData? equipment, string defaultEmoji, string slotName)
     {
         if (slot == null) return;
-        
+
         // 슬롯 안의 모든 자식 제거 (아이템 아이콘, 텍스트 등)
         slot.Clear();
-        
+
         if (equipment.HasValue)
         {
             var eq = equipment.Value;
-            
+
             // 아이템 아이콘 (이모지)
             var iconLabel = new Label(defaultEmoji);
             iconLabel.style.fontSize = 60;
             iconLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             slot.Add(iconLabel);
-            
+
             // 아이템 이름
             var nameLabel = new Label(eq.name);
             nameLabel.style.fontSize = 16;
@@ -222,7 +222,7 @@ public class InventoryUIClass : MonoBehaviour
             nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             nameLabel.style.marginTop = 5;
             slot.Add(nameLabel);
-            
+
             // 희귀도 표시 (색상) - rarity (0-4) 사용
             string[] rarityNames = GetGradeNames();  // 일반/고급/희귀/영웅/전설
             Color rarityColor = GetGradeColor(eq.rarity);  // rarity 기반 색상
@@ -231,7 +231,7 @@ public class InventoryUIClass : MonoBehaviour
             gradeLabel.style.color = rarityColor;
             gradeLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             slot.Add(gradeLabel);
-            
+
             // 슬롯 스타일 - 장착됨 상태
             slot.style.borderLeftColor = rarityColor;
             slot.style.borderRightColor = rarityColor;
@@ -241,7 +241,7 @@ public class InventoryUIClass : MonoBehaviour
             slot.style.borderRightWidth = 3;
             slot.style.borderTopWidth = 3;
             slot.style.borderBottomWidth = 3;
-            
+
             // Debug.Log($"장비 슬롯 업데이트: {slotName} = {eq.name} (Grade {eq.grade})");
         }
         else
@@ -252,14 +252,14 @@ public class InventoryUIClass : MonoBehaviour
             iconLabel.style.color = new Color(0.5f, 0.5f, 0.5f);
             iconLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             slot.Add(iconLabel);
-            
+
             var nameLabel = new Label($"빈 {slotName}");
             nameLabel.style.fontSize = 14;
             nameLabel.style.color = new Color(0.4f, 0.4f, 0.4f);
             nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             nameLabel.style.marginTop = 5;
             slot.Add(nameLabel);
-            
+
             // 슬롯 스타일 - 빈 상태
             slot.style.borderLeftColor = new Color(0.3f, 0.3f, 0.3f);
             slot.style.borderRightColor = new Color(0.3f, 0.3f, 0.3f);
@@ -281,18 +281,18 @@ public class InventoryUIClass : MonoBehaviour
 
         // 컨테이너 비우기
         _inventoryContainer.Clear();
-        
+
         // CSV 데이터에서 현재 탭의 아이템만 필터링
         _allItemsData = DataLoader.Load("items");
-        var tabItems = _allItemsData.Where(item => 
+        var tabItems = _allItemsData.Where(item =>
         {
             var type = item["type"].ToString().ToLower();
             return type == _currentTab;
         }).ToList();
-        
+
         // 아이템을 베이스 이름별로 그룹화
         var groupedItems = GroupItemsByBase(tabItems);
-        
+
         // 각 아이템을 개별 카드로 생성 (자동 줄바꿈)
         foreach (var group in groupedItems)
         {
@@ -308,13 +308,13 @@ public class InventoryUIClass : MonoBehaviour
                 _inventoryContainer.Add(slot);
             }
         }
-        
+
         // 장비 슬롯 업데이트 (장착된 아이템 표시)
         UpdateEquipmentSlots();
-        
+
         // Debug.Log($"인벤토리 그리드 업데이트: {groupedItems.Count}개 그룹 ({_currentTab})");
     }
-    
+
     /// <summary>
     /// 아이템을 베이스 이름별로 그룹화
     /// </summary>
@@ -322,24 +322,24 @@ public class InventoryUIClass : MonoBehaviour
         List<Dictionary<string, object>> items)
     {
         var groups = new Dictionary<string, List<Dictionary<string, object>>>();
-        
+
         foreach (var item in items)
         {
             var baseName = item["name"].ToString();
-            
+
             if (!groups.ContainsKey(baseName))
             {
                 groups[baseName] = new List<Dictionary<string, object>>();
             }
             groups[baseName].Add(item);
         }
-        
+
         // 각 그룹을 희귀도 순서대로 정렬
         var rarityOrder = new Dictionary<string, int>
         {
             { "common", 0 }, { "rare", 1 }, { "epic", 2 }, { "legendary", 3 }, { "mythic", 4 }
         };
-        
+
         foreach (var key in groups.Keys.ToList())
         {
             groups[key] = groups[key].OrderBy(item =>
@@ -348,10 +348,10 @@ public class InventoryUIClass : MonoBehaviour
                 return rarityOrder.ContainsKey(rarity) ? rarityOrder[rarity] : 5;
             }).ToList();
         }
-        
+
         return groups;
     }
-    
+
     /// <summary>
     /// 아이템 슬롯 생성 (정사각형 카드)
     /// </summary>
@@ -379,7 +379,7 @@ public class InventoryUIClass : MonoBehaviour
         slot.style.flexBasis = new StyleLength(new Length(18, LengthUnit.Percent));
         slot.style.minWidth = 80;
         slot.style.minHeight = 80;
-        
+
         // 정사각형 유지를 위해 실제 너비에 맞춰 높이 설정 (런타임)
         slot.RegisterCallback<GeometryChangedEvent>((evt) =>
         {
@@ -387,18 +387,18 @@ public class InventoryUIClass : MonoBehaviour
             slot.style.minHeight = newHeight;
             slot.style.maxHeight = newHeight;
         });
-        
+
         var itemId = item["id"].ToString();
         var itemName = item["name"].ToString();
         var rarity = item["rarity"].ToString().ToLower();
-        
+
         // 보유 수량 확인
         var ownedItem = _gameState.Inventory.items.FirstOrDefault(i => i.id == itemId);
         var count = ownedItem.count;
-        
+
         // 발견 여부 확인
         var discovered = _gameState.Inventory.discoveredItems.Contains(itemId);
-        
+
         if (count > 0)
         {
             slot.AddToClassList("has-item");
@@ -407,12 +407,12 @@ public class InventoryUIClass : MonoBehaviour
             slot.style.borderRightColor = GetRarityColor(rarity);
             slot.style.borderTopColor = GetRarityColor(rarity);
             slot.style.borderBottomColor = GetRarityColor(rarity);
-            
+
             // 아이템 아이콘 (이모지) - 크게
             var iconLabel = new Label(GetItemEmoji(item));
             iconLabel.style.fontSize = 40;
             slot.Add(iconLabel);
-            
+
             // 아이템 이름 (Web 버전과 동일)
             var nameLabel = new Label(itemName);
             nameLabel.style.fontSize = 14;
@@ -420,7 +420,7 @@ public class InventoryUIClass : MonoBehaviour
             nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             nameLabel.style.whiteSpace = WhiteSpace.Normal;
             slot.Add(nameLabel);
-            
+
             // 수량
             var countLabel = new Label($"{count}");
             countLabel.style.fontSize = 16;
@@ -452,10 +452,10 @@ public class InventoryUIClass : MonoBehaviour
                 synthBadge.style.borderBottomRightRadius = 4;
                 slot.Add(synthBadge);
             }
-            
+
             slot.RegisterCallback<ClickEvent>(evt => OnItemClicked(itemId));
             slot.RegisterCallback<ContextClickEvent>(evt => OnItemRightClicked(itemId, itemGrade, evt));
-            
+
             // 툴팁 이벤트 (PointerEnter/Leave가 더 안정적)
             // 아이템 스탯 파싱 (CSV에서 가져온 stats JSON)
             int atkBonus = 0, defBonus = 0, hpBonus = 0;
@@ -476,7 +476,7 @@ public class InventoryUIClass : MonoBehaviour
                     hpBonus = parsed.hpBonus;
                 }
             }
-            
+
             slot.RegisterCallback<PointerEnterEvent>(evt =>
             {
                 int grade = GetRarityGrade(rarity);
@@ -496,11 +496,11 @@ public class InventoryUIClass : MonoBehaviour
             slot.style.borderRightColor = GetRarityColor(rarity);
             slot.style.borderTopColor = GetRarityColor(rarity);
             slot.style.borderBottomColor = GetRarityColor(rarity);
-            
+
             var iconLabel = new Label(GetItemEmoji(item));
             iconLabel.style.fontSize = 40;
             slot.Add(iconLabel);
-            
+
             var countLabel = new Label("0");
             countLabel.style.fontSize = 16;
             countLabel.style.color = Color.gray;
@@ -508,9 +508,9 @@ public class InventoryUIClass : MonoBehaviour
             countLabel.style.bottom = 4;
             countLabel.style.right = 4;
             slot.Add(countLabel);
-            
+
             slot.RegisterCallback<ClickEvent>(evt => OnItemClicked(itemId));
-            
+
             // 발견된 아이템도 툴팁 지원
             slot.RegisterCallback<PointerEnterEvent>(evt =>
             {
@@ -530,15 +530,15 @@ public class InventoryUIClass : MonoBehaviour
             slot.style.borderRightColor = Color.gray;
             slot.style.borderTopColor = Color.gray;
             slot.style.borderBottomColor = Color.gray;
-            
+
             var lockLabel = new Label("🔒");
             lockLabel.style.fontSize = 32;
             slot.Add(lockLabel);
         }
-        
+
         return slot;
     }
-    
+
     /// <summary>
     /// 희귀도별 색상 반환
     /// </summary>
@@ -554,7 +554,7 @@ public class InventoryUIClass : MonoBehaviour
             default: return Color.white;
         }
     }
-    
+
     /// <summary>
     /// 희귀도별 등급 번호 반환 (0=common, 1=rare, 2=epic, 3=legendary, 4=mythic)
     /// </summary>
@@ -570,7 +570,7 @@ public class InventoryUIClass : MonoBehaviour
             default: return 0;
         }
     }
-    
+
     /// <summary>
     /// 등급 이름 배열 반환 (0=일반, 1=고급, 2=희귀, 3=영웅, 4=전설)
     /// </summary>
@@ -578,7 +578,7 @@ public class InventoryUIClass : MonoBehaviour
     {
         return new[] { "일반", "고급", "희귀", "영웅", "전설" };
     }
-    
+
     /// <summary>
     /// 등급별 색상 반환
     /// </summary>
@@ -594,7 +594,7 @@ public class InventoryUIClass : MonoBehaviour
             default: return Color.white;
         }
     }
-    
+
     /// <summary>
     /// 아이템 타입별 이모지 반환
     /// </summary>
@@ -610,7 +610,7 @@ public class InventoryUIClass : MonoBehaviour
             default: return "📦";
         }
     }
-    
+
     /// <summary>
     /// 아이템 클릭 이벤트 (1click=비교, 2click=장착)
     /// </summary>
@@ -619,13 +619,13 @@ public class InventoryUIClass : MonoBehaviour
         // 아이템 정보 가져오기
         var item = _allItemsData.FirstOrDefault(i => i["id"].ToString() == itemId);
         if (item == null) return;
-        
+
         int grade = System.Convert.ToInt32(item["grade"]);
         string itemType = item["type"].ToString();
         int rarity = GetRarityGrade(item["rarity"].ToString());
-        
+
         Debug.Log($"[TOOLTIP-DBG] 아이템 클릭: id={itemId}, grade={grade}, pending={_pendingCompareItemId}");
-        
+
         // 같은 아이템 두 번째 클릭이면 장착 실행
         if (_pendingCompareItemId == itemId && _pendingCompareGrade == grade)
         {
@@ -639,37 +639,37 @@ public class InventoryUIClass : MonoBehaviour
             }
             return;
         }
-        
+
         // 첫 번째 클릭이거나 다른 아이템 → 비교 툴팁 표시
         Debug.Log($"[TOOLTIP-DBG] 비교 툴팁 표시 시도");
         ShowItemComparison(itemId, grade, itemType, rarity);
     }
-    
+
     /// <summary>
     /// 아이템 비교 툴팁 표시
     /// </summary>
     private void ShowItemComparison(string itemId, int grade, string itemType, int rarity)
     {
         Debug.Log($"[TOOLTIP-DBG] ShowItemComparison 시작: id={itemId}, grade={grade}, type={itemType}, rarity={rarity}");
-        
+
         // 아이템 데이터 가져오기
         var item = _allItemsData.FirstOrDefault(i => i["id"].ToString() == itemId);
         if (item == null) return;
-        
+
         // 새 아이템 스탯 계산
         float newAttack = InventorySystem.Instance.CalculateEquipmentBonus(grade, "attack");
         float newDefense = InventorySystem.Instance.CalculateEquipmentBonus(grade, "defense");
         float newHealth = InventorySystem.Instance.CalculateEquipmentBonus(grade, "health");
-        
+
         Debug.Log($"[TOOLTIP-DBG] 새 스탯: atk={newAttack}, def={newDefense}, hp={newHealth}");
-        
+
         // 현재 장비 스탯 가져오기
         float currentAttack = 0, currentDefense = 0, currentHealth = 0;
         var equipment = _gameState.Inventory.equipment;
-        
+
         EquipmentSlot targetSlot = InventorySystem.Instance.GetSlotFromItemType(itemType);
         var currentEquip = equipment.FirstOrDefault(e => e.slot == (int)targetSlot);
-        
+
         if (currentEquip.id != null)  // 슬롯에 장비가 있을 때
         {
             currentAttack = currentEquip.attackBonus;
@@ -681,13 +681,13 @@ public class InventoryUIClass : MonoBehaviour
         {
             Debug.Log($"[TOOLTIP-DBG] 현재 장비 없음 (빈 슬롯)");
         }
-        
+
         // 대기 중인 비교 상태 저장
         _pendingCompareItemId = itemId;
         _pendingCompareGrade = grade;
-        
+
         Debug.Log($"[TOOLTIP-DBG] TooltipManager.Instance={(TooltipManager.Instance != null ? "있음" : "null")}");
-        
+
         // 비교 툴팁 표시 (화면 중앙 근처)
         TooltipManager.Instance?.ShowComparisonTooltip(
             item["name"].ToString(),
@@ -697,10 +697,10 @@ public class InventoryUIClass : MonoBehaviour
             currentAttack, currentDefense, currentHealth,
             new Vector2(300, 200)  // 중앙 위치
         );
-        
+
         Debug.Log($"[TOOLTIP-DBG] ShowComparisonTooltip 호출 완료");
     }
-    
+
     /// <summary>
     /// 대기 중인 비교 상태 초기화
     /// </summary>
@@ -710,7 +710,7 @@ public class InventoryUIClass : MonoBehaviour
         _pendingCompareGrade = 0;
         TooltipManager.Instance?.HideItemTooltip();
     }
-    
+
     /// <summary>
     /// 아이템 우클릭 이벤트 (합성)
     /// </summary>

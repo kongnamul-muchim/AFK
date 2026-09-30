@@ -10,30 +10,30 @@ using System.Linq;
 public class UpgradeUIClass : MonoBehaviour
 {
     private IGameState _gameState;
-    
+
     private string _currentTab = "gold";
-    
+
     private VisualElement _root;
     private ScrollView _scrollView;
     private VisualElement _upgradeContainer;
-    
+
     // 탭 버튼들
     private Button _upgradeTabGold;
     private Button _upgradeTabStat;
     private Button _upgradeTabGem;
     private Button _upgradeTabRebirth;
-    
+
     // 헤더 표시 요소들
     private Label _upgradePointsDisplay;
     private Label _upgradeGoldDisplay;
     private Label _upgradeGemsDisplay;
-    
+
     // 스탯 정의 (Web 버전과 동일)
     private Dictionary<string, StatDefinition> _statDefinitions;
-    
+
     // 보석 업그레이드 정의
     private Dictionary<string, GemUpgradeDefinition> _gemUpgradeDefinitions;
-    
+
     private void Awake()
     {
         try
@@ -48,13 +48,13 @@ public class UpgradeUIClass : MonoBehaviour
             // Debug.LogError($"UpgradeUIClass.Awake() - DI 실패: {e.Message}");
         }
     }
-    
+
     private void InjectDependencies()
     {
         if (Bootstrap.Container == null) return;
         _gameState = Bootstrap.Container.Resolve<IGameState>();
     }
-    
+
     private void DefineStats()
     {
         _statDefinitions = new Dictionary<string, StatDefinition>
@@ -201,7 +201,7 @@ public class UpgradeUIClass : MonoBehaviour
             }
         };
     }
-    
+
     private void DefineGemUpgrades()
     {
         _gemUpgradeDefinitions = new Dictionary<string, GemUpgradeDefinition>
@@ -268,38 +268,38 @@ public class UpgradeUIClass : MonoBehaviour
             }
         };
     }
-    
+
     public void Initialize(VisualElement root)
     {
         _root = root;
-        
+
         _upgradeTabGold = _root.Q<Button>("UpgradeTabGold");
         _upgradeTabStat = _root.Q<Button>("UpgradeTabStat");
         _upgradeTabGem = _root.Q<Button>("UpgradeTabGem");
         _upgradeTabRebirth = _root.Q<Button>("UpgradeTabRebirth");
-        
+
         _scrollView = _root.Q<ScrollView>("UpgradeGrid");
         _upgradeContainer = _scrollView;
-        
+
         // ScrollView 설정
         if (_scrollView != null)
         {
             _scrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             _scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
         }
-        
+
         // 헤더 표시 요소들
         _upgradePointsDisplay = _root.Q<Label>("UpgradePointsDisplay");
         _upgradeGoldDisplay = _root.Q<Label>("UpgradeGoldDisplay");
         _upgradeGemsDisplay = _root.Q<Label>("UpgradeGemsDisplay");
-        
+
         SetupTabs();
-        
+
         // 초기 디스플레이 업데이트 (탭 클릭 없이 바로 표시)
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     private void SetupTabs()
     {
         if (_upgradeTabGold != null)
@@ -311,7 +311,7 @@ public class UpgradeUIClass : MonoBehaviour
         if (_upgradeTabRebirth != null)
             _upgradeTabRebirth.clicked += () => OnTabClicked("rebirth", _upgradeTabRebirth);
     }
-    
+
     private void OnTabClicked(string tabType, Button clickedTab)
     {
         _currentTab = tabType;
@@ -321,7 +321,7 @@ public class UpgradeUIClass : MonoBehaviour
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     private void ResetTabButtons()
     {
         if (_upgradeTabGold != null) _upgradeTabGold.RemoveFromClassList("active");
@@ -329,7 +329,7 @@ public class UpgradeUIClass : MonoBehaviour
         if (_upgradeTabGem != null) _upgradeTabGem.RemoveFromClassList("active");
         if (_upgradeTabRebirth != null) _upgradeTabRebirth.RemoveFromClassList("active");
     }
-    
+
     /// <summary>
     /// 디스플레이 업데이트 (골드, 포인트, 보석 표시)
     /// </summary>
@@ -348,7 +348,7 @@ public class UpgradeUIClass : MonoBehaviour
                 _upgradeGoldDisplay.style.display = DisplayStyle.None;
             }
         }
-        
+
         if (_upgradePointsDisplay != null)
         {
             if (_currentTab == "stat")
@@ -360,7 +360,7 @@ public class UpgradeUIClass : MonoBehaviour
             else if (_currentTab == "rebirth")
             {
                 var bonusPoints = _gameState.Rebirth.bonusPoints;
-                _upgradePointsDisplay.text = $"🎁 {bonusPoints}"; // 환생 포인트는 🎁로 (보석과 구분)
+                _upgradePointsDisplay.text = $"🎁 {bonusPoints}"; // 환생 포인트는 로 (보석과 구분)
                 _upgradePointsDisplay.style.display = DisplayStyle.Flex;
             }
             else
@@ -368,7 +368,7 @@ public class UpgradeUIClass : MonoBehaviour
                 _upgradePointsDisplay.style.display = DisplayStyle.None;
             }
         }
-        
+
         if (_upgradeGemsDisplay != null)
         {
             if (_currentTab == "gem")
@@ -383,17 +383,17 @@ public class UpgradeUIClass : MonoBehaviour
             }
         }
     }
-    
+
     /// <summary>
     /// 업그레이드 그리드 새로고침
     /// </summary>
     public void RefreshUpgradeGrid()
     {
         if (_upgradeContainer == null || _gameState == null) return;
-        
+
         // 컨테이너 비우기
         _upgradeContainer.Clear();
-        
+
         switch (_currentTab)
         {
             case "gold":
@@ -409,16 +409,16 @@ public class UpgradeUIClass : MonoBehaviour
                 PopulateRebirthUpgrades();
                 break;
         }
-        
+
         // Debug.Log($"업그레이드 그리드 업데이트: {_currentTab}");
     }
-    
+
     private void PopulateGoldUpgrades()
     {
         foreach (var kvp in _statDefinitions)
         {
             if (!kvp.Value.tabs.Contains("gold")) continue;
-            
+
             // 잠금 조건 확인
             if (kvp.Value.unlockCondition != null && !kvp.Value.unlockCondition())
             {
@@ -435,14 +435,14 @@ public class UpgradeUIClass : MonoBehaviour
                 _upgradeContainer.Add(lockedItem);
                 continue;
             }
-            
+
             var level = GetGoldUpgradeLevel(kvp.Key);
             var isMaxLevel = kvp.Value.maxLevel.HasValue && level >= kvp.Value.maxLevel.Value;
             var cost = isMaxLevel ? 0 : CalculateGoldCost(kvp.Key, level);
             var hasCurrency = _gameState.Player.gold >= cost;
             var currentValue = kvp.Value.getValue(level);
             var nextValue = isMaxLevel ? "" : kvp.Value.getValue(level + 1);
-            
+
             var item = CreateUpgradeCard(
                 kvp.Value.name,
                 $"Lv.{level}",
@@ -456,20 +456,20 @@ public class UpgradeUIClass : MonoBehaviour
             _upgradeContainer.Add(item);
         }
     }
-    
+
     private void PopulateStatUpgrades()
     {
         foreach (var kvp in _statDefinitions)
         {
             if (!kvp.Value.tabs.Contains("stat")) continue;
-            
+
             var level = GetStatUpgradeLevel(kvp.Key);
             var isMaxLevel = kvp.Value.maxLevel.HasValue && level >= kvp.Value.maxLevel.Value;
             var cost = kvp.Value.statCost;
             var hasCurrency = _gameState.Player.statPoints >= cost;
             var currentValue = kvp.Value.getValue(level);
             var nextValue = isMaxLevel ? "" : kvp.Value.getValue(level + 1);
-            
+
             var item = CreateUpgradeCard(
                 kvp.Value.name,
                 $"Lv.{level}",
@@ -483,7 +483,7 @@ public class UpgradeUIClass : MonoBehaviour
             _upgradeContainer.Add(item);
         }
     }
-    
+
     private void PopulateGemUpgrades()
     {
         foreach (var kvp in _gemUpgradeDefinitions)
@@ -492,13 +492,13 @@ public class UpgradeUIClass : MonoBehaviour
             var isUnlocked = upgradeData.unlocked;
             var level = upgradeData.level;
             var isMaxLevel = kvp.Value.maxLevel.HasValue && level >= kvp.Value.maxLevel.Value;
-            
+
             if (!isUnlocked)
             {
                 // 해금 전
                 var unlockCost = kvp.Value.gemCostBase;
                 var canAfford = _gameState.Player.gems >= unlockCost;
-                
+
                 var item = CreateGemUpgradeCard(
                     kvp.Value.name,
                     "🔒 해금 필요",
@@ -517,7 +517,7 @@ public class UpgradeUIClass : MonoBehaviour
                 var canAfford = _gameState.Player.gems >= upgradeCost && !isMaxLevel;
                 var currentValue = kvp.Value.getValue(level);
                 var nextValue = isMaxLevel ? "" : kvp.Value.getValue(level + 1);
-                
+
                 var item = CreateGemUpgradeCard(
                     kvp.Value.name,
                     isMaxLevel ? "최대 레벨" : $"Lv.{level}",
@@ -531,7 +531,7 @@ public class UpgradeUIClass : MonoBehaviour
             }
         }
     }
-    
+
     private void PopulateRebirthUpgrades()
     {
         // 환생 가능 여부 확인 (RebirthSystem 기준)
@@ -539,11 +539,11 @@ public class UpgradeUIClass : MonoBehaviour
         var playerLevel = _gameState.Player.level;
         var minLevel = RebirthSystem.Instance != null ? GameConfig.MinRebirthLevel : 50;
         var rebirthCount = _gameState.Rebirth.rebirthCount;
-        
+
         // 환생 섹션
         var rebirthSection = CreateRebirthSection(canRebirth, rebirthCount, playerLevel, minLevel);
         _upgradeContainer.Add(rebirthSection);
-        
+
         // 구분선
         var divider = new VisualElement();
         divider.style.height = 1;
@@ -551,7 +551,7 @@ public class UpgradeUIClass : MonoBehaviour
         divider.style.marginTop = 10;
         divider.style.marginBottom = 10;
         _upgradeContainer.Add(divider);
-        
+
         // 환생 업그레이드 목록 (보너스 포인트 사용)
         var rebirthUpgrades = GetRebirthUpgradeDefinitions();
         foreach (var upgrade in rebirthUpgrades)
@@ -559,7 +559,7 @@ public class UpgradeUIClass : MonoBehaviour
             var currentLevel = GetRebirthUpgradeLevel(upgrade.key);
             var isMaxLevel = currentLevel >= upgrade.maxLevel;
             var canPurchase = _gameState.Rebirth.bonusPoints >= upgrade.costPerLevel && !isMaxLevel;
-            
+
             var item = CreateRebirthUpgradeCard(
                 upgrade.name,
                 $"Lv.{currentLevel}/{upgrade.maxLevel}",
@@ -573,7 +573,7 @@ public class UpgradeUIClass : MonoBehaviour
             _upgradeContainer.Add(item);
         }
     }
-    
+
     private VisualElement CreateRebirthSection(bool canRebirth, int rebirthCount, int playerLevel, int minLevel)
     {
         var section = new VisualElement();
@@ -589,38 +589,38 @@ public class UpgradeUIClass : MonoBehaviour
         section.style.borderBottomLeftRadius = 12;
         section.style.borderBottomRightRadius = 12;
         section.style.marginBottom = 10;
-        
+
         if (canRebirth)
         {
             var bonusCount = RebirthSystem.Instance != null ? RebirthSystem.Instance.GetBonusPointsPreview() : 0;
-            
+
             var title = new Label("🔄 환생 가능!");
             title.style.fontSize = 28;
             title.style.color = new Color(1, 0.84f, 0);
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             section.Add(title);
-            
+
             var info1 = new Label($"현재 레벨: {playerLevel} / 최소 레벨: {minLevel}");
             info1.style.fontSize = 20;
             info1.style.color = new Color(0.69f, 0.69f, 0.69f);
             section.Add(info1);
-            
+
             var info2 = new Label($"환생 횟수: {rebirthCount}회");
             info2.style.fontSize = 20;
             info2.style.color = new Color(0.69f, 0.69f, 0.69f);
             section.Add(info2);
-            
+
             var bonus = new Label($"획득 보너스: 💎 {bonusCount}개");
             bonus.style.fontSize = 22;
             bonus.style.color = new Color(0.29f, 0.93f, 0.5f);
             section.Add(bonus);
-            
+
             var note = new Label("* 환생 시 레벨 1로 초기화, 장비/인벤토리 유지, 보너스 포인트 획득");
             note.style.fontSize = 16;
             note.style.color = new Color(0.53f, 0.53f, 0.53f);
             note.style.marginTop = 5;
             section.Add(note);
-            
+
             var btn = new Button(() => PerformRebirth());
             btn.text = "🔄 환생하기";
             btn.style.fontSize = 28;
@@ -641,23 +641,23 @@ public class UpgradeUIClass : MonoBehaviour
         else
         {
             var progress = Math.Min(100, (playerLevel * 100.0f / minLevel));
-            
+
             var title = new Label("🔒 환생 잠김");
             title.style.fontSize = 28;
             title.style.color = new Color(0.4f, 0.4f, 0.4f);
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             section.Add(title);
-            
+
             var info1 = new Label($"현재 레벨: {playerLevel} / 최소 레벨: {minLevel}");
             info1.style.fontSize = 20;
             info1.style.color = new Color(0.69f, 0.69f, 0.69f);
             section.Add(info1);
-            
+
             var info2 = new Label($"환생 횟수: {rebirthCount}회");
             info2.style.fontSize = 20;
             info2.style.color = new Color(0.69f, 0.69f, 0.69f);
             section.Add(info2);
-            
+
             // 진행바
             var progressBarBg = new VisualElement();
             progressBarBg.style.width = Length.Percent(80);
@@ -670,7 +670,7 @@ public class UpgradeUIClass : MonoBehaviour
             progressBarBg.style.borderBottomRightRadius = 4;
             progressBarBg.style.marginTop = 10;
             progressBarBg.style.marginBottom = 10;
-            
+
             var progressBarFill = new VisualElement();
             progressBarFill.style.width = Length.Percent(progress);
             progressBarFill.style.height = 8;
@@ -680,18 +680,18 @@ public class UpgradeUIClass : MonoBehaviour
             progressBarFill.style.borderBottomLeftRadius = 4;
             progressBarFill.style.borderBottomRightRadius = 4;
             progressBarBg.Add(progressBarFill);
-            
+
             section.Add(progressBarBg);
-            
+
             var note = new Label($"레벨 {minLevel}이 되어야 환생할 수 있습니다");
             note.style.fontSize = 18;
             note.style.color = new Color(0.53f, 0.53f, 0.53f);
             section.Add(note);
         }
-        
+
         return section;
     }
-    
+
     /// <summary>
     /// 업그레이드 카드 생성 (골드/스탯 탭용)
     /// </summary>
@@ -710,46 +710,46 @@ public class UpgradeUIClass : MonoBehaviour
         container.style.borderBottomLeftRadius = 12;
         container.style.borderBottomRightRadius = 12;
         container.style.marginBottom = 10;
-        
+
         // 상단 행: 이름 + 레벨
         var topRow = new VisualElement();
         topRow.style.flexDirection = FlexDirection.Row;
         topRow.style.justifyContent = Justify.SpaceBetween;
         topRow.style.alignItems = Align.Center;
-        
+
         var nameLabel = new Label(name);
         nameLabel.style.fontSize = 26;
         nameLabel.style.color = Color.white;
         nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
         nameLabel.style.flexGrow = 1;
         topRow.Add(nameLabel);
-        
+
         var levelLabel = new Label(level);
         levelLabel.style.fontSize = 22;
         levelLabel.style.color = isMaxLevel ? new Color(0.29f, 0.93f, 0.5f) : new Color(0.69f, 0.69f, 0.69f);
         topRow.Add(levelLabel);
-        
+
         container.Add(topRow);
-        
+
         // 스탯 행
         var statsLabel = new Label(stats);
         statsLabel.style.fontSize = 20;
         statsLabel.style.color = new Color(0.69f, 0.69f, 0.69f);
         statsLabel.style.marginTop = 5;
         container.Add(statsLabel);
-        
+
         // 하단 행: 비용 + 구매 버튼
         var bottomRow = new VisualElement();
         bottomRow.style.flexDirection = FlexDirection.Row;
         bottomRow.style.justifyContent = Justify.SpaceBetween;
         bottomRow.style.alignItems = Align.Center;
         bottomRow.style.marginTop = 10;
-        
+
         var costLabel = new Label(isMaxLevel ? "최대 레벨" : $"{cost}{costType}");
         costLabel.style.fontSize = 22;
         costLabel.style.color = isMaxLevel ? new Color(0.29f, 0.93f, 0.5f) : new Color(1, 0.84f, 0);
         bottomRow.Add(costLabel);
-        
+
         if (!isMaxLevel && onClick != null)
         {
             var buyBtn = new Button(onClick);
@@ -769,12 +769,12 @@ public class UpgradeUIClass : MonoBehaviour
             buyBtn.SetEnabled(canBuy);
             bottomRow.Add(buyBtn);
         }
-        
+
         container.Add(bottomRow);
-        
+
         return container;
     }
-    
+
     /// <summary>
     /// 보석 업그레이드 카드 생성
     /// </summary>
@@ -793,43 +793,43 @@ public class UpgradeUIClass : MonoBehaviour
         container.style.borderBottomLeftRadius = 12;
         container.style.borderBottomRightRadius = 12;
         container.style.marginBottom = 10;
-        
+
         var topRow = new VisualElement();
         topRow.style.flexDirection = FlexDirection.Row;
         topRow.style.justifyContent = Justify.SpaceBetween;
         topRow.style.alignItems = Align.Center;
-        
+
         var nameLabel = new Label(name);
         nameLabel.style.fontSize = 26;
         nameLabel.style.color = Color.white;
         nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
         nameLabel.style.flexGrow = 1;
         topRow.Add(nameLabel);
-        
+
         var levelLabel = new Label(level);
         levelLabel.style.fontSize = 22;
         levelLabel.style.color = isMaxLevel ? new Color(0.29f, 0.93f, 0.5f) : new Color(0.69f, 0.69f, 0.69f);
         topRow.Add(levelLabel);
-        
+
         container.Add(topRow);
-        
+
         var statsLabel = new Label(stats);
         statsLabel.style.fontSize = 20;
         statsLabel.style.color = new Color(0.69f, 0.69f, 0.69f);
         statsLabel.style.marginTop = 5;
         container.Add(statsLabel);
-        
+
         var bottomRow = new VisualElement();
         bottomRow.style.flexDirection = FlexDirection.Row;
         bottomRow.style.justifyContent = Justify.SpaceBetween;
         bottomRow.style.alignItems = Align.Center;
         bottomRow.style.marginTop = 10;
-        
+
         var costLabel = new Label(isMaxLevel ? "최대 레벨" : $"💎 {cost}");
         costLabel.style.fontSize = 22;
         costLabel.style.color = isMaxLevel ? new Color(0.29f, 0.93f, 0.5f) : new Color(0.29f, 0.62f, 1);
         bottomRow.Add(costLabel);
-        
+
         if (!isMaxLevel && onClick != null)
         {
             var buyBtn = new Button(onClick);
@@ -848,12 +848,12 @@ public class UpgradeUIClass : MonoBehaviour
             buyBtn.SetEnabled(canBuy);
             bottomRow.Add(buyBtn);
         }
-        
+
         container.Add(bottomRow);
-        
+
         return container;
     }
-    
+
     /// <summary>
     /// 환생 업그레이드 카드 생성
     /// </summary>
@@ -871,43 +871,43 @@ public class UpgradeUIClass : MonoBehaviour
         container.style.borderBottomLeftRadius = 12;
         container.style.borderBottomRightRadius = 12;
         container.style.marginBottom = 10;
-        
+
         var topRow = new VisualElement();
         topRow.style.flexDirection = FlexDirection.Row;
         topRow.style.justifyContent = Justify.SpaceBetween;
         topRow.style.alignItems = Align.Center;
-        
+
         var nameLabel = new Label(name);
         nameLabel.style.fontSize = 26;
         nameLabel.style.color = Color.white;
         nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
         nameLabel.style.flexGrow = 1;
         topRow.Add(nameLabel);
-        
+
         var levelLabel = new Label(level);
         levelLabel.style.fontSize = 22;
         levelLabel.style.color = isMaxLevel ? new Color(0.29f, 0.93f, 0.5f) : new Color(0.69f, 0.69f, 0.69f);
         topRow.Add(levelLabel);
-        
+
         container.Add(topRow);
-        
+
         var descLabel = new Label(description);
         descLabel.style.fontSize = 20;
         descLabel.style.color = new Color(0.69f, 0.69f, 0.69f);
         descLabel.style.marginTop = 5;
         container.Add(descLabel);
-        
+
         var bottomRow = new VisualElement();
         bottomRow.style.flexDirection = FlexDirection.Row;
         bottomRow.style.justifyContent = Justify.SpaceBetween;
         bottomRow.style.alignItems = Align.Center;
         bottomRow.style.marginTop = 10;
-        
+
         var costLabel = new Label(isMaxLevel ? "완성!" : $"{cost}pt");
         costLabel.style.fontSize = 22;
         costLabel.style.color = isMaxLevel ? new Color(0.29f, 0.93f, 0.5f) : new Color(1, 0.84f, 0);
         bottomRow.Add(costLabel);
-        
+
         if (!isMaxLevel && onClick != null)
         {
             var buyBtn = new Button(onClick);
@@ -926,34 +926,34 @@ public class UpgradeUIClass : MonoBehaviour
             buyBtn.SetEnabled(canBuy);
             bottomRow.Add(buyBtn);
         }
-        
+
         container.Add(bottomRow);
-        
+
         return container;
     }
-    
-    // ==================== 유틸리티 메서드들 ====================
-    
+
+    // 유틸리티 메서드들
+
     private int GetGoldUpgradeLevel(string key)
     {
         if (_gameState.Player.goldUpgrades.ContainsKey(key))
             return _gameState.Player.goldUpgrades[key];
         return 0;
     }
-    
+
     private int GetStatUpgradeLevel(string key)
     {
         if (_gameState.Player.statUpgrades.ContainsKey(key))
             return _gameState.Player.statUpgrades[key];
         return 0;
     }
-    
+
     private GemUpgradeItemData GetGemUpgradeData(string key)
     {
         // 기존 GemUpgradeData(RebirthData.cs)에서 해당 키의 레벨을 읽음
         var gemData = _gameState.GemUpgrades;
         var result = new GemUpgradeItemData();
-        
+
         switch (key)
         {
             case "offlineBonus":
@@ -985,17 +985,17 @@ public class UpgradeUIClass : MonoBehaviour
                 result.level = 0;
                 break;
         }
-        
+
         return result;
     }
-    
+
     private int GetRebirthUpgradeLevel(string key)
     {
         if (_gameState.Rebirth.upgrades.ContainsKey(key))
             return _gameState.Rebirth.upgrades[key];
         return 0;
     }
-    
+
     private float CalculateStatValue(int level, float baseValue)
     {
         float total = 0;
@@ -1005,7 +1005,7 @@ public class UpgradeUIClass : MonoBehaviour
         }
         return total * baseValue;
     }
-    
+
     private float GetEfficiencyMultiplier(int lvl)
     {
         if (lvl < 10) return 1.0f;
@@ -1014,12 +1014,12 @@ public class UpgradeUIClass : MonoBehaviour
         if (lvl < 40) return 2.5f;
         return 3.0f;
     }
-    
+
     private int CalculateGoldCost(string key, int currentLevel)
     {
         var baseCost = _statDefinitions[key].goldCostBase;
         if (currentLevel == 0) return baseCost;
-        
+
         int cost = baseCost;
         for (int i = 1; i <= currentLevel; i++)
         {
@@ -1036,18 +1036,18 @@ public class UpgradeUIClass : MonoBehaviour
         }
         return Math.Max(cost, 10);
     }
-    
+
     private int CalculateGemCost(int baseCost, int currentLevel)
     {
         return Mathf.FloorToInt(baseCost * Mathf.Pow(1.15f, currentLevel));
     }
-    
+
     private int CalculateRebirthBonus()
     {
         // 간단한 계산: 플레이어 레벨 / 10
         return _gameState.Player.level / 10;
     }
-    
+
     private List<RebirthUpgradeDef> GetRebirthUpgradeDefinitions()
     {
         return new List<RebirthUpgradeDef>
@@ -1059,79 +1059,79 @@ public class UpgradeUIClass : MonoBehaviour
             new RebirthUpgradeDef { key = "dropBonus", name = "드롭 보너스", description = "드롭률 1% 증가", maxLevel = 5, costPerLevel = 3 }
         };
     }
-    
-    // ==================== 구매 액션들 ====================
-    
+
+    // 구매 액션들
+
     private void PurchaseGoldUpgrade(string key)
     {
         var level = GetGoldUpgradeLevel(key);
         var cost = CalculateGoldCost(key, level);
-        
+
         if (_gameState.Player.gold < cost) return;
         if (_statDefinitions[key].maxLevel.HasValue && level >= _statDefinitions[key].maxLevel.Value) return;
-        
+
         _gameState.Player.gold -= cost;
         _gameState.Player.goldUpgrades[key] = level + 1;
-        
+
         // Debug.Log($"골드 업그레이드 구매: {key} → Lv.{level + 1}");
-        
+
         EventBus.Instance?.Emit(GameEvents.GOLD_CHANGED);
         EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     private void PurchaseStatUpgrade(string key)
     {
         var level = GetStatUpgradeLevel(key);
         var cost = _statDefinitions[key].statCost;
-        
+
         if (_gameState.Player.statPoints < cost) return;
         if (_statDefinitions[key].maxLevel.HasValue && level >= _statDefinitions[key].maxLevel.Value) return;
-        
+
         _gameState.Player.statPoints -= cost;
         _gameState.Player.statUpgrades[key] = level + 1;
-        
+
         EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     private void UnlockGemUpgrade(string key)
     {
         var cost = _gemUpgradeDefinitions[key].gemCostBase;
         if (_gameState.Player.gems < cost) return;
-        
+
         _gameState.Player.gems -= cost;
-        
+
         // 기존 GemUpgradeData 필드에 레벨 설정
         SetGemUpgradeLevel(key, 1);
-        
+
         EventBus.Instance?.Emit(GameEvents.GEM_CHANGED);
         EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     private void UpgradeGemUpgrade(string key, int currentLevel)
     {
         var cost = CalculateGemCost(_gemUpgradeDefinitions[key].gemCostBase, currentLevel);
         if (_gameState.Player.gems < cost) return;
         if (_gemUpgradeDefinitions[key].maxLevel.HasValue && currentLevel >= _gemUpgradeDefinitions[key].maxLevel.Value) return;
-        
+
         _gameState.Player.gems -= cost;
         SetGemUpgradeLevel(key, currentLevel + 1);
-        
+
         EventBus.Instance?.Emit(GameEvents.GEM_CHANGED);
         EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     /// <summary>
     /// 보석 업그레이드 레벨 설정 (기존 GemUpgradeData 필드에 맞춤)
     /// </summary>
@@ -1148,37 +1148,37 @@ public class UpgradeUIClass : MonoBehaviour
             case "baseStats": gemData.statBonusLevel = level; break;
         }
     }
-    
+
     private void PerformRebirth()
     {
         if (RebirthSystem.Instance == null || !RebirthSystem.Instance.CanRebirth()) return;
-        
+
         RebirthSystem.Instance.PerformRebirth();
-        
+
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
+
     private void PurchaseRebirthUpgrade(string key)
     {
         var level = GetRebirthUpgradeLevel(key);
         var defs = GetRebirthUpgradeDefinitions();
         var def = defs.First(d => d.key == key);
-        
+
         if (_gameState.Rebirth.bonusPoints < def.costPerLevel) return;
         if (level >= def.maxLevel) return;
-        
+
         _gameState.Rebirth.bonusPoints -= def.costPerLevel;
         _gameState.Rebirth.upgrades[key] = level + 1;
-        
+
         EventBus.Instance?.Emit(GameEvents.PLAYER_STAT_CHANGED);
-        
+
         UpdateDisplay();
         RefreshUpgradeGrid();
     }
-    
-    // ==================== 데이터 구조체들 ====================
-    
+
+    // 데이터 구조체들
+
     private class StatDefinition
     {
         public string name;
@@ -1191,7 +1191,7 @@ public class UpgradeUIClass : MonoBehaviour
         public Func<bool> unlockCondition;
         public string unlockMessage;
     }
-    
+
     private class GemUpgradeDefinition
     {
         public string name;
@@ -1200,13 +1200,13 @@ public class UpgradeUIClass : MonoBehaviour
         public int gemCostBase;
         public Func<int, string> getValue;
     }
-    
+
     private class GemUpgradeItemData
     {
         public bool unlocked = false;
         public int level = 0;
     }
-    
+
     private class RebirthUpgradeDef
     {
         public string key;

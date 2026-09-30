@@ -10,7 +10,7 @@ class LoadingScreen {
         this.percentText = document.getElementById('loading-percent');
         this.tipText = document.getElementById('loading-tip');
         this.retryBtn = document.getElementById('loading-retry');
-        
+
         this.tips = [
             '스탯포인트는 전략적으로 분배하세요!',
             '장비 5 개를 모으면 합성할 수 있습니다!',
@@ -50,8 +50,8 @@ class LoadingScreen {
 
     /**
      * 진행률 업데이트
-     * @param {number} percent 
-     * @param {string} tip 
+     * @param {number} percent
+     * @param {string} tip
      */
     updateProgress(percent, tip) {
         if (this.barFill) {
@@ -77,7 +77,7 @@ class LoadingScreen {
 
     /**
      * 에러 표시
-     * @param {string} message 
+     * @param {string} message
      */
     showError(message) {
         if (this.tipText) {

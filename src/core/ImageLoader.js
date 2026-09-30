@@ -20,19 +20,19 @@ class ImageLoader {
     async load(key, src) {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            
+
             img.onload = () => {
                 this.images.set(key, img);
                 this.loadedCount++;
                 gameLogger.debug(`Image loaded: ${key} (${img.width}x${img.height})`);
                 resolve(img);
             };
-            
+
             img.onerror = () => {
                 gameLogger.error(`Failed to load image: ${key}`);
                 reject(new Error(`Failed to load ${src}`));
             };
-            
+
             img.src = src;
         });
     }
@@ -45,25 +45,25 @@ class ImageLoader {
     async loadAll(imageMap) {
         this.totalCount = Object.keys(imageMap).length;
         this.loadedCount = 0;
-        
+
         const entries = Object.entries(imageMap);
         const results = await Promise.allSettled(
             entries.map(([key, src]) => this.load(key, src))
         );
-        
+
         // 실패한 이미지 로깅
         results.forEach((result, index) => {
             if (result.status === 'rejected') {
                 gameLogger.error(`Failed: ${entries[index][0]}`);
             }
         });
-        
+
         return this.images;
     }
 
     /**
      * 이미지 가져오기
-     * @param {string} key 
+     * @param {string} key
      * @returns {HTMLImageElement|null}
      */
     get(key) {
@@ -82,7 +82,7 @@ class ImageLoader {
     getSpriteFrame(key, frameX, frameY, frameWidth, frameHeight) {
         const image = this.images.get(key);
         if (!image) return null;
-        
+
         return {
             image,
             sx: frameX * frameWidth,
@@ -104,7 +104,7 @@ class ImageLoader {
     getAllFrames(key, frameWidth, frameHeight, columns, rows) {
         const image = this.images.get(key);
         if (!image) return [];
-        
+
         const frames = [];
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < columns; x++) {

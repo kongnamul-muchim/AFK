@@ -8,7 +8,7 @@ using UnityEngine;
 public class StatsTracker : MonoBehaviour
 {
     private static StatsTracker _instance;
-    
+
     /// <summary>
     /// StatsTracker의 싱글톤 인스턴스
     /// </summary>
@@ -26,11 +26,11 @@ public class StatsTracker : MonoBehaviour
         }
     }
 
-    // ========== 의존성 주입 ==========
-    
+    // 의존성 주입
+
     private IGameState _gameState;
     private IEventBus _eventBus;
-    
+
     /// <summary>
     /// ServiceLocator를 통한 의존성 주입
     /// </summary>
@@ -53,7 +53,7 @@ public class StatsTracker : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
         // 의존성 주입
         InjectDependencies();
     }
@@ -62,7 +62,7 @@ public class StatsTracker : MonoBehaviour
     {
         // 의존성 주입 확인
         InjectDependencies();
-        
+
         // 이벤트 구독
         _eventBus.On(GameEvents.MONSTER_KILL, OnMonsterKill);
         _eventBus.On(GameEvents.BOSS_KILL, OnBossKill);
@@ -82,8 +82,8 @@ public class StatsTracker : MonoBehaviour
         _eventBus.Off(GameEvents.STAGE_CLEAR, OnStageClear);
     }
 
-    // ========== 이벤트 핸들러 ==========
-    
+    // 이벤트 핸들러
+
     private void OnMonsterKill()
     {
         // CombatSystem.ProcessVictory에서 이미 stats.totalKills를 증가시킴
@@ -123,8 +123,8 @@ public class StatsTracker : MonoBehaviour
         // 스테이지 클리어 수 업데이트
     }
 
-    // ========== 플레이 시간 ==========
-    
+    // 플레이 시간
+
     private void Update()
     {
         var stats = _gameState.Stats;
@@ -132,8 +132,8 @@ public class StatsTracker : MonoBehaviour
         _gameState.Stats = stats;
     }
 
-    // ========== 통계 포맷팅 ==========
-    
+    // 통계 포맷팅
+
     /// <summary>
     /// 플레이 시간을 시:분:초 형식으로 포맷팅
     /// </summary>
@@ -142,7 +142,7 @@ public class StatsTracker : MonoBehaviour
     public string FormatPlayTime(float seconds)
     {
         System.TimeSpan time = System.TimeSpan.FromSeconds(seconds);
-        
+
         if (time.TotalDays >= 1)
         {
             return $"{(int)time.TotalDays}일 {(int)time.Hours}시간 {(int)time.Minutes}분";
@@ -175,7 +175,7 @@ public class StatsTracker : MonoBehaviour
         var stats = _gameState.Stats;
         var player = _gameState.Player;
         var stage = _gameState.Stage;
-        
+
         return $@"
 === 게임 통계 ===
 플레이 시간: {FormatPlayTime(stats.totalPlayTime)}

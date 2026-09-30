@@ -19,16 +19,16 @@ public static class GameLogger
     {
         /// <summary>모든 로그 출력 (개발용)</summary>
         DEBUG,
-        
+
         /// <summary>일반 정보 로그</summary>
         INFO,
-        
+
         /// <summary>경고 로그</summary>
         WARN,
-        
+
         /// <summary>에러 로그</summary>
         ERROR,
-        
+
         /// <summary>로그 없음</summary>
         NONE
     }
@@ -36,7 +36,7 @@ public static class GameLogger
     private static LogLevel _currentLevel = LogLevel.INFO;
 
     // ===== 파일 저장 관련 필드 =====
-    
+
     /// <summary>
     /// 로그 저장 경로
     /// </summary>

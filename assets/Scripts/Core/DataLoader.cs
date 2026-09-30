@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public static class DataLoader
 {
-    private static Dictionary<string, List<Dictionary<string, object>>> _cache = 
+    private static Dictionary<string, List<Dictionary<string, object>>> _cache =
         new Dictionary<string, List<Dictionary<string, object>>>();
 
     /// <summary>
@@ -27,7 +27,7 @@ public static class DataLoader
 
         var data = CSVParser.Parse(textAsset.text);
         _cache[csvName] = data;
-        
+
         Debug.Log($"Loaded {csvName}.csv: {data.Count} rows");
         return data;
     }

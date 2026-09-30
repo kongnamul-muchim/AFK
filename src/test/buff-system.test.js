@@ -234,7 +234,7 @@ class CombatSystem {
     }
 }
 
-// ==================== TEST RUNNER ====================
+// TEST RUNNER
 
 let passCount = 0;
 let failCount = 0;
@@ -259,7 +259,7 @@ function it(name, fn) {
     fn();
 }
 
-// ==================== TESTS ====================
+// TESTS
 
 describe('Buff System Tests', () => {
     it('1. 버프 없을 때 몬스터 처치 → 기본 goldReward, expReward 확인', () => {

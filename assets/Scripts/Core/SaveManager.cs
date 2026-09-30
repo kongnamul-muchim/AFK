@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 public class SaveManager : MonoBehaviour, ISaveManager
 {
     private static SaveManager _instance;
-    
+
     /// <summary>
     /// SaveManager의 싱글톤 인스턴스
     /// </summary>
@@ -31,17 +31,17 @@ public class SaveManager : MonoBehaviour, ISaveManager
 
     /// <summary>저장 파일명</summary>
     private const string SAVE_FILE_NAME = "savegame.json";
-    
+
     /// <summary>현재 세이브 버전 (마이그레이션용)</summary>
     private const int CURRENT_SAVE_VERSION = 3;
-    
+
     /// <summary>자동 저장 코루틴</summary>
     private Coroutine _autoSaveCoroutine;
-    
+
     /// <summary>자동 저장 간격 (초)</summary>
     private float _autoSaveInterval = 5f;
 
-    // ========== MonoBehaviour 라이프사이클 ==========
+    // MonoBehaviour 라이프사이클
 
     private void Awake()
     {
@@ -61,7 +61,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
         StopAutoSave();
     }
 
-    // ========== 저장/로드 메서드 ==========
+    // 저장/로드 메서드
 
     /// <summary>
     /// 게임 상태를 JSON 파일로 저장 (동기)
@@ -81,17 +81,17 @@ public class SaveManager : MonoBehaviour, ISaveManager
             SaveData saveData = SaveData.CreateFromGameState(state);
             string json = JsonUtility.ToJson(saveData, true);
             string savePath = GetSavePath();
-            
+
             // 디렉토리 확인
             string directory = Path.GetDirectoryName(savePath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             File.WriteAllText(savePath, json);
             GameLogger.Info($"게임 저장 완료: {savePath}");
-            
+
             // 저장 이벤트 발생
             EventBus.Instance.Emit(GameEvents.GAME_SAVED);
         }
@@ -120,17 +120,17 @@ public class SaveManager : MonoBehaviour, ISaveManager
             SaveData saveData = SaveData.CreateFromGameState(state);
             string json = JsonUtility.ToJson(saveData, true);
             string savePath = GetSavePath();
-            
+
             // 디렉토리 확인
             string directory = Path.GetDirectoryName(savePath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             await File.WriteAllTextAsync(savePath, json);
             GameLogger.Info($"게임 저장 완료 (비동기): {savePath}");
-            
+
             // 저장 이벤트 발생
             EventBus.Instance.Emit(GameEvents.GAME_SAVED);
         }
@@ -153,13 +153,13 @@ public class SaveManager : MonoBehaviour, ISaveManager
             if (File.Exists(savePath))
             {
                 string json = File.ReadAllText(savePath);
-                
+
                 if (string.IsNullOrEmpty(json))
                 {
                     GameLogger.Warn("저장 파일이 비어있습니다.");
                     return null;
                 }
-                
+
                 // SaveData로 역직렬화 후 GameState에 적용
                 SaveData saveData = JsonUtility.FromJson<SaveData>(json);
                 if (saveData == null)
@@ -167,16 +167,16 @@ public class SaveManager : MonoBehaviour, ISaveManager
                     GameLogger.Warn("저장 파일이 잘못되었습니다.");
                     return null;
                 }
-                
+
                 // 기존 GameState 인스턴스에 데이터 적용
                 var state = GameState.Instance;
                 saveData.ApplyToGameState(state);
-                
+
                 GameLogger.Info("게임 로드 완료");
-                
+
                 // 로드 이벤트 발생
                 EventBus.Instance.Emit(GameEvents.GAME_LOADED);
-                
+
                 return state;
             }
         }
@@ -185,7 +185,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
             GameLogger.Error($"로드 실패: {e.Message}");
             GameLogger.Exception(e);
         }
-        
+
         return null;
     }
 
@@ -201,13 +201,13 @@ public class SaveManager : MonoBehaviour, ISaveManager
             if (File.Exists(savePath))
             {
                 string json = await File.ReadAllTextAsync(savePath);
-                
+
                 if (string.IsNullOrEmpty(json))
                 {
                     GameLogger.Warn("저장 파일이 비어있습니다.");
                     return null;
                 }
-                
+
                 // SaveData로 역직렬화 후 GameState에 적용
                 SaveData saveData = JsonUtility.FromJson<SaveData>(json);
                 if (saveData == null)
@@ -215,16 +215,16 @@ public class SaveManager : MonoBehaviour, ISaveManager
                     GameLogger.Warn("저장 파일이 잘못되었습니다.");
                     return null;
                 }
-                
+
                 // 기존 GameState 인스턴스에 데이터 적용
                 var state = GameState.Instance;
                 saveData.ApplyToGameState(state);
-                
+
                 GameLogger.Info("게임 로드 완료 (비동기)");
-                
+
                 // 로드 이벤트 발생
                 EventBus.Instance.Emit(GameEvents.GAME_LOADED);
-                
+
                 return state;
             }
         }
@@ -233,7 +233,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
             GameLogger.Error($"로드 실패: {e.Message}");
             GameLogger.Exception(e);
         }
-        
+
         return null;
     }
 
@@ -259,7 +259,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
         }
     }
 
-    // ========== 자동 저장 ==========
+    // 자동 저장
 
     /// <summary>
     /// 자동 저장 시작
@@ -268,12 +268,12 @@ public class SaveManager : MonoBehaviour, ISaveManager
     public void StartAutoSave(float interval = 5f)
     {
         _autoSaveInterval = interval;
-        
+
         if (_autoSaveCoroutine != null)
         {
             StopCoroutine(_autoSaveCoroutine);
         }
-        
+
         _autoSaveCoroutine = StartCoroutine(AutoSaveCoroutine());
         GameLogger.Info($"자동 저장 시작 (간격: {interval}초)");
     }
@@ -294,11 +294,11 @@ public class SaveManager : MonoBehaviour, ISaveManager
     private IEnumerator AutoSaveCoroutine()
     {
         WaitForSeconds wait = new WaitForSeconds(_autoSaveInterval);
-        
+
         while (true)
         {
             yield return wait;
-            
+
             if (GameState.Instance != null)
             {
                 Save(GameState.Instance);
@@ -306,7 +306,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
         }
     }
 
-    // ========== 내보내기/가져오기 ==========
+    // 내보내기/가져오기
 
     /// <summary>
     /// 저장 파일을 텍스트로 내보내기 (웹 세이브 이관용)
@@ -358,7 +358,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
             // 웹 버전 JSON을 Unity 형식으로 변환
             // 필요한 경우 마이그레이션 로직 추가
             GameState state = JsonUtility.FromJson<GameState>(json);
-            
+
             if (state != null)
             {
                 Save(state);
@@ -376,7 +376,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
         }
     }
 
-    // ========== 유틸리티 메서드 ==========
+    // 유틸리티 메서드
 
     /// <summary>
     /// 저장 경로 가져오기
@@ -409,7 +409,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
     {
         string savePath = GetSavePath();
         string backupPath = Path.Combine(Application.persistentDataPath, "savegame_backup.json");
-        
+
         if (File.Exists(savePath))
         {
             File.Copy(savePath, backupPath, true);
@@ -424,7 +424,7 @@ public class SaveManager : MonoBehaviour, ISaveManager
     {
         string backupPath = Path.Combine(Application.persistentDataPath, "savegame_backup.json");
         string savePath = GetSavePath();
-        
+
         if (File.Exists(backupPath))
         {
             File.Copy(backupPath, savePath, true);
@@ -432,8 +432,8 @@ public class SaveManager : MonoBehaviour, ISaveManager
         }
     }
 
-    // ========== ISaveManager 인터페이스 구현 ==========
-    
+    // ISaveManager 인터페이스 구현
+
     void ISaveManager.CreateBackup()
     {
         BackupSave();

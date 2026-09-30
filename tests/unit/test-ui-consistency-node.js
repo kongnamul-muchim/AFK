@@ -1,4 +1,4 @@
-// ========== UI-코드 일치성 테스트 (Node.js) ==========
+// UI-코드 일치성 테스트 (Node.js)
 
 const fs = require('fs');
 
