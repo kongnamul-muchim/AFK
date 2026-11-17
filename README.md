@@ -13,3 +13,8 @@ Unity C# 기반, DI Container + Event-driven 아키텍처.
 - SOLID Principles
 - Event-driven Architecture
 - Rebirth / Prestige System
+
+## AI 활용
+
+AI 코딩 에이전트를 UI 스캐폴딩과 반복 코드 작성에 사용했습니다.
+작업 규칙(네이밍·계층 구조·금지 API)은 `AGENTS.md`에 명시해 두고 진행했습니다.
